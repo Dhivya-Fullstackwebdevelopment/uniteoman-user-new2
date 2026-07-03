@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { useParams, Link, useNavigate } from 'react-router-dom'
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { businessApi, bookingApi, serviceApi, reviewApi } from '@/lib/api'
 import { Spinner } from '@/components/ui'
@@ -12,6 +12,33 @@ const BRAND_FROM = '#D61CA8'
 const BRAND_TO = '#8B2EF5'
 const BRAND_GRADIENT = `linear-gradient(135deg, ${BRAND_FROM} 0%, ${BRAND_TO} 100%)`
 const AI_GRADIENT = `linear-gradient(135deg, ${BRAND_FROM} 0%, #4B6EF5 100%)`
+
+const STATIC_SERVICES = [
+  {
+    id: 'ac-deep-cleaning',
+    name: 'AC Deep Cleaning',
+    description: '~45 mins · Materials included',
+    price: 'OMR 15',
+    icon: '❄️',
+    bg: '#DBEAFE'
+  },
+  {
+    id: 'ac-repair-diagnosis',
+    name: 'AC Repair & Diagnosis',
+    description: '~60 mins · Parts extra',
+    price: 'OMR 25',
+    icon: '🔩',
+    bg: '#FEF3C7'
+  },
+  {
+    id: 'annual-ac-contract',
+    name: 'Annual AC Contract',
+    description: '2 services/yr · Priority support',
+    price: 'OMR 89/yr',
+    icon: '📋',
+    bg: '#D1FAE5'
+  }
+]
 
 // ── Validation schema for the contact fields ──
 const bookingSchema = z.object({
@@ -26,6 +53,8 @@ const bookingSchema = z.object({
 export default function ProfessionalProfilePage() {
   const { slug } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
+  const navState = location.state || {}
 
   const { data: business, isLoading } = useQuery({
     queryKey: ['business', slug],
@@ -50,14 +79,28 @@ export default function ProfessionalProfilePage() {
 
   const TIMES = ['9:00 AM', '10:00 AM', '11:00 AM', '2:00 PM']
 
-  // ── API CALL FOR SERVICES ──
+  const storedServices = useMemo(() => {
+    try {
+      const raw = sessionStorage.getItem(`biz-services:${slug}`)
+      return raw ? JSON.parse(raw) : null
+    } catch {
+      return null
+    }
+  }, [slug])
+
+  const preloadedServices =
+    (navState.businessId && business?.id && navState.businessId === business.id && Array.isArray(navState.services))
+      ? navState.services
+      : (Array.isArray(storedServices) ? storedServices : null)
+
   const { data: servicesData, isLoading: servicesLoading } = useQuery({
     queryKey: ['services', business?.id],
     queryFn: () => serviceApi.listByBusiness(business?.id),
     enabled: !!business?.id,
+    initialData: preloadedServices || undefined,
+    staleTime: 5 * 60 * 1000,
   })
 
-  // ── API CALL FOR REVIEWS ──
   const {
     data: reviewsData,
     isLoading: reviewsLoading,
@@ -70,14 +113,10 @@ export default function ProfessionalProfilePage() {
     retry: false,
   })
 
-  const services = servicesData || []
-  const GENERAL_ENQUIRY = {
-    name: 'General Enquiry',
-    price: 'FREE',
-    description: `Discuss your requirements with ${business?.name_en || 'this professional'}`
-  }
+  // const services = servicesData || []
+  const services = STATIC_SERVICES
 
-  const [selectedService, setSelectedService] = useState(GENERAL_ENQUIRY)
+  const [selectedService, setSelectedService] = useState(STATIC_SERVICES[0])
 
   const [selectedDate, setSelectedDate] = useState(dates[1]?.full || dates[0]?.full)
   const [selectedTime, setSelectedTime] = useState(TIMES[1])
@@ -184,7 +223,6 @@ export default function ProfessionalProfilePage() {
     return `${diffInYears} ${diffInYears === 1 ? 'year' : 'years'} ago`;
   }
 
-
   /* ── SUCCESS STATE ── */
   if (isBooked) {
     return (
@@ -237,7 +275,8 @@ export default function ProfessionalProfilePage() {
               <div className="flex items-start justify-between gap-3 mb-2 flex-wrap">
                 <div>
                   <div className="text-[24px] font-bold text-[#0A0A0F] tracking-tight leading-tight">
-                    {business.name_en}
+                    {/* {business.name_en} */}
+                    Mohammed Al-Balushi
                   </div>
                   <div className="text-[15px] font-medium text-[#6B7280] mt-1">
                     {business.category_name || business.specialty || 'Service Professional'}
@@ -349,32 +388,42 @@ export default function ProfessionalProfilePage() {
               </div> */}
 
               {/* API service records */}
+              {/* API service records -> NOW STATIC */}
               {services.map((s) => {
                 const isActive = selectedService.name === s.name
                 return (
                   <div
-                    key={s.id || s.name}
-                    className="flex items-center justify-between p-3 px-4 rounded-xl transition-all"
+                    key={s.id}
+                    className="flex items-center justify-between p-3.5 px-4 rounded-xl transition-all"
                     style={isActive
-                      ? { background: 'rgba(214,28,168,.06)', border: '1.5px solid rgba(214,28,168,.3)' }
+                      ? { background: 'rgba(214,28,168,.04)', border: '1.5px solid rgba(214,28,168,.15)' }
                       : { background: '#F8F8FA', border: '1.5px solid transparent' }}
                   >
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-[38px] h-[38px] rounded-[10px] bg-[#DBEAFE] flex items-center justify-center text-[18px] shrink-0">
-                        🛠️
+                    <div className="flex items-center gap-3 min-w-0">
+                      {/* Dynamic icon background matches image_e8d58d.png */}
+                      <div
+                        className="w-[42px] h-[42px] rounded-xl flex items-center justify-center text-[20px] shrink-0"
+                        style={{ backgroundColor: s.bg }}
+                      >
+                        {s.icon}
                       </div>
                       <div className="min-w-0">
-                        <div className="text-[14px] font-semibold text-[#0A0A0F] truncate">{s.name}</div>
-                        <div className="text-[12px] text-[#9090A0] mt-0.5 truncate">{s.description || 'Professional service'}</div>
+                        <div className="text-[15px] font-bold text-[#0A0A0F] truncate">{s.name}</div>
+                        <div className="text-[13px] text-[#9090A0] mt-0.5 truncate">{s.description}</div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3 shrink-0">
-                      <div className="text-[16px] font-extrabold text-[#0A0A0F]">
-                        {s.price || 'OMR --'}
+
+                    <div className="flex items-center gap-4 shrink-0">
+                      {/* Text color changes based on active selection */}
+                      <div
+                        className="text-[16px] font-black"
+                        style={{ color: isActive ? BRAND_FROM : '#0A0A0F' }}
+                      >
+                        {s.price}
                       </div>
                       <button
                         onClick={() => setSelectedService(s)}
-                        className="px-4 py-[7px] rounded-[9px] text-[12px] font-bold"
+                        className="px-5 py-[8px] rounded-[10px] text-[13px] font-bold transition-all"
                         style={isActive
                           ? { background: BRAND_GRADIENT, color: 'white' }
                           : { background: '#fff', color: '#0A0A0F', border: '1.5px solid #EBEBEF' }}
@@ -388,7 +437,7 @@ export default function ProfessionalProfilePage() {
 
               {!services.length && (
                 <div className="text-center text-[12px] text-[#9090A0] py-4">
-                  No specific services listed yet — send a general enquiry above.
+                  No services available.
                 </div>
               )}
             </div>
@@ -518,7 +567,7 @@ export default function ProfessionalProfilePage() {
             </div>
 
             {/* Contact details */}
-            <div className="mb-4 flex flex-col gap-3">
+            {/* <div className="mb-4 flex flex-col gap-3">
               <div>
                 <label className="text-[10px] font-black uppercase tracking-widest text-[#C4CBD6] ml-0.5 block mb-1.5">
                   Full Name <span className="text-red-500">*</span>
@@ -569,7 +618,7 @@ export default function ProfessionalProfilePage() {
                 />
                 {errors.phone && <p className="text-red-500 text-[11px] font-semibold mt-1 pl-1">{errors.phone}</p>}
               </div>
-            </div>
+            </div> */}
 
             {/* Price */}
             <div className="bg-[#F8F8FA] rounded-xl p-3.5 mb-4">

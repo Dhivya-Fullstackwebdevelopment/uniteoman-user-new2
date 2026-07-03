@@ -225,6 +225,23 @@ export default function BusinessListPage() {
     { label: 'Any', value: '' },
   ]
 
+  const handleSelectBusiness = (biz, idx) => {
+    const bizServices = serviceQueries[idx]?.data || []
+
+    try {
+      sessionStorage.setItem(`biz-services:${biz.slug}`, JSON.stringify(bizServices))
+    } catch {
+      
+    }
+
+    navigate(`/business/${biz.slug}/book`, {
+      state: {
+        businessId: biz.id,
+        services: bizServices,
+      },
+    })
+  }
+
   return (
     <div style={{ background: '#F8F8FA', minHeight: '100vh', fontFamily: '"DM Sans", sans-serif' }}>
 
@@ -521,7 +538,7 @@ export default function BusinessListPage() {
                 return (
                   <div
                     key={b.id}
-                    onClick={() => navigate(`/business/${b.slug}/book`)}
+                    onClick={() => handleSelectBusiness(b, i)}
                     onMouseEnter={() => setHoveredCard(b.id)}
                     onMouseLeave={() => setHoveredCard(null)}
                     className="bg-white rounded-[18px] p-5 flex gap-4 shadow-[0_2px_10px_rgba(0,0,0,.06)] cursor-pointer relative overflow-hidden hover:shadow-[0_6px_20px_rgba(0,0,0,.08)] transition-all duration-200"
@@ -558,7 +575,7 @@ export default function BusinessListPage() {
                           <span className="text-[12px] text-[#9090A0]">({b.rating_count || 0} reviews)</span>
                         </div>
                         <button
-                          onClick={(e) => { e.stopPropagation(); navigate(`/business/${b.slug}/book`) }}
+                          onClick={(e) => { e.stopPropagation(); handleSelectBusiness(b, i) }}
                           className="px-4 py-[7px] rounded-[9px] text-[12px] font-bold transition-all duration-200"
                           style={isActive
                             ? { background: BRAND_GRADIENT, color: '#fff' }

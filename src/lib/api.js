@@ -51,6 +51,7 @@ export const businessApi = {
   autocomplete: (q) => api.get('/api/businesses/autocomplete', { params: { q } }).then(r => r.data),
 }
 
+
 // ── Categories ────────────────────────────────────────────────
 export const categoryApi = {
   list: (isFeatured, parentId, parentSlug) => {
