@@ -129,6 +129,7 @@ export default function BusinessListPage() {
   const sort = searchParams.get('sort') || 'featured'
   const minRating = searchParams.get('min_rating') || ''
   const page = parseInt(searchParams.get('page') || '1')
+  const [hoveredCard, setHoveredCard] = useState(null)
 
   const setParam = (key, val) => {
     const p = new URLSearchParams(searchParams)
@@ -515,15 +516,21 @@ export default function BusinessListPage() {
             ) : (
               businesses.map((b, i) => {
                 const Icon = CATEGORY_ICONS[b.category_slug] || CATEGORY_ICONS[activeCategory?.slug] || Wrench
-                const isTop = i === 0
+                const isActive = hoveredCard === b.id  // ← no more isTop, purely hover-based
+
                 return (
                   <div
                     key={b.id}
                     onClick={() => navigate(`/business/${b.slug}/book`)}
-                    className="bg-white rounded-[18px] p-5 flex gap-4 shadow-[0_2px_10px_rgba(0,0,0,.06)] cursor-pointer relative overflow-hidden hover:shadow-[0_6px_20px_rgba(0,0,0,.08)] transition-shadow"
+                    onMouseEnter={() => setHoveredCard(b.id)}
+                    onMouseLeave={() => setHoveredCard(null)}
+                    className="bg-white rounded-[18px] p-5 flex gap-4 shadow-[0_2px_10px_rgba(0,0,0,.06)] cursor-pointer relative overflow-hidden hover:shadow-[0_6px_20px_rgba(0,0,0,.08)] transition-all duration-200"
                   >
-                    {isTop && (
-                      <div className="absolute top-0 left-0 right-0 h-[3px]" style={{ background: BRAND_GRADIENT }} />
+                    {isActive && (
+                      <div
+                        className="absolute top-0 left-0 right-0 h-[3px] transition-opacity duration-200"
+                        style={{ background: BRAND_GRADIENT }}
+                      />
                     )}
                     <div
                       className="w-[72px] h-[72px] rounded-2xl flex items-center justify-center shrink-0"
@@ -534,7 +541,10 @@ export default function BusinessListPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2 mb-1.5">
                         <div className="text-[15px] font-bold text-[#0A0A0F] leading-snug truncate">{b.name_en}</div>
-                        <div className="text-[17px] font-extrabold shrink-0" style={{ color: isTop ? BRAND_FROM : '#0A0A0F' }}>
+                        <div
+                          className="text-[17px] font-extrabold shrink-0 transition-colors duration-200"
+                          style={{ color: isActive ? BRAND_FROM : '#0A0A0F' }}
+                        >
                           {b.starting_price ? `OMR ${b.starting_price}` : 'OMR 10'}
                         </div>
                       </div>
@@ -549,8 +559,8 @@ export default function BusinessListPage() {
                         </div>
                         <button
                           onClick={(e) => { e.stopPropagation(); navigate(`/business/${b.slug}/book`) }}
-                          className="px-4 py-[7px] rounded-[9px] text-[12px] font-bold transition-all"
-                          style={isTop
+                          className="px-4 py-[7px] rounded-[9px] text-[12px] font-bold transition-all duration-200"
+                          style={isActive
                             ? { background: BRAND_GRADIENT, color: '#fff' }
                             : { background: '#F8F8FA', color: '#0A0A0F', border: '1.5px solid #EBEBEF' }}
                         >

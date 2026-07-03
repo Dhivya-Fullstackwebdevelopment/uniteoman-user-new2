@@ -38,6 +38,7 @@ export default function CategoriesPage() {
   const parentSlug = searchParams.get('parent_slug')
   const parentName = searchParams.get('name')
   const isSubView = (parentId !== 0 && parentId !== '0') || !!parentSlug
+  const [hoveredCategory, setHoveredCategory] = useState(null)
 
   const { data: cats = [], isLoading } = useQuery({
     queryKey: ['categories', parentId, parentSlug],
@@ -115,8 +116,8 @@ export default function CategoriesPage() {
             <button
               onClick={() => setSortBy('popular')}
               className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${sortBy === 'popular'
-                  ? 'bg-gradient-to-r from-[#D61CA8] to-[#8B2EF5] text-white'
-                  : 'bg-white border border-gray-100 text-gray-500 hover:text-gray-700'
+                ? 'bg-gradient-to-r from-[#D61CA8] to-[#8B2EF5] text-white'
+                : 'bg-white border border-gray-100 text-gray-500 hover:text-gray-700'
                 }`}
             >
               Most Popular
@@ -125,8 +126,8 @@ export default function CategoriesPage() {
             <button
               onClick={() => setSortBy('alpha')}
               className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${sortBy === 'alpha'
-                  ? 'bg-gradient-to-r from-[#D61CA8] to-[#8B2EF5] text-white'
-                  : 'bg-white border border-gray-100 text-gray-500 hover:text-gray-700'
+                ? 'bg-gradient-to-r from-[#D61CA8] to-[#8B2EF5] text-white'
+                : 'bg-white border border-gray-100 text-gray-500 hover:text-gray-700'
                 }`}
             >
               A–Z
@@ -151,16 +152,19 @@ export default function CategoriesPage() {
               const link = cat.has_children
                 ? `/categories?parent_slug=${cat.slug}&name=${encodeURIComponent(cat.name_en)}`
                 : `/businesses?category=${cat.slug}`
+              const isActive = hoveredCategory === cat.id  // ← purely hover-driven
 
               return (
                 <Link
                   key={cat.id}
                   to={link}
+                  onMouseEnter={() => setHoveredCategory(cat.id)}
+                  onMouseLeave={() => setHoveredCategory(null)}
                   className="group relative bg-white rounded-2xl p-4 pt-6 text-center cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-xl border border-gray-100 overflow-hidden flex flex-col justify-between"
                 >
                   {/* Top Dynamic Ribbon highlight bar */}
-                  {i === 0 && (
-                    <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#D61CA8] to-[#8B2EF5]" />
+                  {isActive && (
+                    <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#D61CA8] to-[#8B2EF5] transition-opacity duration-200" />
                   )}
 
                   <div>
@@ -179,7 +183,10 @@ export default function CategoriesPage() {
                   </div>
 
                   {/* Pricing Badge Info from UI Specs */}
-                  <div className="mt-3 text-[11px] font-bold text-[#D61CA8]">
+                  <div
+                    className="mt-3 text-[11px] font-bold transition-colors duration-200"
+                    style={{ color: isActive ? '#D61CA8' : '#0A0A0F' }}
+                  >
                     {cat.starting_price ? `From OMR ${cat.starting_price}` : 'From OMR 10'}
                   </div>
                 </Link>
