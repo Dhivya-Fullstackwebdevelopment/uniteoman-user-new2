@@ -174,7 +174,6 @@ export function CategoryGrid() {
     text-[18px]
     font-extrabold
     text-[#0A0A0F]
-    leading-[28px]
     h-[56px]
     overflow-hidden
     mb-2
