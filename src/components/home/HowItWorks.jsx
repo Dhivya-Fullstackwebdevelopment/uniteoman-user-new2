@@ -33,7 +33,7 @@ export default function HowItWorks() {
   ];
 
   return (
-    <section className="py-24 bg-white">
+    <section className="py-24  bg-white">
       <div className="max-w-[1300px] mx-auto px-5 lg:px-14">
 
         {/* Heading */}

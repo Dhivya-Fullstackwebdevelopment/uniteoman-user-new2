@@ -97,7 +97,7 @@ export function CategoryGrid() {
   ]
 
   return (
-    <section className="py-24 bg-[#F7F7FA]">
+    <section className="pt-10 pb-10 bg-[#F7F7FA]">
       <div className="max-w-[1300px] mx-auto px-5 lg:px-14">
 
         {/* Heading */}

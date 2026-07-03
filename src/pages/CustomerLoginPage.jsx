@@ -343,7 +343,7 @@ export default function CustomerLoginPage() {
                                     className="w-16 h-16 rounded-full flex items-center justify-center text-white"
                                     style={{ background: BRAND_GRADIENT }}
                                 >
-                                    <span className="text-2xl">{isLogin ? '👋' : '✨'}</span>
+                                    <span className="text-2xl">{isLogin ?   <User size={30} /> : <User size={30} />}</span>
                                 </div>
                             </div>
                             <h1 className="text-2xl font-black text-[#0A0A0F] tracking-tight">
