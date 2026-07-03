@@ -238,7 +238,7 @@ export default function HomeHero() {
     }
   }
 
-   const [selectedSuggestion, setSelectedSuggestion] = useState(null)
+  const [selectedSuggestion, setSelectedSuggestion] = useState(null)
 
   const handleQuickSearch = (e) => {
     e?.preventDefault()
@@ -261,11 +261,11 @@ export default function HomeHero() {
     }
 
     if (!quickQuery.trim() && !quickLocation) return
-    
+
     const params = new URLSearchParams()
     if (quickQuery.trim()) params.set('q', quickQuery)
     if (quickLocation) params.set('governorate', quickLocation)
-    
+
     navigate(`/businesses?${params.toString()}`)
     setShowDropdown(false)
   }
@@ -278,17 +278,17 @@ export default function HomeHero() {
 
   const handleSuggestionClick = (s) => {
     const params = new URLSearchParams()
-    
+
     if (s.type === 'category') {
       params.set('category', s.slug)
     } else {
       // If it's an alternate business node click layout path inside autocomplete
       params.set('q', s.name)
     }
-    
+
     // Crucial: capture the current dropdown location state too!
     if (quickLocation) params.set('governorate', quickLocation)
-    
+
     navigate(`/businesses?${params.toString()}`)
     setShowDropdown(false)
     setQuickQuery('')
@@ -356,7 +356,145 @@ export default function HomeHero() {
         @media (max-width: 768px) {
           .radius { margin-top: 20px; width: 8px; height: 8px; }
         }
-          
+          /* ── Orbit Hero Cards (ported from static HTML) ── */
+        .orbit-rings{ position:absolute; top:50%; left:50%; width:1px; height:1px; }
+       .ring{ position:absolute; top:50%; left:50%; border-radius:50%; border-style:solid; border-width:1px; transform:translate(-50%,-50%); box-shadow:none; }
+.ring-1{ width:300px;height:300px; border-color:rgba(139,46,245,0.10); box-shadow:none; animation:ringSpin 40s linear infinite; }
+.ring-2{ width:420px;height:420px; border-color:rgba(139,46,245,0.07); box-shadow:none; animation:ringSpin 60s linear infinite reverse; }
+.ring-3{ width:520px;height:520px; border-color:rgba(139,46,245,0.05); box-shadow:none; animation:ringSpin 85s linear infinite; }
+.ring-dot::after{ content:""; position:absolute; top:0; left:50%; width:6px; height:6px; margin-left:-3px; border-radius:50%; background:rgba(139,46,245,0.65); }        .ring-dot{ position:absolute; top:50%; left:50%; width:520px; height:520px; transform:translate(-50%,-50%); animation:ringSpin 40s linear infinite; }
+        @keyframes ringSpin{ from{ transform:translate(-50%,-50%) rotate(0deg); } to{ transform:translate(-50%,-50%) rotate(360deg); } }
+
+        .field{ position:relative; width:560px; height:480px; }
+        .card{ position:absolute; background:#fff; border-radius:16px; opacity:0; will-change:transform,opacity; transform-origin:center center; }
+
+        .card-service{
+          top:190px; left:0; width:230px; padding:18px 18px 20px;
+          box-shadow:0 10px 30px rgba(20,20,40,0.09), 0 2px 8px rgba(20,20,40,0.05);
+          border:1px solid #eceef2;
+          animation: arriveService 0.7s cubic-bezier(.22,.61,.36,1) 0.15s forwards, orbitService 36s linear 0.85s infinite;
+        }
+        @keyframes arriveService{ from{ opacity:0; transform:translate(-26px,18px) scale(.96); } to{ opacity:1; transform:translate(0,0) scale(1); } }
+        @keyframes orbitService{
+          0.0%{ transform:translate(0px,-18px) scale(0.90); }
+          8.33%{ transform:translate(9px,-15.59px) scale(0.913); }
+          16.67%{ transform:translate(15.59px,-9px) scale(0.95); }
+          25.0%{ transform:translate(18px,0px) scale(1.0); }
+          33.33%{ transform:translate(15.59px,9px) scale(1.05); }
+          41.67%{ transform:translate(9px,15.59px) scale(1.087); }
+          50.0%{ transform:translate(0px,18px) scale(1.10); }
+          58.33%{ transform:translate(-9px,15.59px) scale(1.087); }
+          66.67%{ transform:translate(-15.59px,9px) scale(1.05); }
+          75.0%{ transform:translate(-18px,0px) scale(1.0); }
+          83.33%{ transform:translate(-15.59px,-9px) scale(0.95); }
+          91.67%{ transform:translate(-9px,-15.59px) scale(0.913); }
+          100.0%{ transform:translate(0px,-18px) scale(0.90); }
+        }
+
+        .card-confirm{
+          top:0; right:0; width:290px; padding:16px 18px 18px;
+          box-shadow:0 16px 34px rgba(120,30,160,0.20), 0 4px 10px rgba(120,30,160,0.10);
+          animation: arriveConfirm 0.75s cubic-bezier(.22,.61,.36,1) 0.35s forwards, orbitConfirm 40s linear 1.1s infinite;
+        }
+        @keyframes arriveConfirm{ from{ opacity:0; transform:translate(24px,-16px) scale(.96); } to{ opacity:1; transform:translate(0,0) scale(1); } }
+        @keyframes orbitConfirm{
+          0.0%{ transform:translate(0px,-15px) scale(0.91); }
+          8.33%{ transform:translate(7.5px,-12.99px) scale(0.922); }
+          16.67%{ transform:translate(12.99px,-7.5px) scale(0.955); }
+          25.0%{ transform:translate(15px,0px) scale(1.0); }
+          33.33%{ transform:translate(12.99px,7.5px) scale(1.045); }
+          41.67%{ transform:translate(7.5px,12.99px) scale(1.078); }
+          50.0%{ transform:translate(0px,15px) scale(1.09); }
+          58.33%{ transform:translate(-7.5px,12.99px) scale(1.078); }
+          66.67%{ transform:translate(-12.99px,7.5px) scale(1.045); }
+          75.0%{ transform:translate(-15px,0px) scale(1.0); }
+          83.33%{ transform:translate(-12.99px,-7.5px) scale(0.955); }
+          91.67%{ transform:translate(-7.5px,-12.99px) scale(0.922); }
+          100.0%{ transform:translate(0px,-15px) scale(0.91); }
+        }
+
+        .card-rating{
+          bottom:26px; right:30px; width:270px; padding:14px 18px;
+          box-shadow:0 10px 26px rgba(20,20,40,0.09), 0 2px 8px rgba(20,20,40,0.05);
+          border:1px solid #eceef2;
+          animation: arriveRating 0.7s cubic-bezier(.22,.61,.36,1) 0.55s forwards, orbitRating 44s linear 1.3s infinite;
+        }
+        @keyframes arriveRating{ from{ opacity:0; transform:translate(18px,20px) scale(.96); } to{ opacity:1; transform:translate(0,0) scale(1); } }
+        @keyframes orbitRating{
+          0.0%{ transform:translate(0px,-14px) scale(0.92); }
+          8.33%{ transform:translate(7px,-12.12px) scale(0.931); }
+          16.67%{ transform:translate(12.12px,-7px) scale(0.96); }
+          25.0%{ transform:translate(14px,0px) scale(1.0); }
+          33.33%{ transform:translate(12.12px,7px) scale(1.04); }
+          41.67%{ transform:translate(7px,12.12px) scale(1.069); }
+          50.0%{ transform:translate(0px,14px) scale(1.08); }
+          58.33%{ transform:translate(-7px,12.12px) scale(1.069); }
+          66.67%{ transform:translate(-12.12px,7px) scale(1.04); }
+          75.0%{ transform:translate(-14px,0px) scale(1.0); }
+          83.33%{ transform:translate(-12.12px,-7px) scale(0.96); }
+          91.67%{ transform:translate(-7px,-12.12px) scale(0.931); }
+          100.0%{ transform:translate(0px,-14px) scale(0.92); }
+        }
+
+        .card-pros{
+          top:290px; left:180px; width:250px; padding:12px 16px;
+          background:#12131a; border-radius:12px;
+          box-shadow:0 14px 28px rgba(0,0,0,0.28);
+          opacity:0;
+          animation: arrivePros 0.6s cubic-bezier(.22,.61,.36,1) 0.9s forwards, orbitPros 32s linear 1.5s infinite, pulsePros 2.6s ease-in-out 1.6s infinite;
+        }
+        @keyframes arrivePros{ from{ opacity:0; transform:translate(0,10px) scale(.92); } to{ opacity:1; transform:translate(0,0) scale(1); } }
+        @keyframes orbitPros{
+          0.0%{ transform:translate(0px,-11px) scale(0.88); }
+          8.33%{ transform:translate(5.5px,-9.53px) scale(0.896); }
+          16.67%{ transform:translate(9.53px,-5.5px) scale(0.94); }
+          25.0%{ transform:translate(11px,0px) scale(1.0); }
+          33.33%{ transform:translate(9.53px,5.5px) scale(1.06); }
+          41.67%{ transform:translate(5.5px,9.53px) scale(1.104); }
+          50.0%{ transform:translate(0px,11px) scale(1.12); }
+          58.33%{ transform:translate(-5.5px,9.53px) scale(1.104); }
+          66.67%{ transform:translate(-9.53px,5.5px) scale(1.06); }
+          75.0%{ transform:translate(-11px,0px) scale(1.0); }
+          83.33%{ transform:translate(-9.53px,-5.5px) scale(0.94); }
+          91.67%{ transform:translate(-5.5px,-9.53px) scale(0.896); }
+          100.0%{ transform:translate(0px,-11px) scale(0.88); }
+        }
+        @keyframes pulsePros{
+          0%,100%{ box-shadow:0 14px 28px rgba(0,0,0,0.28); }
+          50%{ box-shadow:0 14px 34px rgba(214,28,168,0.22); }
+        }
+
+        .service-icon{ width:44px; height:44px; border-radius:11px; background:linear-gradient(135deg,#e9f3ff,#dce9ff); display:flex; align-items:center; justify-content:center; margin-bottom:12px; }
+        .service-title{ font-size:15px; font-weight:700; color:#0f0f14; margin:0 0 3px; font-family:'DM Sans',sans-serif; }
+        .service-meta{ font-size:12.5px; color:#6b6f76; margin:0 0 8px; font-family:'DM Sans',sans-serif; }
+        .rating-stars{ font-size:12px; color:#f59e0b; letter-spacing:1px; font-family:'DM Sans',sans-serif; }
+
+        .confirm-badge{ display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,0.16); color:#fff; font-size:11px; font-weight:700; letter-spacing:.04em; padding:5px 10px 5px 6px; border-radius:999px; margin-bottom:12px; font-family:'DM Sans',sans-serif; }
+        .confirm-card-inner{ background:linear-gradient(135deg,#D61CA8,#4B6EF5); border-radius:16px; padding:16px 18px 46px; position:relative; overflow:hidden; }
+        .confirm-check{ width:18px;height:18px;border-radius:50%; background:rgba(255,255,255,0.25); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+        .confirm-check svg{ width:10px;height:10px; }
+        .confirm-title{ color:#fff; font-size:16.5px; font-weight:700; margin:0 0 4px; font-family:'DM Sans',sans-serif; }
+        .confirm-date{ color:rgba(255,255,255,0.85); font-size:12.5px; margin:0; font-family:'DM Sans',sans-serif; }
+        .confirm-footer{ position:absolute; left:16px; right:16px; bottom:14px; display:flex; align-items:center; gap:10px; }
+        .confirm-avatar{ width:32px;height:32px;border-radius:50%; background:#fff; color:#4B6EF5; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; flex-shrink:0; font-family:'DM Sans',sans-serif; }
+        .confirm-name{ color:#fff; font-size:12.5px; font-weight:600; margin:0; font-family:'DM Sans',sans-serif; }
+        .confirm-sub{ color:rgba(255,255,255,0.8); font-size:11px; margin:1px 0 0; display:flex; align-items:center; gap:5px; font-family:'DM Sans',sans-serif; }
+        .live-dot{ width:6px;height:6px;border-radius:50%; background:#4ade80; animation:dotPulse 1.8s ease-in-out infinite; }
+        @keyframes dotPulse{ 0%,100%{ opacity:1; transform:scale(1); } 50%{ opacity:0.45; transform:scale(0.75); } }
+
+        .rating-row{ display:flex; align-items:center; gap:10px; }
+        .rating-avatar{ width:34px;height:34px;border-radius:50%; background:linear-gradient(135deg,#D61CA8,#4B6EF5); color:#fff; font-weight:700; font-size:13px; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-family:'DM Sans',sans-serif; }
+        .rating-name{ font-size:12.5px; color:#0f0f14; margin:0 0 2px; font-family:'DM Sans',sans-serif; }
+        .rating-stars .word{ color:#0f0f14; font-weight:700; margin-left:4px; }
+
+        .pros-row{ display:flex; align-items:center; gap:8px; }
+        .pros-dot{ width:8px;height:8px;border-radius:50%; background:#4ade80; animation:dotPulse 1.8s ease-in-out infinite; flex-shrink:0; }
+        .pros-title{ color:#fff; font-size:13px; font-weight:700; margin:0; font-family:'DM Sans',sans-serif; }
+        .pros-sub{ color:rgba(255,255,255,0.65); font-size:11.5px; margin:2px 0 0; font-family:'DM Sans',sans-serif; }
+
+        @media (prefers-reduced-motion: reduce){
+          .card, .live-dot, .pros-dot{ animation-duration:0.01ms !important; animation-iteration-count:1 !important; }
+        }
       `}</style>
 
       {/* HERO SECTION */}
@@ -747,159 +885,85 @@ export default function HomeHero() {
           </div>
 
           {/* Right Hero - Hide on mobile */}
+          {/* Right Hero - Hide on mobile */}
           {!isMobile && (
             <div
               style={{
                 flex: 1,
                 position: "relative",
-                minHeight: "640px",
+                minHeight: "560px",
                 display: "flex",
                 justifyContent: "center",
                 alignItems: "center",
               }}
             >
-              {/* Ambient Mesh Glow Effects */}
-              <div
-                style={{
-                  position: "absolute",
-                  width: "450px",
-                  height: "450px",
-                  borderRadius: "50%",
-                  background: "radial-gradient(circle, rgba(214,28,168,0.15) 0%, rgba(139,46,245,0.08) 50%, transparent 70%)",
-                  filter: "blur(50px)",
-                  animation: "corePulse 7s ease-in-out infinite",
-                }}
-              />
-              <div
-                style={{
-                  position: "absolute",
-                  width: "350px",
-                  height: "350px",
-                  borderRadius: "50%",
-                  background: "radial-gradient(circle, rgba(75,110,245,0.12) 0%, transparent 70%)",
-                  filter: "blur(40px)",
-                  bottom: "5%",
-                  right: "5%",
-                }}
-              />
+              <div className="stage" style={{ position: 'relative', width: '100%', height: '100%', minHeight: '560px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div className="orbit-rings">
+                  <div className="ring ring-1"></div>
+                  <div className="ring ring-2"></div>
+                  <div className="ring ring-3"></div>
+                  <div className="ring-dot"></div>
+                </div>
 
-              {/* Main Hero Glass Platform */}
-              <div style={{ flex: 1, position: 'relative', minHeight: '520px' }}>
-                <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50% ,-50%)', width: '420px', height: '420px', borderRadius: '50%', background: 'linear-gradient(135deg,rgba(214,28,168,.07),rgba(75,110,245,.07))', border: '1px solid rgba(214,28,168,.1)' }}></div>
+                <div className="field">
 
+                  {/* Service preview card */}
+                  <div className="card card-service">
+                    <div className="service-icon">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                        <path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8" stroke="#5b8def" strokeWidth="1.8" strokeLinecap="round" />
+                      </svg>
+                    </div>
+                    <p className="service-title">AC Deep Cleaning</p>
+                    <p className="service-meta">From OMR 15</p>
+                    <div className="rating-stars">★★★☆☆</div>
+                  </div>
 
-                <div style={{ position: 'absolute', top: '20px', right: '20px', width: '250px', background: 'white', borderRadius: '22px', padding: '20px', boxShadow: '0 20px 60px rgba(0,0,0,.13)', animation: 'floatA 5s ease-in-out infinite' }}>
-                  <div style={{ background: 'linear-gradient(135deg,#D61CA8,#8B2EF5)', borderRadius: '14px', padding: '18px', marginBottom: '16px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '8px' }}>
-                      <div style={{ width: '18px', height: '18px', borderRadius: '50%', background: 'rgba(255,255,255,.3)', display: 'flex', alignItems: 'center', justifyCenter: 'center' }}>
-                        <svg width="9" height="9" viewBox="0 0 9 9"><path d="M1.5 4.5l2.5 2.5L7.5 2" stroke="white" strokeWidth="1.6" strokeLinecap="round" /></svg>
+                  {/* Booking confirmed card */}
+                  <div className="card card-confirm">
+                    <div className="confirm-card-inner">
+                      <div className="confirm-badge">
+                        <span className="confirm-check">
+                          <svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                        </span>
+                        BOOKING CONFIRMED
                       </div>
-                      <span style={{ font: '700 11px "DM Sans",sans-serif', color: 'rgba(255,255,255,.9)', letterSpacing: '.3px' }}>BOOKING CONFIRMED</span>
+                      <p className="confirm-title">AC Deep Cleaning</p>
+                      <p className="confirm-date">Sat 28 Jun · 10:00 AM</p>
+                      <div className="confirm-footer">
+                        <div className="confirm-avatar">M</div>
+                        <div>
+                          <p className="confirm-name">Mohammed Al-Balushi</p>
+                          <p className="confirm-sub"><span className="live-dot"></span> On the way · 12 min</p>
+                        </div>
+                      </div>
                     </div>
-                    <div style={{ font: '800 16px/1.3 "DM Sans",sans-serif', color: 'white' }}>AC Deep Cleaning</div>
-                    <div style={{ font: '400 12px "DM Sans",sans-serif', color: 'rgba(255,255,255,.7)', marginTop: '5px' }}>Sat 28 Jun · 10:00 AM</div>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg,#D61CA8,#8B2EF5)', display: 'flex', alignItems: 'center', justifyContent: 'center', font: '700 16px "DM Sans"', color: 'white', flexShrink: 0 }}>M</div>
-                    <div>
-                      <div style={{ font: '700 13px/1.2 "DM Sans",sans-serif', color: '#0A0A0F' }}>Mohammed Al-Balushi</div>
-                      <div style={{ font: '400 11px "DM Sans",sans-serif', color: '#9090A0', marginTop: '3px' }}>On the way · ⬤ 12 min</div>
+
+                  {/* Rating card */}
+                  <div className="card card-rating">
+                    <div className="rating-row">
+                      <div className="rating-avatar">K</div>
+                      <div>
+                        <p className="rating-name">Khalid just rated</p>
+                        <div className="rating-stars">★★★★★ <span className="word">Excellent!</span></div>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-
-                <div style={{ position: 'absolute', top: '200px', left: 0, width: '190px', background: 'white', borderRadius: '20px', padding: '18px', boxShadow: '0 14px 44px rgba(0,0,0,.11)', animation: 'floatB 6s ease-in-out infinite .7s' }}>
-                  <div style={{ width: '52px', height: '52px', background: '#DBEAFE', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px', marginBottom: '12px' }}>❄️</div>
-                  <div style={{ font: '700 14px/1.2 "DM Sans",sans-serif', color: '#0A0A0F', marginBottom: '4px' }}>AC Deep Cleaning</div>
-                  <div style={{ font: '400 12px "DM Sans",sans-serif', color: '#9090A0', marginBottom: '10px' }}>From OMR 15</div>
-                  <div style={{ display: 'flex', gap: '1px' }}><span style={{ color: '#F59E0B', fontSize: '13px' }}>★★★★★</span></div>
-                </div>
-
-
-                <div style={{ position: 'absolute', bottom: '80px', right: '10px', background: 'white', borderRadius: '18px', padding: '14px 18px', boxShadow: '0 10px 32px rgba(0,0,0,.1)', display: 'flex', alignItems: 'center', gap: '12px', animation: 'floatC 4.5s ease-in-out infinite 1.4s' }}>
-                  <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'linear-gradient(135deg,#4B6EF5,#8B2EF5)', display: 'flex', alignItems: 'center', justifyContent: 'center', font: '700 15px "DM Sans"', color: 'white', flexShrink: 0 }}>K</div>
-                  <div>
-                    <div style={{ font: '400 11px "DM Sans",sans-serif', color: '#9090A0', marginBottom: '4px' }}>Khalid just rated</div>
-                    <div style={{ font: '700 14px "DM Sans",sans-serif', color: '#0A0A0F' }}>★★★★★ Excellent!</div>
+                  {/* Pros nearby pill */}
+                  <div className="card card-pros">
+                    <div className="pros-row">
+                      <span className="pros-dot"></span>
+                      <div>
+                        <p className="pros-title">312 pros near you</p>
+                        <p className="pros-sub">Muscat · Available now</p>
+                      </div>
+                    </div>
                   </div>
+
                 </div>
-
-
-                <div style={{ position: 'absolute', bottom: '170px', left: '180px', background: '#0A0A0F', borderRadius: '14px', padding: '12px 18px', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 8px 28px rgba(0,0,0,.25)' }}>
-                  <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#4ade80', animation: 'blink 1.8s infinite', flexShrink: 0 }}></div>
-                  <div>
-                    <div style={{ font: '700 14px "DM Sans",sans-serif', color: 'white' }}>312 pros near you</div>
-                    <div style={{ font: '400 11px "DM Sans",sans-serif', color: 'rgba(255,255,255,.5)', marginTop: '3px' }}>Muscat · Available now</div>
-                  </div>
-                </div>
-
               </div>
-
-              {/* Floating Badges */}
-              {/* <div
-                style={{
-                  position: "absolute",
-                  top: "10px",
-                  right: "-15px",
-                  background: "#0A0A0F",
-                  borderRadius: "20px",
-                  padding: "12px 16px",
-                  boxShadow: "0 20px 40px rgba(0,0,0,0.2)",
-                  zIndex: 3,
-                  animation: "cardFloatX 5.5s ease-in-out infinite",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "6px",
-                  width: "160px",
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                  <span style={{ fontSize: "12px" }}>⚡</span>
-                  <span style={{ font: "700 11px 'DM Sans', sans-serif", color: "#FFF", letterSpacing: "0.5px" }}>Instant Booking</span>
-                </div>
-                <div style={{ width: "100%", height: "4px", background: "rgba(255,255,255,0.1)", borderRadius: "2px", overflow: "hidden", position: "relative" }}>
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: 0,
-                      left: 0,
-                      height: "100%",
-                      width: "75%",
-                      background: "linear-gradient(90deg, #D61CA8, #4B6EF5)",
-                      borderRadius: "2px",
-                    }}
-                  />
-                  <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)", animation: "shimmerBar 1.5s infinite" }} />
-                </div>
-                <div style={{ font: "500 10px 'DM Sans', sans-serif", color: "rgba(255,255,255,0.5)" }}>Matching local experts...</div>
-              </div> */}
-
-              {/* <div
-                style={{
-                  position: "absolute",
-                  bottom: "20px",
-                  left: "-20px",
-                  background: "#FFF",
-                  borderRadius: "18px",
-                  padding: "10px 14px",
-                  boxShadow: "0 16px 36px rgba(10,10,15,0.08)",
-                  zIndex: 3,
-                  animation: "cardFloatY 4.8s ease-in-out infinite reverse",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "10px",
-                  border: "1px solid rgba(0,0,0,0.04)",
-                }}
-              >
-                <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: "linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: "bold", fontSize: "12px" }}>
-                  ✓
-                </div>
-                <div>
-                  <div style={{ font: "800 12px 'DM Sans', sans-serif", color: "#0A0A0F" }}>Trustscore 4.9/5</div>
-                  <div style={{ font: "500 10px 'DM Sans', sans-serif", color: "#9090A0" }}>Based on client reviews</div>
-                </div>
-              </div> */}
             </div>
           )}
         </div>
