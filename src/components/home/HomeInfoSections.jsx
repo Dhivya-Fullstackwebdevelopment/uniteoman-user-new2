@@ -172,7 +172,7 @@ export function CategoryGrid() {
                 <h3
                   className="
     text-[18px]
-    font-extrabold
+    font-bold
     text-[#0A0A0F]
     h-[56px]
     overflow-hidden
