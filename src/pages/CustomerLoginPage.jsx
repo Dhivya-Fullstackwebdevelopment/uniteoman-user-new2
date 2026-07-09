@@ -17,7 +17,10 @@ export default function CustomerLoginPage() {
     const [otp, setOtp] = useState('')
     const navigate = useNavigate()
     const [searchParams] = useSearchParams()
-    const redirectTo = searchParams.get('redirect') || '/'
+    
+    // Get redirect URL from query params, default to a specific page if not provided
+    const redirectTo = searchParams.get('redirect') || '/business/the-psychology-clinic/book'
+    
     const [otpTimer, setOtpTimer] = useState(600)
     const [canResendOtp, setCanResendOtp] = useState(false)
 
@@ -112,10 +115,16 @@ export default function CustomerLoginPage() {
                     password: formData.password,
                 })
 
+                // Store auth data
                 localStorage.setItem('customer_token', response.access_token)
                 localStorage.setItem('customerUser', JSON.stringify(response.customer))
+                
                 toast.success('Login successful')
-                window.location.href = redirectTo;
+                
+                // Use navigate with replace to prevent going back to login page
+                // This will redirect to the specified page
+                navigate(redirectTo, { replace: true })
+                
             } catch (err) {
                 toast.error(err.response?.data?.detail || 'Invalid email or password')
             } finally {
@@ -170,7 +179,11 @@ export default function CustomerLoginPage() {
             localStorage.setItem('customer_token', response.access_token)
             localStorage.setItem('customerUser', JSON.stringify(response.customer))
             toast.success('Account created successfully')
-            window.location.href = redirectTo;
+            
+            // Use navigate with replace to prevent going back to login page
+            // This will redirect to the specified page
+            navigate(redirectTo, { replace: true })
+            
         } catch (err) {
             toast.error(err.response?.data?.detail || 'Invalid OTP')
         } finally {
@@ -215,6 +228,16 @@ export default function CustomerLoginPage() {
             setLoading(false)
         }
     }
+
+    // ================= CHECK AUTH STATUS =================
+    // Check if user is already authenticated and redirect them
+    useEffect(() => {
+        const token = localStorage.getItem('customer_token')
+        if (token) {
+            // If already logged in, redirect to the intended page
+            navigate(redirectTo, { replace: true })
+        }
+    }, [navigate, redirectTo])
 
     // ── Render View ───────────────────────────────────────────
     return (
