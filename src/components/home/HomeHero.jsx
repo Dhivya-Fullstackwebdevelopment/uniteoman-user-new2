@@ -234,14 +234,14 @@ export default function HomeHero() {
       `}</style>
 
       <div style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
-        {/* HERO SECTION - Set to dynamically scale to screen space without dead margins */}
+        {/* HERO SECTION - Set to exactly 100vh height */}
         <section style={{
           background: 'linear-gradient(145deg,#0a0050,#200030,#0a0a1a)',
           width: '100%',
-          minHeight: isMobile ? 'auto' : '75vh',
+          minHeight: isMobile ? 'auto' : '90vh',
           display: 'flex',
           alignItems: 'center',
-          padding: isMobile ? '40px 0 32px' : '60px 0',
+          padding: isMobile ? '40px 0 32px' : '0px',
           position: 'relative',
           overflow: 'hidden',
           boxSizing: 'border-box'
@@ -251,10 +251,10 @@ export default function HomeHero() {
             position: 'absolute',
             top: '-100px',
             right: '-100px',
-            width: isMobile ? '300px' : '500px',
-            height: isMobile ? '300px' : '500px',
+            width: isMobile ? '300px' : '600px',
+            height: isMobile ? '300px' : '600px',
             borderRadius: '50%',
-            background: 'radial-gradient(circle,rgba(214,28,168,.18),transparent 70%)',
+            background: 'radial-gradient(circle,rgba(214,28,168,.15),transparent 70%)',
             pointerEvents: 'none'
           }}></div>
 
@@ -262,14 +262,14 @@ export default function HomeHero() {
             position: 'absolute',
             bottom: '-150px',
             left: '-150px',
-            width: isMobile ? '250px' : '400px',
-            height: isMobile ? '250px' : '400px',
+            width: isMobile ? '250px' : '500px',
+            height: isMobile ? '250px' : '500px',
             borderRadius: '50%',
-            background: 'radial-gradient(circle,rgba(139,46,245,.08),transparent 70%)',
+            background: 'radial-gradient(circle,rgba(139,46,245,.1),transparent 70%)',
             pointerEvents: 'none'
           }}></div>
 
-          {/* Content Container */}
+          {/* Content Container - Kept aligned to Left side */}
           <div style={{
             maxWidth: '1300px',
             width: '100%',
@@ -279,6 +279,7 @@ export default function HomeHero() {
             textAlign: 'left',
             display: 'flex',
             flexDirection: 'column',
+            alignItems: 'flex-start',
             justifyContent: 'center'
           }}>
             {/* Status Badge */}
@@ -290,12 +291,12 @@ export default function HomeHero() {
               border: '1px solid rgba(214,28,168,.25)',
               borderRadius: '20px',
               padding: isMobile ? '6px 12px' : '6px 14px',
-              marginBottom: isMobile ? '16px' : '20px',
+              marginBottom: isMobile ? '16px' : '24px',
               alignSelf: 'flex-start'
             }}>
               <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#4ade80' }}></div>
               <span style={{
-                font: isMobile ? '600 10px/1 "DM Sans",sans-serif' : '600 11px/1 "DM Sans",sans-serif',
+                font: isMobile ? '600 10px/1 "DM Sans",sans-serif' : '600 12px/1 "DM Sans",sans-serif',
                 color: 'rgba(255,255,255,.75)'
               }}>
                 Available in Muscat · 312 Professionals
@@ -304,10 +305,10 @@ export default function HomeHero() {
 
             {/* Headline */}
             <h1 style={{
-              font: isMobile ? '400 32px/1.1 "DM Sans",sans-serif' : '600 56px/1.1 "DM Sans",sans-serif',
+              font: isMobile ? '400 32px/1.1 "DM Sans",sans-serif' : '600 68px/1.1 "DM Sans",sans-serif',
               color: 'white',
               letterSpacing: isMobile ? '-0.5px' : '-2px',
-              marginBottom: isMobile ? '12px' : '16px',
+              marginBottom: isMobile ? '16px' : '20px',
               textAlign: 'left'
             }}>
               Home services,<br />
@@ -323,11 +324,11 @@ export default function HomeHero() {
 
             {/* Description */}
             <p style={{
-              font: isMobile ? '400 15px/1.6 "DM Sans",sans-serif' : '400 18px/1.6 "DM Sans",sans-serif',
+              font: isMobile ? '400 15px/1.6 "DM Sans",sans-serif' : '400 19px/1.6 "DM Sans",sans-serif',
               color: 'rgba(255,255,255,.6)',
-              marginBottom: isMobile ? '24px' : '36px',
+              marginBottom: isMobile ? '30px' : '48px',
               textAlign: 'left',
-              maxWidth: '650px'
+              maxWidth: '700px'
             }}>
               Trusted professionals for AC, cleaning, plumbing, electrical and 17 more home services — booked in 60 seconds.
             </p>
@@ -343,9 +344,9 @@ export default function HomeHero() {
                 alignItems: 'center',
                 gap: '10px',
                 boxShadow: '0 12px 40px rgba(0,0,0,.25)',
-                maxWidth: isMobile ? '100%' : '620px',
+                maxWidth: isMobile ? '100%' : '660px',
                 width: '100%',
-                marginBottom: '24px',
+                marginBottom: '28px',
                 flexWrap: isMobile ? 'wrap' : 'nowrap'
               }}
             >
@@ -428,20 +429,20 @@ export default function HomeHero() {
             {/* Trust Badges */}
             <div style={{
               display: 'flex',
-              gap: '20px',
+              gap: '24px',
               flexWrap: 'wrap',
               justifyContent: 'flex-start'
             }}>
               <span style={{
-                font: isMobile ? '400 11px/1 "DM Sans",sans-serif' : '400 13px/1 "DM Sans",sans-serif',
+                font: isMobile ? '400 11px/1 "DM Sans",sans-serif' : '400 14px/1 "DM Sans",sans-serif',
                 color: 'rgba(255,255,255,.5)'
               }}>✓ Verified & insured</span>
               <span style={{
-                font: isMobile ? '400 11px/1 "DM Sans",sans-serif' : '400 13px/1 "DM Sans",sans-serif',
+                font: isMobile ? '400 11px/1 "DM Sans",sans-serif' : '400 14px/1 "DM Sans",sans-serif',
                 color: 'rgba(255,255,255,.5)'
               }}>✓ Fixed pricing</span>
               <span style={{
-                font: isMobile ? '400 11px/1 "DM Sans",sans-serif' : '400 13px/1 "DM Sans",sans-serif',
+                font: isMobile ? '400 11px/1 "DM Sans",sans-serif' : '400 14px/1 "DM Sans",sans-serif',
                 color: 'rgba(255,255,255,.5)'
               }}>✓ 60-second booking</span>
             </div>
