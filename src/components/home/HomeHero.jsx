@@ -233,301 +233,220 @@ export default function HomeHero() {
         .rv.d6 { animation-delay: 0.25s; }
       `}</style>
 
-      {/* HERO SECTION - WITH CONSISTENT SPACING MATCHING OTHER SECTIONS */}
-      <section style={{
-        background: 'linear-gradient(145deg,#0a0050,#200030,#0a0a1a)',
-        minHeight: 'auto',
-        display: 'flex',
-        alignItems: 'center',
-        padding: isMobile ? '60px 0 40px' : '72px 0 56px',
-        position: 'relative',
-        overflow: 'hidden'
-      }}>
-        {/* Gradient Orbs */}
-        <div style={{
-          position: 'absolute',
-          top: '-100px',
-          right: '-100px',
-          width: isMobile ? '300px' : '500px',
-          height: isMobile ? '300px' : '500px',
-          borderRadius: '50%',
-          background: 'radial-gradient(circle,rgba(214,28,168,.18),transparent 70%)',
-          pointerEvents: 'none'
-        }}></div>
-
-        <div style={{
-          position: 'absolute',
-          bottom: '-150px',
-          left: '-150px',
-          width: isMobile ? '250px' : '400px',
-          height: isMobile ? '250px' : '400px',
-          borderRadius: '50%',
-          background: 'radial-gradient(circle,rgba(139,46,245,.08),transparent 70%)',
-          pointerEvents: 'none'
-        }}></div>
-
-        {/* Content Container - MATCHES CATEGORY GRID, WHY SECTION, ETC. */}
-        <div style={{
-          maxWidth: '1300px',
+      <div style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
+        {/* HERO SECTION - Set to dynamically scale to screen space without dead margins */}
+        <section style={{
+          background: 'linear-gradient(145deg,#0a0050,#200030,#0a0a1a)',
           width: '100%',
-          margin: '0 auto',
-          padding: isMobile ? '0 20px' : '0 56px', // Matches px-5 lg:px-14
-          position: 'relative',
-          textAlign: 'left'
-        }}>
-          {/* Status Badge */}
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px',
-            background: 'rgba(214,28,168,.12)',
-            border: '1px solid rgba(214,28,168,.25)',
-            borderRadius: '20px',
-            padding: isMobile ? '6px 12px' : '6px 14px',
-            marginBottom: isMobile ? '16px' : '20px'
-          }}>
-            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#4ade80' }}></div>
-            <span style={{
-              font: isMobile ? '600 10px/1 "DM Sans",sans-serif' : '600 11px/1 "DM Sans",sans-serif',
-              color: 'rgba(255,255,255,.75)'
-            }}>
-              Available in Muscat · 312 Professionals
-            </span>
-          </div>
-
-          {/* Headline */}
-          <h1 style={{
-            font: isMobile ? '700 32px/1.1 "DM Sans",sans-serif' : '800 52px/1.1 "DM Sans",sans-serif',
-            color: 'white',
-            letterSpacing: isMobile ? '-0.5px' : '-2px',
-            marginBottom: isMobile ? '12px' : '16px',
-            textAlign: 'left'
-          }}>
-            Home services,<br />
-            <span style={{
-              background: 'linear-gradient(135deg,#D61CA8,#8B2EF5)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text'
-            }}>
-              on demand.
-            </span>
-          </h1>
-
-          {/* Description */}
-          <p style={{
-            font: isMobile ? '400 15px/1.6 "DM Sans",sans-serif' : '400 17px/1.6 "DM Sans",sans-serif',
-            color: 'rgba(255,255,255,.6)',
-            marginBottom: isMobile ? '24px' : '32px',
-            textAlign: 'left'
-          }}>
-            Trusted professionals for AC, cleaning, plumbing, electrical and 17 more home services — booked in 60 seconds.
-          </p>
-
-          {/* Search Container */}
-          <div style={{
-            background: 'white',
-            borderRadius: '14px',
-            padding: isMobile ? '4px' : '5px 5px 5px 18px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            boxShadow: '0 12px 40px rgba(0,0,0,.25)',
-            maxWidth: isMobile ? '100%' : '580px',
-            width: '100%',
-            marginBottom: '14px',
-            flexWrap: isMobile ? 'wrap' : 'nowrap'
-          }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
-              <circle cx="10.5" cy="10.5" r="7" stroke="#9090A0" strokeWidth="2" />
-              <path d="M15.5 15.5L21 21" stroke="#9090A0" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-
-            <input
-              ref={searchInputRef}
-              style={{
-                flex: '1',
-                border: 'none',
-                outline: 'none',
-                font: isMobile ? '400 14px/1 "DM Sans",sans-serif' : '400 15px/1 "DM Sans",sans-serif',
-                color: '#0A0A0F',
-                minWidth: isMobile ? '100%' : 'auto',
-                padding: isMobile ? '10px 0' : '0',
-                background: 'transparent'
-              }}
-              placeholder="What service do you need?"
-              value={quickQuery}
-              onChange={handleInputChange}
-              onFocus={handleInputFocus}
-            />
-
-            <div style={{
-              padding: '0 12px',
-              font: isMobile ? '400 12px/1 "DM Sans",sans-serif' : '400 13px/1 "DM Sans",sans-serif',
-              color: '#9090A0',
-              borderLeft: isMobile ? 'none' : '1px solid #EBEBEF',
-              borderTop: isMobile ? '1px solid #EBEBEF' : 'none',
-              paddingTop: isMobile ? '10px' : '0',
-              paddingBottom: isMobile ? '10px' : '0',
-              width: isMobile ? '100%' : 'auto',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between'
-            }}>
-              <select
-                value={quickLocation}
-                onChange={(e) => setQuickLocation(e.target.value)}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  outline: 'none',
-                  font: isMobile ? '400 12px/1 "DM Sans",sans-serif' : '400 13px/1 "DM Sans",sans-serif',
-                  color: '#9090A0',
-                  cursor: 'pointer',
-                  padding: '4px 0',
-                  width: '100%'
-                }}
-              >
-                <option value="">Qurum ▾</option>
-                {governorates.map(g => (
-                  <option key={g.id} value={g.slug}>{g.name_en}</option>
-                ))}
-              </select>
-            </div>
-
-            <div style={{
-              padding: isMobile ? '10px 22px' : '10px 22px',
-              background: 'linear-gradient(135deg,#D61CA8,#8B2EF5)',
-              borderRadius: '10px',
-              font: isMobile ? '700 12px/1 "DM Sans",sans-serif' : '700 13px/1 "DM Sans",sans-serif',
-              color: 'white',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              width: isMobile ? '100%' : 'auto',
-              justifyContent: 'center'
-            }}>
-              <span style={{ fontSize: '11px' }}>✨</span>
-              AI Search
-            </div>
-          </div>
-
-          {/* Trust Badges */}
-          <div style={{
-            display: 'flex',
-            gap: '16px',
-            flexWrap: 'wrap',
-            justifyContent: 'flex-start'
-          }}>
-            <span style={{
-              font: isMobile ? '400 10px/1 "DM Sans",sans-serif' : '400 12px/1 "DM Sans",sans-serif',
-              color: 'rgba(255,255,255,.45)'
-            }}>✓ Verified & insured</span>
-            <span style={{
-              font: isMobile ? '400 10px/1 "DM Sans",sans-serif' : '400 12px/1 "DM Sans",sans-serif',
-              color: 'rgba(255,255,255,.45)'
-            }}>✓ Fixed pricing</span>
-            <span style={{
-              font: isMobile ? '400 10px/1 "DM Sans",sans-serif' : '400 12px/1 "DM Sans",sans-serif',
-              color: 'rgba(255,255,255,.45)'
-            }}>✓ 60-second booking</span>
-          </div>
-        </div>
-      </section>
-
-      {/* SERVICE CATEGORIES SECTION - WITH CONSISTENT SPACING */}
-      <div style={{
-        background: 'white',
-        borderBottom: '1px solid #EBEBEF',
-        padding: isMobile ? '16px 0' : '20px 0',
-        display: 'flex',
-        justifyContent: 'center',
-        width: '100%'
-      }}>
-        <div style={{
-          maxWidth: '1300px',
-          width: '100%',
-          padding: isMobile ? '0 20px' : '0 56px', // Matches px-5 lg:px-14
+          minHeight: isMobile ? 'auto' : '75vh',
           display: 'flex',
-          gap: isMobile ? '12px' : '20px',
-          overflowX: 'auto',
-          scrollbarWidth: 'none',
-          msOverflowStyle: 'none',
-          WebkitOverflowScrolling: 'touch',
-          justifyContent: 'flex-start'
+          alignItems: 'center',
+          padding: isMobile ? '40px 0 32px' : '60px 0',
+          position: 'relative',
+          overflow: 'hidden',
+          boxSizing: 'border-box'
         }}>
-          {serviceCategories.map((category, index) => (
-            <div
-              key={index}
-              onClick={() => handleCategoryClick(category.name)}
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: '7px',
-                cursor: 'pointer',
-                flexShrink: 0
-              }}
-            >
-              <div style={{
-                width: isMobile ? '44px' : '52px',
-                height: isMobile ? '44px' : '52px',
-                background: category.bg,
-                borderRadius: '14px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: isMobile ? '20px' : '24px',
-                transition: 'transform 0.2s ease'
-              }}>
-                {category.icon}
-              </div>
+          {/* Gradient Orbs */}
+          <div style={{
+            position: 'absolute',
+            top: '-100px',
+            right: '-100px',
+            width: isMobile ? '300px' : '500px',
+            height: isMobile ? '300px' : '500px',
+            borderRadius: '50%',
+            background: 'radial-gradient(circle,rgba(214,28,168,.18),transparent 70%)',
+            pointerEvents: 'none'
+          }}></div>
+
+          <div style={{
+            position: 'absolute',
+            bottom: '-150px',
+            left: '-150px',
+            width: isMobile ? '250px' : '400px',
+            height: isMobile ? '250px' : '400px',
+            borderRadius: '50%',
+            background: 'radial-gradient(circle,rgba(139,46,245,.08),transparent 70%)',
+            pointerEvents: 'none'
+          }}></div>
+
+          {/* Content Container */}
+          <div style={{
+            maxWidth: '1300px',
+            width: '100%',
+            margin: '0 auto',
+            padding: isMobile ? '0 20px' : '0 56px',
+            position: 'relative',
+            textAlign: 'left',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center'
+          }}>
+            {/* Status Badge */}
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              background: 'rgba(214,28,168,.12)',
+              border: '1px solid rgba(214,28,168,.25)',
+              borderRadius: '20px',
+              padding: isMobile ? '6px 12px' : '6px 14px',
+              marginBottom: isMobile ? '16px' : '20px',
+              alignSelf: 'flex-start'
+            }}>
+              <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#4ade80' }}></div>
               <span style={{
-                font: isMobile ? '500 10px/1.2 "DM Sans",sans-serif' : '500 11px/1.2 "DM Sans",sans-serif',
-                color: '#0A0A0F',
-                textAlign: 'center',
-                maxWidth: isMobile ? '50px' : '60px'
+                font: isMobile ? '600 10px/1 "DM Sans",sans-serif' : '600 11px/1 "DM Sans",sans-serif',
+                color: 'rgba(255,255,255,.75)'
               }}>
-                {category.name}
+                Available in Muscat · 312 Professionals
               </span>
             </div>
-          ))}
 
-          {/* More Button */}
-          <div
-            onClick={() => navigate('/businesses')}
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '7px',
-              cursor: 'pointer',
-              flexShrink: 0
-            }}
-          >
-            <div style={{
-              width: isMobile ? '44px' : '52px',
-              height: isMobile ? '44px' : '52px',
-              background: '#F8F8FA',
-              borderRadius: '14px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              font: isMobile ? '700 12px "DM Sans",sans-serif' : '700 13px "DM Sans",sans-serif',
-              color: '#9090A0'
+            {/* Headline */}
+            <h1 style={{
+              font: isMobile ? '400 32px/1.1 "DM Sans",sans-serif' : '600 56px/1.1 "DM Sans",sans-serif',
+              color: 'white',
+              letterSpacing: isMobile ? '-0.5px' : '-2px',
+              marginBottom: isMobile ? '12px' : '16px',
+              textAlign: 'left'
             }}>
-              +12
+              Home services,<br />
+              <span style={{
+                background: 'linear-gradient(135deg,#D61CA8,#8B2EF5)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text'
+              }}>
+                on demand.
+              </span>
+            </h1>
+
+            {/* Description */}
+            <p style={{
+              font: isMobile ? '400 15px/1.6 "DM Sans",sans-serif' : '400 18px/1.6 "DM Sans",sans-serif',
+              color: 'rgba(255,255,255,.6)',
+              marginBottom: isMobile ? '24px' : '36px',
+              textAlign: 'left',
+              maxWidth: '650px'
+            }}>
+              Trusted professionals for AC, cleaning, plumbing, electrical and 17 more home services — booked in 60 seconds.
+            </p>
+
+            {/* Search Container */}
+            <div 
+              ref={formRef}
+              style={{
+                background: 'white',
+                borderRadius: '14px',
+                padding: isMobile ? '4px' : '6px 6px 6px 18px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                boxShadow: '0 12px 40px rgba(0,0,0,.25)',
+                maxWidth: isMobile ? '100%' : '620px',
+                width: '100%',
+                marginBottom: '24px',
+                flexWrap: isMobile ? 'wrap' : 'nowrap'
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
+                <circle cx="10.5" cy="10.5" r="7" stroke="#9090A0" strokeWidth="2" />
+                <path d="M15.5 15.5L21 21" stroke="#9090A0" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+
+              <input
+                ref={searchInputRef}
+                style={{
+                  flex: '1',
+                  border: 'none',
+                  outline: 'none',
+                  font: isMobile ? '400 14px/1 "DM Sans",sans-serif' : '400 15px/1 "DM Sans",sans-serif',
+                  color: '#0A0A0F',
+                  minWidth: isMobile ? '100%' : 'auto',
+                  padding: isMobile ? '10px 0' : '0',
+                  background: 'transparent'
+                }}
+                placeholder="What service do you need?"
+                value={quickQuery}
+                onChange={handleInputChange}
+                onFocus={handleInputFocus}
+              />
+
+              <div style={{
+                padding: '0 12px',
+                font: isMobile ? '400 12px/1 "DM Sans",sans-serif' : '400 13px/1 "DM Sans",sans-serif',
+                color: '#9090A0',
+                borderLeft: isMobile ? 'none' : '1px solid #EBEBEF',
+                borderTop: isMobile ? '1px solid #EBEBEF' : 'none',
+                paddingTop: isMobile ? '10px' : '0',
+                paddingBottom: isMobile ? '10px' : '0',
+                width: isMobile ? '100%' : 'auto',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between'
+              }}>
+                <select
+                  value={quickLocation}
+                  onChange={(e) => setQuickLocation(e.target.value)}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    outline: 'none',
+                    font: isMobile ? '400 12px/1 "DM Sans",sans-serif' : '400 13px/1 "DM Sans",sans-serif',
+                    color: '#9090A0',
+                    cursor: 'pointer',
+                    padding: '4px 0',
+                    width: '100%'
+                  }}
+                >
+                  <option value="">Qurum ▾</option>
+                  {governorates.map(g => (
+                    <option key={g.id} value={g.slug}>{g.name_en}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={{
+                padding: '12px 24px',
+                background: 'linear-gradient(135deg,#D61CA8,#8B2EF5)',
+                borderRadius: '10px',
+                font: '700 13px/1 "DM Sans",sans-serif',
+                color: 'white',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                width: isMobile ? '100%' : 'auto',
+                justifyContent: 'center',
+                whiteSpace: 'nowrap'
+              }}>
+                <span style={{ fontSize: '11px' }}>✨</span>
+                AI Search
+              </div>
             </div>
-            <span style={{
-              font: isMobile ? '500 10px/1.2 "DM Sans",sans-serif' : '500 11px/1.2 "DM Sans",sans-serif',
-              color: '#9090A0',
-              textAlign: 'center'
+
+            {/* Trust Badges */}
+            <div style={{
+              display: 'flex',
+              gap: '20px',
+              flexWrap: 'wrap',
+              justifyContent: 'flex-start'
             }}>
-              More
-            </span>
+              <span style={{
+                font: isMobile ? '400 11px/1 "DM Sans",sans-serif' : '400 13px/1 "DM Sans",sans-serif',
+                color: 'rgba(255,255,255,.5)'
+              }}>✓ Verified & insured</span>
+              <span style={{
+                font: isMobile ? '400 11px/1 "DM Sans",sans-serif' : '400 13px/1 "DM Sans",sans-serif',
+                color: 'rgba(255,255,255,.5)'
+              }}>✓ Fixed pricing</span>
+              <span style={{
+                font: isMobile ? '400 11px/1 "DM Sans",sans-serif' : '400 13px/1 "DM Sans",sans-serif',
+                color: 'rgba(255,255,255,.5)'
+              }}>✓ 60-second booking</span>
+            </div>
           </div>
-        </div>
+        </section>
       </div>
 
       {/* Search Autocomplete Dropdown Portal */}
@@ -662,5 +581,3 @@ export default function HomeHero() {
     </div>
   )
 }
-
-

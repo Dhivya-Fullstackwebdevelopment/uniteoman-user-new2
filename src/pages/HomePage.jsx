@@ -2,20 +2,21 @@ import { useEffect } from 'react'
 import { useQueries } from '@tanstack/react-query'
 import { businessApi } from '@/lib/api'
 import { useNavigate } from 'react-router-dom'
-import { 
-  Brush, 
-  Wrench, 
-  HeartPulse, 
-  Sparkles, 
-  Monitor, 
-  Package, 
-  PartyPopper, 
+import {
+  Brush,
+  Wrench,
+  HeartPulse,
+  Sparkles,
+  Monitor,
+  Package,
+  PartyPopper,
   GraduationCap,
   Utensils,
   Stars,
   Download
 } from 'lucide-react'
 import HomeHero from '@/components/home/HomeHero'
+import Categories from '@/components/home/CategoriesPills'
 import ServiceShelf from '@/components/home/ServiceShelf'
 import { CategoryGrid, WhySection, Testimonials, CTABand } from '@/components/home/HomeInfoSections'
 import TrustBanner from '@/components/home/TrustBanner'
@@ -29,12 +30,12 @@ import DownloadAppSection from '@/components/home/DownloadAppSection'
 const HOME_STALE_TIME = 5 * 60 * 1000
 
 const HOME_SHELF_QUERIES = [
-  { queryKey: ['home-featured'],   queryFn: () => businessApi.list({ sort: 'featured', per_page: 8 }) },
-  { queryKey: ['home-new'],        queryFn: () => businessApi.list({ sort: 'newest', per_page: 8 }) },
-  { queryKey: ['home-tech'],       queryFn: () => businessApi.list({ category: 'it-software', per_page: 8 }) },
+  { queryKey: ['home-featured'], queryFn: () => businessApi.list({ sort: 'featured', per_page: 8 }) },
+  { queryKey: ['home-new'], queryFn: () => businessApi.list({ sort: 'newest', per_page: 8 }) },
+  { queryKey: ['home-tech'], queryFn: () => businessApi.list({ category: 'it-software', per_page: 8 }) },
   { queryKey: ['home-essentials'], queryFn: () => businessApi.list({ category: 'retail', per_page: 8 }) },
-  { queryKey: ['home-grooming'],   queryFn: () => businessApi.list({ category: 'grooming-for-men', per_page: 8 }) },
-  { queryKey: ['home-beauty'],     queryFn: () => businessApi.list({ category: 'spa', per_page: 8 }) },
+  { queryKey: ['home-grooming'], queryFn: () => businessApi.list({ category: 'grooming-for-men', per_page: 8 }) },
+  { queryKey: ['home-beauty'], queryFn: () => businessApi.list({ category: 'spa', per_page: 8 }) },
 ]
 
 export default function HomePage() {
@@ -55,17 +56,17 @@ export default function HomePage() {
         }
       })
     }, { threshold: 0.1 })
-    
+
     // Select all elements with .rv on mount and after data loads
     document.querySelectorAll('.rv').forEach(el => observer.observe(el))
-    
+
     return () => observer.disconnect()
   }, [featuredData, newData, techData, homeEssentialsData, beautyData, groomingData])
 
   // Mapper
   const mapBusiness = (b, index, extras = {}) => {
     const bgImg = b.cover_image_url || b.logo_url;
-    
+
     // Deterministic fallback images for visual variety
     const fallbacks = [
       'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?w=600&q=80', // Cafe
@@ -75,9 +76,9 @@ export default function HomePage() {
       'https://images.unsplash.com/photo-1581578731548-c64695ce6958?w=600&q=80'  // Cleaning
     ]
     const fallbackImg = fallbacks[index % fallbacks.length];
-    
+
     const imgSrc = bgImg ? (bgImg.startsWith('/') ? import.meta.env.VITE_API_URL + bgImg : bgImg) : fallbackImg;
-    
+
     // Simulate pricing for "Exact Design" demo if not real
     const currentPrice = b.plan === 'enterprise' ? 40 : b.plan === 'professional' ? 20 : 12;
     const oldPrice = extras.badge === 'New' ? null : Math.round(currentPrice * 1.3);
@@ -107,7 +108,8 @@ export default function HomePage() {
   return (
     <main className="min-h-screen pt-[0px] bg-white overflow-hidden">
       <HomeHero />
-      
+      <Categories />
+
       {/* <DealsSection />
       
       <div className="shelves pb-[48px] ">
@@ -123,9 +125,9 @@ export default function HomePage() {
       <TrustBanner />
       <CategoryGrid />
       <HowItWorks />
-      <StatsSection/>
+      <StatsSection />
       {/* <TopProfessionals/> */}
-      <DownloadAppSection/>
+      <DownloadAppSection />
       {/* <WhySection />
       <Testimonials />
       <CTABand /> */}
