@@ -9,7 +9,7 @@ import {
   Wrench, HeartPulse, Brush, Monitor, Package,
   PartyPopper, GraduationCap, Utensils,
   Briefcase, Stethoscope, Pill, Key, Store,
-  Smartphone
+  Smartphone, MapPin, Clock, CheckCircle2, Phone
 } from 'lucide-react'
 
 // Category Icons Mapping
@@ -42,6 +42,7 @@ export default function HomeHero() {
   const [showDropdown, setShowDropdown] = useState(false)
   const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, width: 0 })
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
+  const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1100)
 
   const formRef = useRef(null)
   const portalRef = useRef(null)
@@ -75,6 +76,7 @@ export default function HomeHero() {
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768)
+      setIsDesktop(window.innerWidth >= 1100)
     }
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
@@ -216,6 +218,22 @@ export default function HomeHero() {
           0%, 100% { transform: scale(1); }
           50% { transform: scale(1.02); }
         }
+        @keyframes float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-10px); }
+        }
+        @keyframes floatSlow {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          50% { transform: translateY(-8px) rotate(1deg); }
+        }
+        @keyframes dashMove {
+          to { stroke-dashoffset: -20; }
+        }
+        @keyframes ringPulse {
+          0% { box-shadow: 0 0 0 0 rgba(74,222,128,.5); }
+          70% { box-shadow: 0 0 0 10px rgba(74,222,128,0); }
+          100% { box-shadow: 0 0 0 0 rgba(74,222,128,0); }
+        }
         .skel { background: linear-gradient(90deg, #f2f2f2 25%, #e6e6e6 50%, #f2f2f2 75%); background-size: 200% 100%; animation: loading 1.5s infinite; }
         @keyframes loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
         .hover-lift { transition: transform 0.25s ease, box-shadow 0.25s ease; }
@@ -269,183 +287,392 @@ export default function HomeHero() {
             pointerEvents: 'none'
           }}></div>
 
-          {/* Content Container - Kept aligned to Left side */}
+          {/* Content Container - two columns on desktop: copy left, live visual right */}
           <div style={{
             maxWidth: '1300px',
             width: '100%',
             margin: '0 auto',
             padding: isMobile ? '0 20px' : '0 56px',
             position: 'relative',
-            textAlign: 'left',
             display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'flex-start',
-            justifyContent: 'center'
+            flexDirection: isDesktop ? 'row' : 'column',
+            alignItems: isDesktop ? 'center' : 'flex-start',
+            justifyContent: isDesktop ? 'space-between' : 'center',
+            gap: isDesktop ? '40px' : '0px'
           }}>
-            {/* Status Badge */}
-            <div style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              background: 'rgba(214,28,168,.12)',
-              border: '1px solid rgba(214,28,168,.25)',
-              borderRadius: '20px',
-              padding: isMobile ? '6px 12px' : '6px 14px',
-              marginBottom: isMobile ? '16px' : '24px',
-              alignSelf: 'flex-start'
-            }}>
-              <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#4ade80' }}></div>
-              <span style={{
-                font: isMobile ? '600 10px/1 "DM Sans",sans-serif' : '600 12px/1 "DM Sans",sans-serif',
-                color: 'rgba(255,255,255,.75)'
-              }}>
-                Available in Muscat · 312 Professionals
-              </span>
-            </div>
 
-            {/* Headline */}
-            <h1 style={{
-              font: isMobile ? '400 32px/1.1 "DM Sans",sans-serif' : '600 68px/1.1 "DM Sans",sans-serif',
-              color: 'white',
-              letterSpacing: isMobile ? '-0.5px' : '-2px',
-              marginBottom: isMobile ? '16px' : '20px',
-              textAlign: 'left'
-            }}>
-              Home services,<br />
-              <span style={{
-                background: 'linear-gradient(135deg,#D61CA8,#8B2EF5)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text'
-              }}>
-                on demand.
-              </span>
-            </h1>
-
-            {/* Description */}
-            <p style={{
-              font: isMobile ? '400 15px/1.6 "DM Sans",sans-serif' : '400 19px/1.6 "DM Sans",sans-serif',
-              color: 'rgba(255,255,255,.6)',
-              marginBottom: isMobile ? '30px' : '48px',
-              textAlign: 'left',
-              maxWidth: '700px'
-            }}>
-              Trusted professionals for AC, cleaning, plumbing, electrical and 17 more home services — booked in 60 seconds.
-            </p>
-
-            {/* Search Container */}
-            <div 
-              ref={formRef}
-              style={{
-                background: 'white',
-                borderRadius: '14px',
-                padding: isMobile ? '4px' : '6px 6px 6px 18px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                boxShadow: '0 12px 40px rgba(0,0,0,.25)',
-                maxWidth: isMobile ? '100%' : '660px',
-                width: '100%',
-                marginBottom: '28px',
-                flexWrap: isMobile ? 'wrap' : 'nowrap'
-              }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
-                <circle cx="10.5" cy="10.5" r="7" stroke="#9090A0" strokeWidth="2" />
-                <path d="M15.5 15.5L21 21" stroke="#9090A0" strokeWidth="2" strokeLinecap="round" />
-              </svg>
-
-              <input
-                ref={searchInputRef}
-                style={{
-                  flex: '1',
-                  border: 'none',
-                  outline: 'none',
-                  font: isMobile ? '400 14px/1 "DM Sans",sans-serif' : '400 15px/1 "DM Sans",sans-serif',
-                  color: '#0A0A0F',
-                  minWidth: isMobile ? '100%' : 'auto',
-                  padding: isMobile ? '10px 0' : '0',
-                  background: 'transparent'
-                }}
-                placeholder="What service do you need?"
-                value={quickQuery}
-                onChange={handleInputChange}
-                onFocus={handleInputFocus}
-              />
-
-              <div style={{
-                padding: '0 12px',
-                font: isMobile ? '400 12px/1 "DM Sans",sans-serif' : '400 13px/1 "DM Sans",sans-serif',
-                color: '#9090A0',
-                borderLeft: isMobile ? 'none' : '1px solid #EBEBEF',
-                borderTop: isMobile ? '1px solid #EBEBEF' : 'none',
-                paddingTop: isMobile ? '10px' : '0',
-                paddingBottom: isMobile ? '10px' : '0',
-                width: isMobile ? '100%' : 'auto',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between'
-              }}>
-                <select
-                  value={quickLocation}
-                  onChange={(e) => setQuickLocation(e.target.value)}
-                  style={{
-                    background: 'transparent',
-                    border: 'none',
-                    outline: 'none',
-                    font: isMobile ? '400 12px/1 "DM Sans",sans-serif' : '400 13px/1 "DM Sans",sans-serif',
-                    color: '#9090A0',
-                    cursor: 'pointer',
-                    padding: '4px 0',
-                    width: '100%'
-                  }}
-                >
-                  <option value="">Qurum ▾</option>
-                  {governorates.map(g => (
-                    <option key={g.id} value={g.slug}>{g.name_en}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div style={{
-                padding: '12px 24px',
-                background: 'linear-gradient(135deg,#D61CA8,#8B2EF5)',
-                borderRadius: '10px',
-                font: '700 13px/1 "DM Sans",sans-serif',
-                color: 'white',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '5px',
-                width: isMobile ? '100%' : 'auto',
-                justifyContent: 'center',
-                whiteSpace: 'nowrap'
-              }}>
-                <span style={{ fontSize: '11px' }}>✨</span>
-                AI Search
-              </div>
-            </div>
-
-            {/* Trust Badges */}
+            {/* LEFT: Copy + Search */}
             <div style={{
               display: 'flex',
-              gap: '24px',
-              flexWrap: 'wrap',
-              justifyContent: 'flex-start'
+              flexDirection: 'column',
+              alignItems: 'flex-start',
+              justifyContent: 'center',
+              textAlign: 'left',
+              maxWidth: isDesktop ? '620px' : '100%',
+              flexShrink: 0,
+              width: isDesktop ? 'auto' : '100%'
             }}>
-              <span style={{
-                font: isMobile ? '400 11px/1 "DM Sans",sans-serif' : '400 14px/1 "DM Sans",sans-serif',
-                color: 'rgba(255,255,255,.5)'
-              }}>✓ Verified & insured</span>
-              <span style={{
-                font: isMobile ? '400 11px/1 "DM Sans",sans-serif' : '400 14px/1 "DM Sans",sans-serif',
-                color: 'rgba(255,255,255,.5)'
-              }}>✓ Fixed pricing</span>
-              <span style={{
-                font: isMobile ? '400 11px/1 "DM Sans",sans-serif' : '400 14px/1 "DM Sans",sans-serif',
-                color: 'rgba(255,255,255,.5)'
-              }}>✓ 60-second booking</span>
+              {/* Status Badge */}
+              <div style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                background: 'rgba(214,28,168,.12)',
+                border: '1px solid rgba(214,28,168,.25)',
+                borderRadius: '20px',
+                padding: isMobile ? '6px 12px' : '6px 14px',
+                marginBottom: isMobile ? '16px' : '24px',
+                alignSelf: 'flex-start'
+              }}>
+                <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#4ade80', animation: 'ringPulse 1.8s infinite' }}></div>
+                <span style={{
+                  font: isMobile ? '600 10px/1 "DM Sans",sans-serif' : '600 12px/1 "DM Sans",sans-serif',
+                  color: 'rgba(255,255,255,.75)'
+                }}>
+                  Available in Muscat · 312 Professionals
+                </span>
+              </div>
+
+              {/* Headline */}
+              <h1 style={{
+                font: isMobile ? '400 32px/1.1 "DM Sans",sans-serif' : '600 68px/1.1 "DM Sans",sans-serif',
+                color: 'white',
+                letterSpacing: isMobile ? '-0.5px' : '-2px',
+                marginBottom: isMobile ? '16px' : '20px',
+                textAlign: 'left'
+              }}>
+                Home services,<br />
+                <span style={{
+                  background: 'linear-gradient(135deg,#D61CA8,#8B2EF5)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text'
+                }}>
+                  on demand.
+                </span>
+              </h1>
+
+              {/* Description */}
+              <p style={{
+                font: isMobile ? '400 15px/1.6 "DM Sans",sans-serif' : '400 19px/1.6 "DM Sans",sans-serif',
+                color: 'rgba(255,255,255,.6)',
+                marginBottom: isMobile ? '30px' : '48px',
+                textAlign: 'left',
+                maxWidth: '700px'
+              }}>
+                Trusted professionals for AC, cleaning, plumbing, electrical and 17 more home services — booked in 60 seconds.
+              </p>
+
+              {/* Search Container */}
+              <div
+                ref={formRef}
+                style={{
+                  background: 'white',
+                  borderRadius: '14px',
+                  padding: isMobile ? '4px' : '6px 6px 6px 18px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  boxShadow: '0 12px 40px rgba(0,0,0,.25)',
+                  maxWidth: isMobile ? '100%' : '660px',
+                  width: '100%',
+                  marginBottom: '28px',
+                  flexWrap: isMobile ? 'wrap' : 'nowrap'
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
+                  <circle cx="10.5" cy="10.5" r="7" stroke="#9090A0" strokeWidth="2" />
+                  <path d="M15.5 15.5L21 21" stroke="#9090A0" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+
+                <input
+                  ref={searchInputRef}
+                  style={{
+                    flex: '1',
+                    border: 'none',
+                    outline: 'none',
+                    font: isMobile ? '400 14px/1 "DM Sans",sans-serif' : '400 15px/1 "DM Sans",sans-serif',
+                    color: '#0A0A0F',
+                    minWidth: isMobile ? '100%' : 'auto',
+                    padding: isMobile ? '10px 0' : '0',
+                    background: 'transparent'
+                  }}
+                  placeholder="What service do you need?"
+                  value={quickQuery}
+                  onChange={handleInputChange}
+                  onFocus={handleInputFocus}
+                />
+
+                <div style={{
+                  padding: '0 12px',
+                  font: isMobile ? '400 12px/1 "DM Sans",sans-serif' : '400 13px/1 "DM Sans",sans-serif',
+                  color: '#9090A0',
+                  borderLeft: isMobile ? 'none' : '1px solid #EBEBEF',
+                  borderTop: isMobile ? '1px solid #EBEBEF' : 'none',
+                  paddingTop: isMobile ? '10px' : '0',
+                  paddingBottom: isMobile ? '10px' : '0',
+                  width: isMobile ? '100%' : 'auto',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between'
+                }}>
+                  <select
+                    value={quickLocation}
+                    onChange={(e) => setQuickLocation(e.target.value)}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      outline: 'none',
+                      font: isMobile ? '400 12px/1 "DM Sans",sans-serif' : '400 13px/1 "DM Sans",sans-serif',
+                      color: '#9090A0',
+                      cursor: 'pointer',
+                      padding: '4px 0',
+                      width: '100%'
+                    }}
+                  >
+                    <option value="">Qurum ▾</option>
+                    {governorates.map(g => (
+                      <option key={g.id} value={g.slug}>{g.name_en}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div style={{
+                  padding: '12px 24px',
+                  background: 'linear-gradient(135deg,#D61CA8,#8B2EF5)',
+                  borderRadius: '10px',
+                  font: '700 13px/1 "DM Sans",sans-serif',
+                  color: 'white',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  width: isMobile ? '100%' : 'auto',
+                  justifyContent: 'center',
+                  whiteSpace: 'nowrap'
+                }}>
+                  <span style={{ fontSize: '11px' }}>✨</span>
+                  AI Search
+                </div>
+              </div>
+
+              {/* Trust Badges */}
+              <div style={{
+                display: 'flex',
+                gap: '24px',
+                flexWrap: 'wrap',
+                justifyContent: 'flex-start'
+              }}>
+                <span style={{
+                  font: isMobile ? '400 11px/1 "DM Sans",sans-serif' : '400 14px/1 "DM Sans",sans-serif',
+                  color: 'rgba(255,255,255,.5)'
+                }}>✓ Verified & insured</span>
+                <span style={{
+                  font: isMobile ? '400 11px/1 "DM Sans",sans-serif' : '400 14px/1 "DM Sans",sans-serif',
+                  color: 'rgba(255,255,255,.5)'
+                }}>✓ Fixed pricing</span>
+                <span style={{
+                  font: isMobile ? '400 11px/1 "DM Sans",sans-serif' : '400 14px/1 "DM Sans",sans-serif',
+                  color: 'rgba(255,255,255,.5)'
+                }}>✓ 60-second booking</span>
+              </div>
             </div>
+
+            {/* RIGHT: Live booking visual — desktop only */}
+            {isDesktop && (
+              <div style={{
+                position: 'relative',
+                width: '420px',
+                height: '480px',
+                flexShrink: 0
+              }}>
+                {/* Ambient glow behind the card stack */}
+                <div style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%,-50%)',
+                  width: '420px',
+                  height: '420px',
+                  background: 'radial-gradient(circle, rgba(214,28,168,.18), transparent 65%)',
+                  pointerEvents: 'none'
+                }} />
+
+                {/* Main glass card: live tracking */}
+                <div style={{
+                  position: 'absolute',
+                  top: '20px',
+                  left: '10px',
+                  width: '360px',
+                  background: 'rgba(255,255,255,0.06)',
+                  backdropFilter: 'blur(20px)',
+                  WebkitBackdropFilter: 'blur(20px)',
+                  border: '1px solid rgba(255,255,255,0.12)',
+                  borderRadius: '20px',
+                  padding: '20px',
+                  boxShadow: '0 24px 60px rgba(0,0,0,.35)',
+                  animation: 'float 6s ease-in-out infinite'
+                }}>
+                  {/* Header row */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div style={{
+                        width: '40px', height: '40px', borderRadius: '50%',
+                        background: 'linear-gradient(135deg,#D61CA8,#8B2EF5)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        font: '700 14px "DM Sans",sans-serif', color: '#fff'
+                      }}>M</div>
+                      <div>
+                        <div style={{ font: '700 13px "DM Sans",sans-serif', color: '#fff' }}>Mohammed Al-Balushi</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', font: '400 11px "DM Sans",sans-serif', color: 'rgba(255,255,255,.55)' }}>
+                          <Star size={10} fill="#facc15" stroke="none" /> 4.9 · AC Deep Cleaning
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{
+                      display: 'flex', alignItems: 'center', gap: '5px',
+                      background: 'rgba(74,222,128,.15)', border: '1px solid rgba(74,222,128,.3)',
+                      borderRadius: '20px', padding: '4px 10px'
+                    }}>
+                      <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#4ade80' }} />
+                      <span style={{ font: '600 10px "DM Sans",sans-serif', color: '#4ade80' }}>On the way</span>
+                    </div>
+                  </div>
+
+                  {/* Mini map */}
+                  <div style={{
+                    position: 'relative',
+                    height: '140px',
+                    borderRadius: '14px',
+                    background: 'linear-gradient(160deg,#151022,#0e0a1a)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    overflow: 'hidden',
+                    marginBottom: '14px'
+                  }}>
+                    <svg width="100%" height="100%" viewBox="0 0 340 140" style={{ position: 'absolute', top: 0, left: 0 }}>
+                      <path d="M20,110 C 90,90 120,40 180,50 S 300,30 320,20" stroke="url(#routeGrad)" strokeWidth="3" fill="none" strokeDasharray="6 6" style={{ animation: 'dashMove 1.2s linear infinite' }} />
+                      <defs>
+                        <linearGradient id="routeGrad" x1="0" y1="0" x2="1" y2="0">
+                          <stop offset="0%" stopColor="#D61CA8" />
+                          <stop offset="100%" stopColor="#8B2EF5" />
+                        </linearGradient>
+                      </defs>
+                      <circle cx="20" cy="110" r="6" fill="#8B2EF5" stroke="#fff" strokeWidth="2" />
+                      <circle cx="320" cy="20" r="6" fill="#D61CA8" stroke="#fff" strokeWidth="2" />
+                    </svg>
+                    <div style={{
+                      position: 'absolute', bottom: '10px', left: '10px',
+                      display: 'flex', alignItems: 'center', gap: '6px',
+                      background: 'rgba(0,0,0,.45)', borderRadius: '8px', padding: '4px 8px'
+                    }}>
+                      <MapPin size={11} color="#D61CA8" />
+                      <span style={{ font: '500 10px "DM Sans",sans-serif', color: 'rgba(255,255,255,.8)' }}>0.8 km away</span>
+                    </div>
+                    <div style={{
+                      position: 'absolute', top: '10px', right: '10px',
+                      display: 'flex', alignItems: 'center', gap: '6px',
+                      background: 'rgba(0,0,0,.45)', borderRadius: '8px', padding: '4px 8px'
+                    }}>
+                      <Clock size={11} color="#4ade80" />
+                      <span style={{ font: '500 10px "DM Sans",sans-serif', color: 'rgba(255,255,255,.8)' }}>Arriving in 12 min</span>
+                    </div>
+                  </div>
+
+                  {/* Bottom row: price + CTA */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div>
+                      <div style={{ font: '400 10px "DM Sans",sans-serif', color: 'rgba(255,255,255,.5)' }}>Total</div>
+                      <div style={{ font: '700 16px "DM Sans",sans-serif', color: '#fff' }}>OMR 17.885</div>
+                    </div>
+                    <div style={{
+                      display: 'flex', alignItems: 'center', gap: '6px',
+                      background: 'linear-gradient(135deg,#D61CA8,#8B2EF5)',
+                      borderRadius: '10px', padding: '9px 16px',
+                      font: '700 11px "DM Sans",sans-serif', color: '#fff'
+                    }}>
+                      <Phone size={11} /> Call Pro
+                    </div>
+                  </div>
+                </div>
+
+                {/* Floating stat chip: rating */}
+                <div style={{
+                  position: 'absolute',
+                  top: '-6px',
+                  right: '0px',
+                  background: 'rgba(255,255,255,0.95)',
+                  borderRadius: '14px',
+                  padding: '10px 14px',
+                  boxShadow: '0 12px 30px rgba(0,0,0,.25)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  animation: 'floatSlow 7s ease-in-out infinite'
+                }}>
+                  <div style={{
+                    width: '30px', height: '30px', borderRadius: '50%',
+                    background: 'linear-gradient(135deg,#D61CA8,#8B2EF5)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                  }}>
+                    <Star size={14} fill="#fff" stroke="none" />
+                  </div>
+                  <div>
+                    <div style={{ font: '700 13px "DM Sans",sans-serif', color: '#0A0A0F' }}>4.8/5</div>
+                    <div style={{ font: '400 9px "DM Sans",sans-serif', color: '#9090A0' }}>2,140 reviews</div>
+                  </div>
+                </div>
+
+                {/* Floating stat chip: booking confirmed */}
+                <div style={{
+                  position: 'absolute',
+                  bottom: '10px',
+                  right: '-18px',
+                  background: 'rgba(255,255,255,0.95)',
+                  borderRadius: '14px',
+                  padding: '12px 16px',
+                  boxShadow: '0 12px 30px rgba(0,0,0,.25)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  animation: 'float 8s ease-in-out infinite',
+                  animationDelay: '.5s'
+                }}>
+                  <div style={{
+                    width: '32px', height: '32px', borderRadius: '50%',
+                    background: 'rgba(74,222,128,.15)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                  }}>
+                    <CheckCircle2 size={16} color="#22c55e" />
+                  </div>
+                  <div>
+                    <div style={{ font: '700 12px "DM Sans",sans-serif', color: '#0A0A0F' }}>Booking Confirmed</div>
+                    <div style={{ font: '400 9px "DM Sans",sans-serif', color: '#9090A0' }}>#UO-4601 · Just now</div>
+                  </div>
+                </div>
+
+                {/* Floating stat chip: fast booking */}
+                <div style={{
+                  position: 'absolute',
+                  bottom: '90px',
+                  left: '-24px',
+                  background: 'rgba(255,255,255,0.95)',
+                  borderRadius: '14px',
+                  padding: '10px 14px',
+                  boxShadow: '0 12px 30px rgba(0,0,0,.25)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  animation: 'floatSlow 6.5s ease-in-out infinite',
+                  animationDelay: '1s'
+                }}>
+                  <Zap size={16} color="#D61CA8" fill="#D61CA8" />
+                  <div>
+                    <div style={{ font: '700 12px "DM Sans",sans-serif', color: '#0A0A0F' }}>60-sec booking</div>
+                    <div style={{ font: '400 9px "DM Sans",sans-serif', color: '#9090A0' }}>No calls needed</div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </section>
       </div>
