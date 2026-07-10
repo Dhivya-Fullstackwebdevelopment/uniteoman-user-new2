@@ -1,134 +1,292 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
-const FAQS = [
+const COMMON_ISSUES = [
   {
-    category: 'Bookings & Cancellations',
-    items: [
-      { q: 'How do I track my active booking?', a: 'Go to "My Bookings" in the top navigation panel. For live coordinates, select your ongoing service to open the interactive map view showing your service provider\'s real-time position.' },
-      { q: 'What is the cancellation policy?', a: 'You can cancel any service up to 2 hours before the scheduled time slot for a full refund. Cancellations made within 2 hours may incur a minimal standard dispatch fee.' },
-      { q: 'Can I reschedule an upcoming booking?', a: 'Yes. Navigate to "My Bookings", select the specific slot details card, and choose an alternative time/day from the dynamic date matrix tool.' }
-    ]
+    icon: '❓',
+    label: 'How to cancel a booking',
+    answer: 'Go to "My Bookings", open the booking you want to cancel, and tap "Cancel Booking". Cancellations made more than 2 hours before the scheduled time are fully refunded.',
   },
   {
-    category: 'Payments & Fees',
-    items: [
-      { q: 'What payment methods do you support?', a: 'We accept all primary localized credit/debit options alongside direct Bank of Muscat automated payment portal transfers.' },
-      { q: 'When am I charged for a booked service?', a: 'Payments are securely held upon initiating your checkout slot configuration and are only settled to the vendor post-successful job completion verification.' }
-    ]
-  }
+    icon: '💳',
+    label: 'Payment not working',
+    answer: 'Check that your card or wallet has sufficient balance and that your internet connection is stable. If the issue continues, try a different payment method or contact support.',
+  },
+  {
+    icon: '🚗',
+    label: "Pro hasn't arrived",
+    answer: 'Open "My Bookings" and tap the live map to track your pro in real time. If they are more than 15 minutes late, you can contact them directly or reach out to support.',
+  },
+  {
+    icon: '⭐',
+    label: 'How to report a problem',
+    answer: 'Go to the booking in question, tap "Report an Issue", and describe what happened. Our support team will follow up with you within 24 hours.',
+  },
+  {
+    icon: '🧾',
+    label: 'Get my invoice / receipt',
+    answer: 'Open "My Bookings", select the completed service, and tap "Download Receipt" to get a PDF copy of your invoice sent to your email.',
+  },
+  {
+    icon: '🔄',
+    label: 'Reschedule a booking',
+    answer: 'Go to "My Bookings", select the booking, and tap "Reschedule" to choose a new available date and time slot.',
+  },
 ];
 
+const CONTACT_METHODS = [
+  { icon: '💬', title: 'WhatsApp Chat', subtitle: '+968 2XXX XXXX' },
+  { icon: '📞', title: 'Call Support', subtitle: '24/7 available' },
+  { icon: '📧', title: 'Email', subtitle: 'support@uniteoman.com' },
+];
+
+function useBreakpoint() {
+  const [width, setWidth] = useState(
+    typeof window !== 'undefined' ? window.innerWidth : 1024
+  );
+  useEffect(() => {
+    const onResize = () => setWidth(window.innerWidth);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+  if (width < 640) return 'mobile';
+  if (width < 1024) return 'tablet';
+  return 'desktop';
+}
+
 export default function Help() {
-  const [searchQuery, setSearchQuery] = useState('');
+  const bp = useBreakpoint();
+  const isDesktop = bp === 'desktop';
+  const isTablet = bp === 'tablet';
   const [openIndex, setOpenIndex] = useState(null);
 
-  const toggleFAQ = (index) => {
-    setOpenIndex(openIndex === index ? null : index);
+  const toggleIssue = (idx) => {
+    setOpenIndex((prev) => (prev === idx ? null : idx));
   };
 
   return (
-    <div style={{ flex: 1, backgroundColor: '#F8F8FA', padding: '40px 0', overflowY: 'auto', fontFamily: '"DM Sans", sans-serif', minHeight: '100vh' }}>
-      
-      {/* Outer Layout Frame Container matching left/right layout bounds */}
-      <div style={{ maxWidth: '1240px', margin: '0 auto', padding: '0 56px' }}>
-        
-        {/* Page Title Header block */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px' }}>
-          <div>
-            <div style={{ font: '600 22px/1 sans-serif', color: '#0A0A0F' }}>Help &amp; Support</div>
-            <div style={{ font: '400 14px/1 sans-serif', color: '#9090A0', marginTop: '6px' }}>
-              Find answers, track resolutions, or contact our support team
+    <div
+      style={{
+        minHeight: '100vh',
+        background: '#F4F4F7',
+        fontFamily: '"DM Sans", -apple-system, BlinkMacSystemFont, sans-serif',
+        padding: isDesktop ? '40px 32px 60px' : isTablet ? '28px 24px 48px' : '20px 16px 40px',
+        boxSizing: 'border-box',
+      }}
+    >
+      <div
+        style={{
+          maxWidth: isDesktop ? '960px' : '420px',
+          margin: '0 auto',
+          display: isDesktop ? 'grid' : 'block',
+          gridTemplateColumns: isDesktop ? '1fr 340px' : undefined,
+          gap: isDesktop ? '24px' : undefined,
+          alignItems: 'start',
+        }}
+      >
+
+        {/* Left / Main column */}
+        <div>
+          {/* AI Assistant Banner */}
+          <button
+            style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '14px',
+              background: 'linear-gradient(120deg, #D61CA8 0%, #8B2EF5 100%)',
+              border: 'none',
+              borderRadius: '20px',
+              padding: isDesktop ? '22px 26px' : '18px 18px',
+              marginBottom: '24px',
+              cursor: 'pointer',
+              boxShadow: '0 8px 20px rgba(139, 46, 245, 0.25)',
+              textAlign: 'left',
+              boxSizing: 'border-box',
+            }}
+          >
+            <div
+              style={{
+                width: isDesktop ? '54px' : '48px',
+                height: isDesktop ? '54px' : '48px',
+                minWidth: isDesktop ? '54px' : '48px',
+                borderRadius: '50%',
+                background: 'rgba(255,255,255,0.22)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: isDesktop ? '26px' : '22px',
+              }}
+            >
+              🤖
             </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ font: `700 ${isDesktop ? '17px' : '15px'}/1.3 "DM Sans", sans-serif`, color: '#fff' }}>
+                Chat with AI Assistant
+              </div>
+              <div style={{ font: `400 ${isDesktop ? '13px' : '12px'}/1.4 "DM Sans", sans-serif`, color: 'rgba(255,255,255,0.85)', marginTop: '3px' }}>
+                Get instant answers in English or Arabic
+              </div>
+            </div>
+            <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: '18px', fontWeight: 700 }}>›</span>
+          </button>
+
+          {/* Common Issues */}
+          <div
+            style={{
+              font: '700 11px/1 "DM Sans", sans-serif',
+              letterSpacing: '0.6px',
+              color: '#9CA3AF',
+              textTransform: 'uppercase',
+              marginBottom: '10px',
+              paddingLeft: '4px',
+            }}
+          >
+            Common Issues
+          </div>
+
+          <div
+            style={{
+              background: '#fff',
+              borderRadius: '18px',
+              marginBottom: isDesktop ? '0' : '28px',
+              boxShadow: '0 2px 10px rgba(16,16,40,0.05)',
+              overflow: 'hidden',
+            }}
+          >
+            {COMMON_ISSUES.map((issue, idx) => {
+              const isOpen = openIndex === idx;
+              const isLast = idx === COMMON_ISSUES.length - 1;
+              return (
+                <div
+                  key={issue.label}
+                  style={{
+                    borderBottom: isLast && !isOpen ? 'none' : '1px solid #F1F1F5',
+                  }}
+                >
+                  <div
+                    role="button"
+                    onClick={() => toggleIssue(idx)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '14px',
+                      padding: '16px 18px',
+                      cursor: 'pointer',
+                      background: isOpen ? '#FBF7FC' : '#fff',
+                      transition: 'background 0.15s ease',
+                    }}
+                  >
+                    <span style={{ fontSize: '18px', width: '22px', textAlign: 'center' }}>
+                      {issue.icon}
+                    </span>
+                    <span
+                      style={{
+                        flex: 1,
+                        font: '600 14px/1.3 "DM Sans", sans-serif',
+                        color: isOpen ? '#D61CA8' : '#12121A',
+                      }}
+                    >
+                      {issue.label}
+                    </span>
+                    <span
+                      style={{
+                        color: isOpen ? '#D61CA8' : '#C4C4CE',
+                        fontSize: '13px',
+                        fontWeight: 700,
+                        transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)',
+                        transition: 'transform 0.15s ease',
+                        display: 'inline-block',
+                      }}
+                    >
+                      ›
+                    </span>
+                  </div>
+
+                  {isOpen && (
+                    <div
+                      style={{
+                        padding: '0 18px 18px 54px',
+                        font: '400 13px/1.6 "DM Sans", sans-serif',
+                        color: '#6B7280',
+                        background: '#FBF7FC',
+                      }}
+                    >
+                      {issue.answer}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
 
-        {/* Interactive Search Spotlight Bar */}
-        <div style={{ background: 'white', border: '1px solid #EBEBEF', borderRadius: '16px', padding: '20px', marginBottom: '18px', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
-          <div style={{ position: 'relative', width: '100%', maxWidth: '600px', margin: '0 auto' }}>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search for topics, features, or keywords..."
-              style={{ width: '100%', padding: '12px 16px', boxSizing: 'border-box', background: '#F8F8FA', border: '1.5px solid #EBEBEF', borderRadius: '10px', fontSize: '13px', color: '#0A0A0F', outline: 'none' }}
-            />
+        {/* Right / Contact column */}
+        <div>
+          <div
+            style={{
+              font: '700 11px/1 "DM Sans", sans-serif',
+              letterSpacing: '0.6px',
+              color: '#9CA3AF',
+              textTransform: 'uppercase',
+              marginBottom: '10px',
+              paddingLeft: '4px',
+            }}
+          >
+            Contact Us
           </div>
-        </div>
 
-        {/* Grid Content Split Grid Layout */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '16px', alignItems: 'start' }}>
-          
-          {/* Left Column: FAQ Accordion Feed */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {FAQS.map((cat, catIdx) => (
-              <div key={catIdx} style={{ background: 'white', border: '1px solid #EBEBEF', borderRadius: '16px', padding: '18px', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
-                <div style={{ font: '700 12px/1 sans-serif', color: '#0A0A0F', marginBottom: '14px', textTransform: 'uppercase', tracking: '0.5px' }}>
-                  {cat.category}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {CONTACT_METHODS.map((method) => (
+              <div
+                key={method.title}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '14px',
+                  background: '#fff',
+                  borderRadius: '16px',
+                  padding: '14px 16px',
+                  boxShadow: '0 2px 10px rgba(16,16,40,0.05)',
+                }}
+              >
+                <span style={{ fontSize: '20px', width: '26px', textAlign: 'center' }}>{method.icon}</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ font: '700 14px/1.3 "DM Sans", sans-serif', color: '#12121A' }}>
+                    {method.title}
+                  </div>
+                  <div
+                    style={{
+                      font: '400 12px/1.4 "DM Sans", sans-serif',
+                      color: '#A3A3AF',
+                      marginTop: '2px',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {method.subtitle}
+                  </div>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {cat.items.map((item, itemIdx) => {
-                    const uniqueId = `${catIdx}-${itemIdx}`;
-                    const isOpen = openIndex === uniqueId;
-                    return (
-                      <div key={itemIdx} style={{ border: '1.5px solid #F0F0F4', borderRadius: '10px', overflow: 'hidden' }}>
-                        <div
-                          onClick={() => toggleFAQ(uniqueId)}
-                          style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px', background: isOpen ? '#F8F8FA' : 'white', cursor: 'pointer', transition: 'background 0.15s' }}
-                        >
-                          <span style={{ font: '600 13px/1.2 sans-serif', color: isOpen ? '#D61CA8' : '#0A0A0F' }}>{item.q}</span>
-                          <span style={{ font: '700 11px/1 "DM Sans", sans-serif', color: '#9090A0' }}>{isOpen ? '▲' : '▼'}</span>
-                        </div>
-                        {isOpen && (
-                          <div style={{ padding: '14px', font: '400 12px/1.5 sans-serif', color: '#6B7280', borderTop: '1.5px solid #F0F0F4', background: 'white' }}>
-                            {item.a}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
+                <button
+                  style={{
+                    border: 'none',
+                    outline: 'none',
+                    padding: '9px 22px',
+                    background: 'linear-gradient(120deg, #D61CA8 0%, #8B2EF5 100%)',
+                    borderRadius: '999px',
+                    font: '700 12px/1 "DM Sans", sans-serif',
+                    color: '#fff',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  Chat
+                </button>
               </div>
             ))}
           </div>
-
-          {/* Right Column: Contact Context Side Panel */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            
-            {/* Direct Support Touchpoints Card */}
-            <div style={{ background: 'white', border: '1px solid #EBEBEF', borderRadius: '16px', padding: '18px', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
-              <div style={{ font: '700 13px/1 sans-serif', color: '#0A0A0F', marginBottom: '12px' }}>Contact Support</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', background: '#F8F8FA', borderRadius: '10px' }}>
-                  <span style={{ fontSize: '16px' }}>💬</span>
-                  <div>
-                    <div style={{ font: '600 11px/1 sans-serif', color: '#0A0A0F' }}>Live Chat Support</div>
-                    <div style={{ font: '400 9px/1 sans-serif', color: '#9090A0', marginTop: '2px' }}>Average response: 2 mins</div>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', background: '#F8F8FA', borderRadius: '10px' }}>
-                  <span style={{ fontSize: '16px' }}>✉️</span>
-                  <div>
-                    <div style={{ font: '600 11px/1 sans-serif', color: '#0A0A0F' }}>Email Helpdesk</div>
-                    <div style={{ font: '400 9px/1 sans-serif', color: '#9090A0', marginTop: '2px' }}>support@uniteoman.om</div>
-                  </div>
-                </div>
-              </div>
-              <button style={{ width: '100%', boxSizing: 'border-box', border: 'none', outline: 'none', marginTop: '12px', padding: '11px', background: 'linear-gradient(135deg, #D61CA8, #8B2EF5)', borderRadius: '10px', font: '700 13px/1 sans-serif', color: 'white', cursor: 'pointer', boxShadow: '0 3px 10px rgba(214,28,168,.2)' }}>
-                Start Live Chat
-              </button>
-            </div>
-
-            {/* Quick Platform Metrics Banner */}
-            <div style={{ background: 'linear-gradient(135deg, #0A0A0F, #0a1240)', borderRadius: '16px', padding: '18px', color: 'white', boxShadow: '0 4px 12px rgba(0,0,0,.05)' }}>
-              <div style={{ font: '700 11px/1 sans-serif', color: '#D61CA8', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Operating Hours</div>
-              <div style={{ font: '600 15px/1.2 sans-serif', color: 'white' }}>7:00 AM – 11:00 PM</div>
-              <div style={{ font: '400 10px/1 sans-serif', color: 'white', opacity: 0.4, marginTop: '5px' }}>Muscat, Oman Time · Saturday to Friday</div>
-            </div>
-
-          </div>
-
         </div>
-        
+
       </div>
     </div>
   );
