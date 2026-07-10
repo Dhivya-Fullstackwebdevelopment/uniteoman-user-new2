@@ -98,6 +98,16 @@ export function CategoryGrid() {
 
   return (
     <section className="pt-10 pb-10 bg-[#F7F7FA]">
+      <style>{`
+        @keyframes cardIn {
+          from { opacity: 0; transform: translateY(28px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .cat-card {
+          opacity: 0;
+          animation: cardIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+      `}</style>
       <div className="max-w-[1300px] mx-auto px-5 lg:px-14">
 
         {/* Heading */}
@@ -116,10 +126,11 @@ export function CategoryGrid() {
                 fontWeight: 600,
                 color: "#0A0A0F",
                 letterSpacing: "-2px",
-                maxWidth: "48TrustBanner.jsx0px",
+                maxWidth: "480px",
                 lineHeight: 1.2,
                 fontSize: "52px",
               }}
+              className="text-[36px] lg:text-[52px]"
             >
               Everything your <br />
               home needs
@@ -156,7 +167,8 @@ export function CategoryGrid() {
               <div
                 key={cat.id}
                 onClick={() => navigate(linkTo)}
-                className="group relative h-[240px] w-full overflow-hidden rounded-[22px] bg-white p-6 cursor-pointer shadow-[0_2px_16px_rgba(0,0,0,.05)] hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col"
+                className="cat-card group relative h-[240px] w-full overflow-hidden rounded-[22px] bg-white p-6 cursor-pointer shadow-[0_2px_16px_rgba(0,0,0,.05)] hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col"
+                style={{ animationDelay: `${index * 0.08}s` }}
               >
                 {/* Top Border */}
                 <div
@@ -164,34 +176,17 @@ export function CategoryGrid() {
                 />
 
                 {/* Icon */}
-                <div className={`w-14 h-14 rounded-2xl ${style.iconBg} flex items-center justify-center mb-4 text-[#D61CA8]`}>
+                <div className={`w-14 h-14 rounded-2xl ${style.iconBg} flex items-center justify-center mb-4 text-[#D61CA8] transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3`}>
                   <Icon size={24} strokeWidth={2.2} />
                 </div>
 
                 {/* Name */}
-                <h3
-                  className="
-    text-[18px]
-    font-bold
-    text-[#0A0A0F]
-    h-[56px]
-    overflow-hidden
-    mb-2
-  "
-                >
+                <h3 className="text-[18px] font-bold text-[#0A0A0F] h-[56px] overflow-hidden mb-2">
                   {cat.name_en}
                 </h3>
 
                 {/* Description */}
-                <p
-                  className="
-    text-[12px]
-    leading-5
-    text-[#9090A0]
-    h-[40px]
-    overflow-hidden
-  "
-                >
+                <p className="text-[12px] leading-5 text-[#9090A0] h-[40px] overflow-hidden">
                   {cat.has_children
                     ? "Browse all available services in this category."
                     : `${cat.business_count || 0} verified listings available.`}
@@ -200,14 +195,11 @@ export function CategoryGrid() {
                 {/* Footer */}
                 <div className="flex items-center justify-between">
                   <span className="text-[#D61CA8] font-bold text-[15px]">
-                    {/* {cat.has_children
-                      ? "Browse"
-                      : `${cat.business_count || 0} Listings`} */}
                     From OMR 20
                   </span>
 
                   <div
-                    className={`w-10 h-10 rounded-xl bg-gradient-to-r ${style.button} flex items-center justify-center text-white shadow-md`}
+                    className={`w-10 h-10 rounded-xl bg-gradient-to-r ${style.button} flex items-center justify-center text-white shadow-md transition-transform duration-300 group-hover:translate-x-1`}
                   >
                     →
                   </div>
@@ -220,7 +212,8 @@ export function CategoryGrid() {
           {remainingCount > 0 && (
             <div
               onClick={() => navigate("/categories")}
-              className="rounded-[22px] bg-gradient-to-br from-[#0A0A0F] via-[#171228] to-[#20153F] p-7 cursor-pointer flex flex-col justify-between"
+              className="cat-card rounded-[22px] bg-gradient-to-br from-[#0A0A0F] via-[#171228] to-[#20153F] p-7 cursor-pointer flex flex-col justify-between hover:-translate-y-1 transition-transform duration-300"
+              style={{ animationDelay: `${visibleCategories.length * 0.08}s` }}
             >
               <div className="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center text-white text-[24px] font-bold mb-4">
                 +{remainingCount}
@@ -317,7 +310,6 @@ export function Testimonials() {
         </div>
         <div>
           <div className="text-[13px] font-bold text-[var(--ink)]">{t.reviewer_name || t.name || 'Anonymous'}</div>
-          {/* <div className="text-[10px] text-[var(--dim)] font-black uppercase tracking-widest">{t.location || 'N/A'}</div> */}
         </div>
       </div>
     </div>
@@ -356,16 +348,13 @@ export function Testimonials() {
       </div>
 
       <div className="marquee-container flex flex-col gap-[20px] relative w-full left-0">
-        {/* Gradients for smooth fade-in / fade-out on the edges */}
         <div className="absolute inset-y-0 left-0 w-[100px] lg:w-[200px] bg-gradient-to-r from-[#FDFDFD] to-transparent z-10 pointer-events-none"></div>
         <div className="absolute inset-y-0 right-0 w-[100px] lg:w-[200px] bg-gradient-to-l from-[#FDFDFD] to-transparent z-10 pointer-events-none"></div>
 
-        {/* Row 1 (Moving Left) */}
         <div className="flex w-max animate-scroll-left">
           {[...row1, ...row1].map((t, i) => renderCard(t, `r1-${i}`))}
         </div>
 
-        {/* Row 2 (Moving Right) */}
         <div className="flex w-max animate-scroll-right">
           {[...row2, ...row2].map((t, i) => renderCard(t, `r2-${i}`))}
         </div>

@@ -55,6 +55,26 @@ const CategoriesPills = ({ isMobile = false }) => {
       justifyContent: 'center',
       width: '100%'
     }}>
+      <style>{`
+        @keyframes pillIn {
+          from { opacity: 0; transform: translateY(14px) scale(.94); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .pill-item {
+          opacity: 0;
+          animation: pillIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+        .pill-icon { transition: transform 0.25s ease, box-shadow 0.25s ease; }
+        .pill-item:hover .pill-icon {
+          transform: translateY(-4px) scale(1.06);
+          box-shadow: 0 10px 20px rgba(0,0,0,.08);
+        }
+        .pill-item:hover .pill-label { color: #D61CA8; }
+        .pill-more:hover .pill-icon {
+          transform: translateY(-4px) scale(1.06);
+          background: #EFEBFF !important;
+        }
+      `}</style>
       <div style={{
         maxWidth: '1300px',
         width: '100%',
@@ -70,6 +90,7 @@ const CategoriesPills = ({ isMobile = false }) => {
         {topCategories.map((category, index) => (
           <div
             key={index}
+            className="pill-item"
             onClick={() => handleCategoryClick(category.name)}
             style={{
               display: 'flex',
@@ -77,10 +98,11 @@ const CategoriesPills = ({ isMobile = false }) => {
               alignItems: 'center',
               gap: '7px',
               cursor: 'pointer',
-              flexShrink: 0
+              flexShrink: 0,
+              animationDelay: `${index * 0.04}s`
             }}
           >
-            <div style={{
+            <div className="pill-icon" style={{
               width: isMobile ? '44px' : '52px',
               height: isMobile ? '44px' : '52px',
               background: category.bg,
@@ -88,16 +110,16 @@ const CategoriesPills = ({ isMobile = false }) => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: isMobile ? '20px' : '24px',
-              transition: 'transform 0.2s ease'
+              fontSize: isMobile ? '20px' : '24px'
             }}>
               {category.icon}
             </div>
-            <span style={{
+            <span className="pill-label" style={{
               font: isMobile ? '500 10px/1.2 "DM Sans",sans-serif' : '500 11px/1.2 "DM Sans",sans-serif',
               color: '#0A0A0F',
               textAlign: 'center',
-              maxWidth: isMobile ? '50px' : '60px'
+              maxWidth: isMobile ? '50px' : '60px',
+              transition: 'color 0.2s ease'
             }}>
               {category.name}
             </span>
@@ -106,6 +128,7 @@ const CategoriesPills = ({ isMobile = false }) => {
 
         {/* More Button */}
         <div
+          className="pill-item pill-more"
           onClick={() => navigate('/businesses')}
           style={{
             display: 'flex',
@@ -113,10 +136,11 @@ const CategoriesPills = ({ isMobile = false }) => {
             alignItems: 'center',
             gap: '7px',
             cursor: 'pointer',
-            flexShrink: 0
+            flexShrink: 0,
+            animationDelay: `${topCategories.length * 0.04}s`
           }}
         >
-          <div style={{
+          <div className="pill-icon" style={{
             width: isMobile ? '44px' : '52px',
             height: isMobile ? '44px' : '52px',
             background: '#F8F8FA',
@@ -129,10 +153,11 @@ const CategoriesPills = ({ isMobile = false }) => {
           }}>
             +{serviceCategories.length - 9}
           </div>
-          <span style={{
+          <span className="pill-label" style={{
             font: isMobile ? '500 10px/1.2 "DM Sans",sans-serif' : '500 11px/1.2 "DM Sans",sans-serif',
             color: '#9090A0',
-            textAlign: 'center'
+            textAlign: 'center',
+            transition: 'color 0.2s ease'
           }}>
             More
           </span>

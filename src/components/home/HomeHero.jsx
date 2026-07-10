@@ -249,6 +249,9 @@ export default function HomeHero() {
         .rv.d4 { animation-delay: 0.15s; }
         .rv.d5 { animation-delay: 0.2s; }
         .rv.d6 { animation-delay: 0.25s; }
+        .search-cta { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .search-cta:hover { transform: translateY(-2px); box-shadow: 0 10px 22px rgba(214,28,168,.35); }
+        .search-cta:active { transform: translateY(0); }
       `}</style>
 
       <div style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -313,7 +316,7 @@ export default function HomeHero() {
               width: isDesktop ? 'auto' : '100%'
             }}>
               {/* Status Badge */}
-              <div style={{
+              <div className="rv" style={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '6px',
@@ -334,7 +337,7 @@ export default function HomeHero() {
               </div>
 
               {/* Headline */}
-              <h1 style={{
+              <h1 className="rv d2" style={{
                 font: isMobile ? '400 32px/1.1 "DM Sans",sans-serif' : '600 68px/1.1 "DM Sans",sans-serif',
                 color: 'white',
                 letterSpacing: isMobile ? '-0.5px' : '-2px',
@@ -353,7 +356,7 @@ export default function HomeHero() {
               </h1>
 
               {/* Description */}
-              <p style={{
+              <p className="rv d3" style={{
                 font: isMobile ? '400 15px/1.6 "DM Sans",sans-serif' : '400 19px/1.6 "DM Sans",sans-serif',
                 color: 'rgba(255,255,255,.6)',
                 marginBottom: isMobile ? '30px' : '48px',
@@ -366,6 +369,7 @@ export default function HomeHero() {
               {/* Search Container */}
               <div
                 ref={formRef}
+                className="rv d4"
                 style={{
                   background: 'white',
                   borderRadius: '14px',
@@ -437,27 +441,30 @@ export default function HomeHero() {
                   </select>
                 </div>
 
-                <div style={{
-                  padding: '12px 24px',
-                  background: 'linear-gradient(135deg,#D61CA8,#8B2EF5)',
-                  borderRadius: '10px',
-                  font: '700 13px/1 "DM Sans",sans-serif',
-                  color: 'white',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '5px',
-                  width: isMobile ? '100%' : 'auto',
-                  justifyContent: 'center',
-                  whiteSpace: 'nowrap'
-                }}>
+                <div
+                  className="search-cta"
+                  onClick={handleQuickSearch}
+                  style={{
+                    padding: '12px 24px',
+                    background: 'linear-gradient(135deg,#D61CA8,#8B2EF5)',
+                    borderRadius: '10px',
+                    font: '700 13px/1 "DM Sans",sans-serif',
+                    color: 'white',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    width: isMobile ? '100%' : 'auto',
+                    justifyContent: 'center',
+                    whiteSpace: 'nowrap'
+                  }}>
                   <span style={{ fontSize: '11px' }}>✨</span>
                   AI Search
                 </div>
               </div>
 
               {/* Trust Badges */}
-              <div style={{
+              <div className="rv d5" style={{
                 display: 'flex',
                 gap: '24px',
                 flexWrap: 'wrap',
@@ -480,7 +487,7 @@ export default function HomeHero() {
 
             {/* RIGHT: Live booking visual — desktop only */}
             {isDesktop && (
-              <div style={{
+              <div className="rv d3" style={{
                 position: 'relative',
                 width: '420px',
                 height: '480px',
