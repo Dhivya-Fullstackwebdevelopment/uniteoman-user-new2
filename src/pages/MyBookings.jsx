@@ -28,26 +28,82 @@ export default function MyBookingsPage() {
     return (
         <div style={{ background: '#F8F8FA', minHeight: '100vh', fontFamily: '"DM Sans", sans-serif', padding: '40px 0' }} className="mb-page">
             <style>{`
+                .mb-outer {
+                    max-width: 1240px;
+                    margin: 0 auto;
+                    padding: 0 56px;
+                    width: 100%;
+                    box-sizing: border-box;
+                }
+                .mb-card {
+                    background: #F4F5F8;
+                    padding: 28px 56px;
+                    border-radius: 16px;
+                    box-shadow: 0 4px 20px rgba(0,0,0,.02);
+                }
+                .mb-booking-row {
+                    background: white;
+                    border-radius: 16px;
+                    padding: 18px;
+                    display: flex;
+                    align-items: center;
+                    gap: 16px;
+                    box-shadow: 0 2px 8px rgba(0,0,0,.06);
+                    border: 1.5px solid #EBEBEF;
+                }
+
+                @media (max-width: 992px) {
+                    .mb-outer { padding: 0 24px !important; }
+                    .mb-card { padding: 24px !important; }
+                }
+
                 @media (max-width: 768px) {
                     .mb-page { padding: 16px 0 !important; }
-                    .mb-outer { padding: 0 16px !important; }
-                    .mb-card { padding: 16px !important; }
-                    .mb-tabs { width: 100% !important; overflow-x: auto !important; -webkit-overflow-scrolling: touch !important; }
-                    .mb-tabs > div { padding: 10px 14px !important; white-space: nowrap !important; }
-                    .mb-booking-row { flex-wrap: wrap !important; }
-                    .mb-booking-content { min-width: 55% !important; }
-                    .mb-booking-price { text-align: left !important; margin-top: 10px !important; width: 100% !important; display: flex !important; align-items: center !important; justify-content: space-between !important; }
-                    .mb-booking-actions { justify-content: flex-start !important; flex-wrap: wrap !important; }
-                }
-                @media (max-width: 480px) {
-                    .mb-card { padding: 12px !important; }
-                    .mb-booking-actions div, .mb-booking-actions button { flex: 1 1 auto !important; text-align: center !important; }
+                    .mb-outer { padding: 0 12px !important; }
+                    .mb-card { padding: 20px 14px !important; }
+                    .mb-tabs { width: 100% !important; overflow-x: auto !important; -webkit-overflow-scrolling: touch !important; scrollbar-width: none; }
+                    .mb-tabs::-webkit-scrollbar { display: none; }
+                    .mb-tabs > div { padding: 10px 16px !important; white-space: nowrap !important; flex: 1; text-align: center; }
+                    
+                    /* Force responsive stacking order */
+                    .mb-booking-row { flex-direction: column; align-items: flex-start !important; gap: 14px !important; }
+                    .mb-booking-content { min-width: 100% !important; }
+                    
+                    /* Restructure price block to match images exactly on mobile */
+                    .mb-booking-price { 
+                        width: 100% !important; 
+                        flex-direction: column !important;
+                        align-items: stretch !important;
+                        text-align: left !important;
+                    }
+                    .mb-price-info {
+                        display: flex !important;
+                        flex-direction: row !important;
+                        justify-content: space-between !important;
+                        align-items: center !important;
+                        width: 100% !important;
+                    }
+                    
+                    /* Separator block styling */
+                    .mb-booking-actions { 
+                        justify-content: flex-start !important; 
+                        flex-wrap: wrap !important; 
+                        margin-top: 12px !important; 
+                        width: 100% !important; 
+                        border-top: 1.5px solid #F4F5F8;
+                        padding-top: 12px;
+                    }
+                    .mb-booking-actions div, .mb-booking-actions button { 
+                        flex: 1; 
+                        text-align: center !important; 
+                        white-space: nowrap; 
+                    }
                 }
             `}</style>
 
             {/* Outer Layout Alignment Framework preserving exact left and right spaces across application screens */}
-            <div style={{ maxWidth: '1240px', margin: '0 auto', padding: '0 56px' }} className="mb-outer">
-                <div style={{ background: '#F4F5F8', padding: '28px 56px', borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,.02)' }} className="mb-card">
+            <div className="mb-outer">
+                <div className="mb-card">
 
                     <div style={{ font: '600 26px/1 "DM Sans", sans-serif', color: '#0A0A0F', letterSpacing: '-1px', marginBottom: '4px' }}>
                         My Bookings
@@ -92,13 +148,10 @@ export default function MyBookingsPage() {
                             </div>
                         ) : (
                             displayedBookings.map((booking) => (
-                                <div
-                                    key={booking.id}
-                                    style={{ background: 'white', borderRadius: '16px', padding: '18px', display: 'flex', alignItems: 'center', gap: '16px', boxShadow: '0 2px 8px rgba(0,0,0,.06)', border: '1.5px solid #EBEBEF' }}
-                                    className="mb-booking-row"
-                                >
+                                <div key={booking.id} className="mb-booking-row">
+                                    
                                     {/* Category Box Icon Frame */}
-                                    <div style={{ width: '52px', height: '52px', background: booking.iconBg, borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', flexShrink: 0 }}>
+                                    <div style={{ width: '52px', height: '52px', background: booking.iconBg, borderRadius: '14px', display: 'flex', alignItems: 'center', justifycontent: 'center', fontSize: '24px', flexShrink: 0, justifyContent: 'center' }}>
                                         {booking.icon}
                                     </div>
 
@@ -116,12 +169,14 @@ export default function MyBookingsPage() {
                                     </div>
 
                                     {/* Pricing metrics and operational workflow action nodes */}
-                                    <div style={{ textAlign: 'right' }} className="mb-booking-price">
-                                        <div style={{ font: '700 16px/1 "DM Sans", sans-serif', color: '#0A0A0F', marginBottom: '6px' }}>
-                                            {booking.cost}
-                                        </div>
-                                        <div style={{ padding: '3px 10px', background: booking.labelBg, borderRadius: '6px', font: '700 9px/1 "DM Sans", sans-serif', color: booking.labelColor, display: 'inline-block', marginBottom: '9px' }}>
-                                            {booking.label}
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }} className="mb-booking-price">
+                                        <div style={{ textAlign: 'right' }} className="mb-price-info">
+                                            <div style={{ font: '700 16px/1 "DM Sans", sans-serif', color: '#0A0A0F', marginBottom: '6px' }}>
+                                                {booking.cost}
+                                            </div>
+                                            <div style={{ padding: '3px 10px', background: booking.labelBg, borderRadius: '6px', font: '700 9px/1 "DM Sans", sans-serif', color: booking.labelColor, display: 'inline-block' }}>
+                                                {booking.label}
+                                            </div>
                                         </div>
 
                                         {/* Contextual actions layout options split mapping configuration properties */}
@@ -136,17 +191,17 @@ export default function MyBookingsPage() {
                                             )}
                                             {booking.label === 'Scheduled' && (
                                                 <>
-                                                    <div style={{ padding: '6px 13px', background: '#F4F5F8', borderRadius: '8px', font: '600 11px/1 "DM Sans", sans-serif', color: '#0A0A0F', border: '1.5px solid #EBEBEF', cursor: 'pointer' }}>Reschedule</div>
-                                                    <div style={{ padding: '6px 13px', background: '#F4F5F8', borderRadius: '8px', font: '600 11px/1 "DM Sans", sans-serif', color: '#0A0A0F', border: '1.5px solid #EBEBEF', cursor: 'pointer' }}>Cancel</div>
+                                                    <div style={{ padding: '6px 13px', background: '#F4F5F8', border: '1.5px solid #EBEBEF', borderRadius: '8px', font: '600 11px/1 "DM Sans", sans-serif', color: '#0A0A0F', cursor: 'pointer' }}>Reschedule</div>
+                                                    <div style={{ padding: '6px 13px', background: '#F4F5F8', border: '1.5px solid #EBEBEF', borderRadius: '8px', font: '600 11px/1 "DM Sans", sans-serif', color: '#0A0A0F', cursor: 'pointer' }}>Cancel</div>
                                                 </>
                                             )}
                                             {booking.label === 'Completed' && (
                                                 <>
-                                                    <div onClick={() => navigate('/Booking/Rating')} style={{ padding: '6px 13px', background: '#F4F5F8', borderRadius: '8px', font: '600 11px/1 "DM Sans", sans-serif', color: '#0A0A0F', border: '1.5px solid #EBEBEF', cursor: 'pointer' }}>Rate</div>
-                                                    <div style={{ padding: '6px 13px', background: '#F4F5F8', borderRadius: '8px', font: '600 11px/1 "DM Sans", sans-serif', color: '#0A0A0F', border: '1.5px solid #EBEBEF', cursor: 'pointer' }}>Rebook</div>
+                                                    <div onClick={() => navigate('/Booking/Rating')} style={{ padding: '6px 13px', background: '#F4F5F8', border: '1.5px solid #EBEBEF', borderRadius: '8px', font: '600 11px/1 "DM Sans", sans-serif', color: '#0A0A0F', cursor: 'pointer' }}>Rate</div>
+                                                    <div style={{ padding: '6px 13px', background: '#F4F5F8', border: '1.5px solid #EBEBEF', borderRadius: '8px', font: '600 11px/1 "DM Sans", sans-serif', color: '#0A0A0F', cursor: 'pointer' }}>Rebook</div>
                                                     <div
                                                         onClick={() => navigate('/Booking/Receipt')}
-                                                        style={{ padding: '6px 13px', background: '#F4F5F8', borderRadius: '8px', font: '600 11px/1 "DM Sans", sans-serif', color: '#0A0A0F', border: '1.5px solid #EBEBEF', cursor: 'pointer' }}
+                                                        style={{ padding: '6px 13px', background: '#F4F5F8', border: '1.5px solid #EBEBEF', borderRadius: '8px', font: '600 11px/1 "DM Sans", sans-serif', color: '#0A0A0F', cursor: 'pointer' }}
                                                     >
                                                         Receipt
                                                     </div>

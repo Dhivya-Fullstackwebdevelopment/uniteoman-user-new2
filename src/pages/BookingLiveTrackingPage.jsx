@@ -14,14 +14,90 @@ export default function BookingLiveTrackingPage() {
   }
 
   return (
-    <div style={{ background: '#F8F8FA', minHeight: '100vh', fontFamily: '"DM Sans", sans-serif', padding: '40px 0' }}>
+    <div className="page-root-wrapper" style={{ background: '#F8F8FA', minHeight: '100vh', fontFamily: '"DM Sans", sans-serif', padding: '40px 0' }}>
       
-      {/* Outer Layout Frame Container preserving matching left and right spaces across views */}
-      <div style={{ maxWidth: '1240px', margin: '0 auto', padding: '0 56px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 420px', height: '650px', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 12px 40px rgba(0,0,0,.08)', border: '1px solid #EBEBEF', background: 'white' }}>
+      {/* Dynamic styles managing layout flow over smaller device viewports */}
+      <style>{`
+        .outer-layout-box {
+          max-width: 1240px;
+          margin: 0 auto;
+          padding: 0 56px;
+          width: 100%;
+          box-sizing: border-box;
+        }
+        .main-tracking-grid {
+          display: grid;
+          grid-template-columns: 1fr 420px;
+          height: 650px;
+          border-radius: 16px;
+          overflow: hidden;
+          box-shadow: 0 12px 40px rgba(0,0,0,.08);
+          border: 1px solid #EBEBEF;
+          background: white;
+        }
+        .map-interactive-canvas {
+          background: #E8EDF2;
+          position: relative;
+          overflow: hidden;
+        }
+        .status-timeline-panel {
+          background: white;
+          border-left: 1px solid #EBEBEF;
+          display: flex;
+          flex-direction: column;
+        }
+
+        /* Tablet Breakpoint Adjustments */
+        @media (max-width: 1024px) {
+          .outer-layout-box {
+            padding: 0 24px;
+          }
+          .main-tracking-grid {
+            grid-template-columns: 1fr 340px;
+          }
+        }
+
+        /* Mobile Breakpoint Stack Overhaul */
+        @media (max-width: 768px) {
+          .page-root-wrapper {
+            padding: 16px 0;
+          }
+          .outer-layout-box {
+            padding: 0 12px;
+          }
+          .main-tracking-grid {
+            grid-template-columns: 1fr;
+            height: auto;
+          }
+          .map-interactive-canvas {
+            height: 320px; /* Locked down explicit viewport space for map canvas layers */
+          }
+          .status-timeline-panel {
+            border-left: none;
+            border-top: 1px solid #EBEBEF;
+          }
+          .provider-card-row {
+            flex-direction: column;
+            align-items: flex-start !important;
+            gap: 12px !important;
+          }
+          .provider-card-row > div:last-child {
+            width: 100%;
+            display: flex;
+            gap: 8px;
+          }
+          .provider-card-row > div:last-child > div {
+            flex: 1;
+            text-align: center;
+          }
+        }
+      `}</style>
+      
+      <div className="outer-layout-box">
+        <div className="main-tracking-grid">
           
           {/* LEFT CONTAINER VIEW PANEL: SIMULATED MAP INTERACTIVE CANVAS */}
-          <div style={{ background: '#E8EDF2', position: 'relative', overflow: 'hidden' }}>
+          <div className="map-interactive-canvas">
             {/* Map Simulated Road Grid Overlays */}
             <div style={{ position: 'absolute', left: 0, right: 0, top: '180px', height: '20px', background: '#F0F2F4' }}></div>
             <div style={{ position: 'absolute', left: 0, right: 0, top: '320px', height: '16px', background: '#F0F2F4' }}></div>
@@ -29,17 +105,16 @@ export default function BookingLiveTrackingPage() {
             <div style={{ position: 'absolute', top: 0, bottom: 0, left: '430px', width: '16px', background: '#F0F2F4' }}></div>
             
             {/* Map Destination Pinpoint Vector Ring Node */}
-            <div style={{ position: 'absolute', top: '240px', left: '400px', width: '24px', height: '24px', background: '#D61CA8', borderRadius: '50%', border: '3px solid white', boxShadow: '0 3px 12px rgba(214,28,168,.6)', zIndex: 10 }}></div>
-            <div style={{ position: 'absolute', top: '224px', left: '384px', width: '56px', height: '56px', borderRadius: '50%', border: '2px solid rgba(214,28,168,.3)' }}></div>
+            <div style={{ position: 'absolute', top: '140px', left: '260px', width: '24px', height: '24px', background: '#D61CA8', borderRadius: '50%', border: '3px solid white', boxShadow: '0 3px 12px rgba(214,28,168,.6)', zIndex: 10 }}></div>
             
             {/* Live Professional Moving Avatar Marker Bubble */}
-            <div style={{ position: 'absolute', top: '320px', left: '210px', background: BRAND_GRADIENT, borderRadius: '50%', width: '38px', height: '38px', border: '3px solid white', display: 'flex', alignItems: 'center', justifyContent: 'center', font: '700 15px "DM Sans", sans-serif', color: 'white', boxShadow: '0 4px 16px rgba(0,0,0,.25)', zIndex: 10 }}>
+            <div style={{ position: 'absolute', top: '220px', left: '110px', background: BRAND_GRADIENT, borderRadius: '50%', width: '38px', height: '38px', border: '3px solid white', display: 'flex', alignItems: 'center', justifyContent: 'center', font: '700 15px "DM Sans", sans-serif', color: 'white', boxShadow: '0 4px 16px rgba(0,0,0,.25)', zIndex: 10 }}>
               M
             </div>
             
             {/* Dotted Tracking Route Line Vector SVG Path Overlay */}
             <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}>
-              <polyline points="229,336 229,280 405,280 405,255" fill="none" stroke="#D61CA8" strokeWidth="3" strokeDasharray="9 5" opacity=".8"/>
+              <polyline points="129,236 129,180 265,180 265,155" fill="none" stroke="#D61CA8" strokeWidth="3" strokeDasharray="9 5" opacity=".8"/>
             </svg>
             
             {/* Floating Overlay Layer Map Control Knobs */}
@@ -55,9 +130,9 @@ export default function BookingLiveTrackingPage() {
           </div>
 
           {/* RIGHT CONTAINER VIEW PANEL: LIVE STEPS STATUS TIMELINE */}
-          <div style={{ background: 'white', borderLeft: '1px solid #EBEBEF', display: 'flex', flexDirection: 'column' }}>
+          <div className="status-timeline-panel">
             
-            {/* Active Status Brand Header Header Panel */}
+            {/* Active Status Brand Header Panel */}
             <div style={{ padding: '20px 24px', borderBottom: '1px solid #EBEBEF', background: BRAND_GRADIENT }}>
               <div style={{ font: '700 13px/1 "DM Sans", sans-serif', color: 'rgba(255,255,255,.7)', marginBottom: '4px' }}>Booking #UO-4601</div>
               <div style={{ font: '600 22px/1 "DM Sans", sans-serif', color: 'white' }}>Mohammed is on the way</div>
@@ -75,7 +150,7 @@ export default function BookingLiveTrackingPage() {
             </div>
 
             {/* Provider Short Communication Context Node Profile card */}
-            <div style={{ padding: '18px 24px', borderBottom: '1px solid #EBEBEF', display: 'flex', alignItems: 'center', gap: '13px' }}>
+            <div className="provider-card-row" style={{ padding: '18px 24px', borderBottom: '1px solid #EBEBEF', display: 'flex', alignItems: 'center', gap: '13px' }}>
               <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: BRAND_GRADIENT, display: 'flex', alignItems: 'center', justifyContent: 'center', font: '700 20px "DM Sans", sans-serif', color: 'white', flexShrink: 0 }}>
                 M
               </div>
@@ -84,8 +159,8 @@ export default function BookingLiveTrackingPage() {
                 <div style={{ font: '400 12px/1 "DM Sans", sans-serif', color: '#9090A0', marginTop: '3px' }}>AC Specialist · ★ 4.9 · 847 jobs</div>
               </div>
               <div style={{ display: 'flex', gap: '8px' }}>
-                <div style={{ padding: '9px 16px', background: '#F4F5F8', borderRadius: '9px', font: '700 12px/1 "DM Sans", sans-serif', color: '#0A0A0F', cursor: 'pointer' }}>💬 Chat</div>
-                <div style={{ padding: '9px 16px', background: '#F4F5F8', borderRadius: '9px', font: '700 12px/1 "DM Sans", sans-serif', color: '#0A0A0F', cursor: 'pointer' }}>📞 Call</div>
+                <div style={{ padding: '9px 16px', background: '#F4F5F8', borderRadius: '9px', font: '700 12px/1 "DM Sans", sans-serif', color: '#0A0A0F', cursor: 'pointer', whiteSpace: 'nowrap' }}>💬 Chat</div>
+                <div style={{ padding: '9px 16px', background: '#F4F5F8', borderRadius: '9px', font: '700 12px/1 "DM Sans", sans-serif', color: '#0A0A0F', cursor: 'pointer', whiteSpace: 'nowrap' }}>📞 Call</div>
               </div>
             </div>
 

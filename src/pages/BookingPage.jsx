@@ -41,14 +41,106 @@ export default function BookingPage() {
   const [selectedTime, setSelectedTime] = useState('10:00 PM')
 
   return (
-    <div style={{ background: 'white', minHeight: '100vh', fontFamily: '"DM Sans", sans-serif', position: 'relative' }}>
+    <div className="page-root" style={{ background: 'white', minHeight: '100vh', fontFamily: '"DM Sans", sans-serif', position: 'relative' }}>
+      
+      {/* Structural layout rules handling breakpoints seamlessly */}
+      <style>{`
+        .hero-inner {
+          max-width: 1100px; 
+          margin: 0 auto; 
+          display: flex; 
+          gap: 28px; 
+          align-items: flex-end;
+        }
+        .main-split-grid {
+          max-width: 1240px;
+          margin: 0 auto;
+          display: grid;
+          grid-template-columns: 1fr 360px;
+          gap: 0;
+        }
+        .left-content-panel {
+          padding: 28px 40px 28px 56px; 
+          border-right: 1px solid #EBEBEF;
+        }
+        .stats-wrapper {
+          display: flex;
+          gap: 20px;
+          margin-bottom: 24px;
+        }
+        .right-sidebar-panel {
+          padding: 24px; 
+          background: #F4F5F8;
+        }
+
+        /* Tablet Breakpoint */
+        @media (max-width: 1024px) {
+          .hero-banner {
+            padding: 32px 24px !important;
+          }
+          .left-content-panel {
+            padding: 24px 24px;
+          }
+          .stats-wrapper {
+            gap: 12px;
+          }
+        }
+
+        /* Mobile Breakpoint */
+        @media (max-width: 768px) {
+          .hero-banner {
+            padding: 24px 16px !important;
+          }
+          .hero-inner {
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 16px;
+          }
+          .hero-inner style-div-actions {
+            margin-left: 0 !important;
+          }
+          .hero-actions-container {
+            margin-left: 0 !important;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+          }
+          .main-split-grid {
+            grid-template-columns: 1fr;
+          }
+          .left-content-panel {
+            padding: 20px 16px;
+            border-right: none;
+          }
+          .stats-wrapper {
+            flex-wrap: wrap;
+            gap: 8px;
+          }
+          .stats-item {
+            flex: unset !important;
+            width: calc(33.33% - 6px);
+          }
+          .stats-item:nth-child(4), .stats-item:nth-child(5) {
+            width: calc(50% - 4px);
+          }
+          .right-sidebar-panel {
+            padding: 16px;
+          }
+          .sticky-booking-card {
+            position: relative !important;
+            top: 0 !important;
+          }
+        }
+      `}</style>
+
       {/* Hero Profile Banner Component */}
-      <div style={{ background: BRAND_GRADIENT, padding: '32px 56px' }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', gap: '28px', alignItems: 'flex-end' }}>
-          <div style={{ width: '84px', height: '84px', border_radius: '50%', borderRadius: '50%', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', font: '800 32px "DM Sans", sans-serif', color: '#D61CA8', border: '4px solid rgba(255,255,255,.5)', flexShrink: 0 }}>
+      <div className="hero-banner" style={{ background: BRAND_GRADIENT, padding: '32px 56px' }}>
+        <div className="hero-inner">
+          <div style={{ width: '84px', height: '84px', borderRadius: '50%', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', font: '800 32px "DM Sans", sans-serif', color: '#D61CA8', border: '4px solid rgba(255,255,255,.5)', flexShrink: 0 }}>
             M
           </div>
-          <div className='pb-5'>
+          <div style={{ paddingBottom: '15px' }}>
             <div style={{ font: '600 28px/1 "DM Sans", sans-serif', color: 'white', letterSpacing: '-.8px', marginBottom: '5px' }}>
               Mohammed Al-Balushi
             </div>
@@ -56,23 +148,23 @@ export default function BookingPage() {
               AC & Electrical Specialist · Qurum, Muscat
             </div>
           </div>
-          <div style={{ marginLeft: 'auto', display: 'flex', gap: '9px' }}>
-            <div style={{ padding: '9px 18px', background: 'rgba(255,255,255,.15)', border: '1.5px solid rgba(255,255,255,.3)', borderRadius: '10px', font: '700 13px/1 "DM Sans", sans-serif', color: 'white', cursor: 'pointer' }}>💬 Message</div>
-            <div onClick={() => navigate('/BookingDateTimePickerPage')} style={{ padding: '9px 22px', background: 'white', borderRadius: '10px', font: '700 13px/1 "DM Sans", sans-serif', color: '#D61CA8', cursor: 'pointer', boxShadow: '0 4px 14px rgba(0,0,0,.15)' }}>Book Now →</div>
+          <div className="hero-actions-container" style={{ marginLeft: 'auto', display: 'flex', gap: '9px' }}>
+            <div style={{ padding: '9px 18px', background: 'rgba(255,255,255,.15)', border: '1.5px solid rgba(255,255,255,.3)', borderRadius: '10px', font: '700 13px/1 "DM Sans", sans-serif', color: 'white', cursor: 'pointer', whiteSpace: 'nowrap' }}>💬 Message</div>
+            <div onClick={() => navigate('/BookingDateTimePickerPage')} style={{ padding: '9px 22px', background: 'white', borderRadius: '10px', font: '700 13px/1 "DM Sans", sans-serif', color: '#D61CA8', cursor: 'pointer', boxShadow: '0 4px 14px rgba(0,0,0,.15)', whiteSpace: 'nowrap' }}>Book Now →</div>
           </div>
         </div>
       </div>
 
       {/* Two-Column Context Space Split Grid Layout */}
-      <div style={{ maxWidth: '1240px', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 360px', gap: 0 }}>
+      <div className="main-split-grid">
 
         {/* LEFT CONTAINER VIEW PANEL */}
-        <div style={{ padding: '28px 40px 28px 56px', borderRight: '1px solid #EBEBEF' }}>
+        <div className="left-content-panel">
 
           {/* Badges and Statistics Counter Box */}
-          <div style={{ display: 'flex', gap: '20px', marginBottom: '24px' }}>
+          <div className="stats-wrapper">
             {STATIC_STATS.map((stat) => (
-              <div key={stat.label} style={{ textScorers: 'center', textAlign: 'center', background: '#F4F5F8', borderRadius: '12px', padding: '14px 18px', flex: 1 }}>
+              <div key={stat.label} className="stats-item" style={{ textAlign: 'center', background: '#F4F5F8', borderRadius: '12px', padding: '14px 18px', flex: 1 }}>
                 <div style={{ font: '800 18px/1 "DM Sans", sans-serif', color: '#0A0A0F' }}>{stat.value}</div>
                 <div style={{ font: '400 11px/1 "DM Sans", sans-serif', color: '#9090A0', marginTop: '4px' }}>{stat.label}</div>
               </div>
@@ -127,8 +219,8 @@ export default function BookingPage() {
         </div>
 
         {/* RIGHT CONTAINER: Booking Setup Panel */}
-        <div style={{ padding: '24px', background: '#F4F5F8' }}>
-          <div style={{ background: '#0A0A0F', borderRadius: '16px', padding: '18px', position: 'sticky', top: '82px' }}>
+        <div className="right-sidebar-panel">
+          <div className="sticky-booking-card" style={{ background: '#0A0A0F', borderRadius: '16px', padding: '18px', position: 'sticky', top: '82px' }}>
             <div style={{ font: '700 13px/1 "DM Sans", sans-serif', color: 'white', marginBottom: '3px' }}>Book Mohammed</div>
             <div style={{ font: '400 11px/1 "DM Sans", sans-serif', color: 'rgba(255,255,255,.4)', marginBottom: '16px' }}>AC Deep Cleaning · OMR 15</div>
 
@@ -143,7 +235,7 @@ export default function BookingPage() {
                     key={d.num}
                     onClick={() => setSelectedDate(d.num)}
                     style={{
-                      flex: 1, padding: '8px 4px', borderRadius: '9px', textAlign: 'center', cursor: 'pointer', border: '1px solid transparent',
+                      flex: 1, padding: '8px 4px', borderRadius: '9px', textAlign: 'center', cursor: 'pointer',
                       background: isSelected ? BRAND_GRADIENT : 'rgba(255,255,255,.06)',
                       border: isSelected ? '1px solid transparent' : '1px solid rgba(255,255,255,.08)',
                       transition: 'all 0.15s ease'

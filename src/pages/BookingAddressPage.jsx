@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
-// Static arrays mapping Muscat areas from your HTML layout
 const STATIC_AREAS = [
   { name: 'Qurum', slug: 'qurum' },
   { name: 'Al Khuwair', slug: 'al-khuwair' },
@@ -21,7 +20,6 @@ export default function BookingAddressPage() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
 
-  // Input forms interactive collection state management
   const [selectedArea, setSelectedArea] = useState('qurum')
   const [villaApartment, setVillaApartment] = useState('Villa 12')
   const [streetName, setStreetName] = useState('Al Noor Street')
@@ -49,21 +47,88 @@ export default function BookingAddressPage() {
   }
 
   return (
-    <div style={{ background: '#F8F8FA', minHeight: '100vh', fontFamily: '"DM Sans", sans-serif', padding: '40px 0' }}>
+    <div className="page-root-wrapper" style={{ background: '#F8F8FA', minHeight: '100vh', fontFamily: '"DM Sans", sans-serif', padding: '40px 0' }}>
       
-      {/* Outer Content Alignment Grid Layer preserving strict side margins */}
-      <div style={{ maxWidth: '1240px', margin: '0 auto', padding: '0 56px' }}>
-        <div style={{ background: 'white', padding: '28px 56px', borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,.04)', display: 'grid', gridTemplateColumns: '1fr 360px', gap: '28px' }}>
+      {/* Structural layout rules handling breakpoints seamlessly */}
+      <style>{`
+        .outer-layout-box {
+          max-width: 1240px;
+          margin: 0 auto;
+          padding: 0 56px;
+          width: 100%;
+          box-sizing: border-box;
+        }
+        .inner-content-card {
+          background: white;
+          padding: 28px 56px;
+          border-radius: 16px;
+          box-shadow: 0 4px 20px rgba(0,0,0,.04);
+          display: grid;
+          grid-template-columns: 1fr 360px;
+          gap: 28px;
+        }
+        .address-inputs-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 12px;
+          margin-bottom: 16px;
+        }
+
+        /* Tablet Breakpoint Adjustments */
+        @media (max-width: 1024px) {
+          .outer-layout-box {
+            padding: 0 24px;
+          }
+          .inner-content-card {
+            padding: 24px;
+            grid-template-columns: 1fr 300px;
+            gap: 20px;
+          }
+        }
+
+        /* Mobile Breakpoint Stack Overhaul */
+        @media (max-width: 768px) {
+          .page-root-wrapper {
+            padding: 16px 0;
+          }
+          .outer-layout-box {
+            padding: 0 12px;
+          }
+          .inner-content-card {
+            padding: 20px 14px;
+            grid-template-columns: 1fr;
+            gap: 24px;
+          }
+          .stepper-label-text {
+            display: none;
+          }
+          .address-inputs-grid {
+            grid-template-columns: 1fr;
+            gap: 12px;
+          }
+          .saved-addresses-row {
+            flex-direction: column;
+            gap: 8px !important;
+          }
+          .summary-sticky-panel {
+            position: relative !important;
+            top: 0 !important;
+          }
+        }
+      `}</style>
+      
+      <div className="outer-layout-box">
+        <div className="inner-content-card">
           
           {/* LEFT CONTAINER VIEW PANEL: ADDRESS BUILDER FORMS */}
-          <div>
+          <div style={{ minWidth: 0 }}>
             
             {/* Horizontal Checkout Progress Tracker Timeline Indicators */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '0', marginBottom: '28px' }}>
               <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
                   <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center', font: '700 11px "DM Sans", sans-serif', color: 'white' }}>✓</div>
-                  <span style={{ font: '500 10px/1 "DM Sans", sans-serif', color: '#10B981', textTransform: 'uppercase', letterSpacing: '.5px' }}>Date & Time</span>
+                  <span className="stepper-label-text" style={{ font: '500 10px/1 "DM Sans", sans-serif', color: '#10B981', textTransform: 'uppercase', letterSpacing: '.5px' }}>Date & Time</span>
                 </div>
                 <div style={{ flex: 1, height: '2px', background: '#10B981', marginBottom: '13px', marginLeft: '8px', marginRight: '8px' }}></div>
               </div>
@@ -71,7 +136,7 @@ export default function BookingAddressPage() {
               <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
                   <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: BRAND_GRADIENT, display: 'flex', alignItems: 'center', justifyContent: 'center', font: '700 11px "DM Sans", sans-serif', color: 'white' }}>2</div>
-                  <span style={{ font: '700 10px/1 "DM Sans", sans-serif', color: '#D61CA8', textTransform: 'uppercase', letterSpacing: '.5px' }}>Address</span>
+                  <span className="stepper-label-text" style={{ font: '700 10px/1 "DM Sans", sans-serif', color: '#D61CA8', textTransform: 'uppercase', letterSpacing: '.5px' }}>Address</span>
                 </div>
                 <div style={{ flex: 1, height: '2px', background: '#E8E8EE', marginBottom: '13px', marginLeft: '8px', marginRight: '8px' }}></div>
               </div>
@@ -79,13 +144,13 @@ export default function BookingAddressPage() {
               <div style={{ display: 'flex', alignItems: 'center' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
                   <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#E8E8EE', display: 'flex', alignItems: 'center', justifyContent: 'center', font: '700 11px "DM Sans", sans-serif', color: '#9090A0' }}>3</div>
-                  <span style={{ font: '500 10px/1 "DM Sans", sans-serif', color: '#C0C0CC', textTransform: 'uppercase', letterSpacing: '.5px' }}>Payment</span>
+                  <span className="stepper-label-text" style={{ font: '500 10px/1 "DM Sans", sans-serif', color: '#C0C0CC', textTransform: 'uppercase', letterSpacing: '.5px' }}>Payment</span>
                 </div>
               </div>
             </div>
 
             {/* Simulated Interactive Map Display Sandbox Wrapper Block */}
-            <div style={{ height: '160px', background: '#E8EDF2', borderRadius: '14px', margin: 'bottom: 20px', marginBottom: '20px', position: 'relative', overflow: 'hidden' }}>
+            <div style={{ height: '160px', background: '#E8EDF2', borderRadius: '14px', marginBottom: '20px', position: 'relative', overflow: 'hidden' }}>
               <div style={{ position: 'absolute', left: 0, right: 0, top: '80px', height: '14px', background: '#F0F2F4' }}></div>
               <div style={{ position: 'absolute', top: 0, bottom: 0, left: '140px', width: '14px', background: '#F0F2F4' }}></div>
               <div style={{ position: 'absolute', top: '55px', left: '126px', width: '20px', height: '20px', background: '#D61CA8', borderRadius: '50%', border: '3px solid white', boxShadow: '0 2px 10px rgba(214,28,168,.5)' }}></div>
@@ -127,7 +192,7 @@ export default function BookingAddressPage() {
             <div style={{ font: '700 14px/1 "DM Sans", sans-serif', color: '#0A0A0F', marginBottom: '12px' }}>Address Details</div>
             
             {/* Input fields explicit double split grid panel schema */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+            <div className="address-inputs-grid">
               <div>
                 <label style={{ font: '600 11px/1 "DM Sans", sans-serif', color: '#9090A0', display: 'block', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '.6px' }}>Villa / Apartment No. *</label>
                 <input 
@@ -164,7 +229,7 @@ export default function BookingAddressPage() {
 
             {/* Quick Access Address Selector Profiles */}
             <div style={{ font: '700 13px/1 "DM Sans", sans-serif', color: '#0A0A0F', marginBottom: '10px' }}>Or Use Saved Address</div>
-            <div style={{ display: 'flex', gap: '10px' }}>
+            <div className="saved-addresses-row" style={{ display: 'flex', gap: '10px' }}>
               <div 
                 onClick={() => handleUseSavedAddress('home')}
                 style={{ flex: 1, padding: '11px', background: 'rgba(214,28,168,.04)', border: '1.5px solid rgba(214,28,168,.25)', borderRadius: '12px', cursor: 'pointer' }}
@@ -183,25 +248,25 @@ export default function BookingAddressPage() {
           </div>
 
           {/* RIGHT SIDE FIXED BILLING RECEIPT CONTAINER PANEL */}
-          <div>
-            <div style={{ background: '#0A0A0F', borderRadius: '18px', padding: '20px', position: 'sticky', top: '20px' }}>
-              <div style={{ font: '700 13px/1 "DM Sans", sans-serif', color: 'white', margin_bottom: '16px', marginBottom: '16px' }}>Order Summary</div>
+          <div style={{ minWidth: 0 }}>
+            <div className="summary-sticky-panel" style={{ background: '#0A0A0F', borderRadius: '18px', padding: '20px', position: 'sticky', top: '20px' }}>
+              <div style={{ font: '700 13px/1 "DM Sans", sans-serif', color: 'white', marginBottom: '16px' }}>Order Summary</div>
               
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <span style={{ font: '400 11px/1 "DM Sans", sans-serif', color: 'rgba(255,255,255,.45)' }}>Service</span>
-                <span style={{ font: '600 11px/1 "DM Sans", sans-serif', color: 'white' }}>AC Deep Cleaning</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', gap: '8px' }}>
+                <span style={{ font: '400 11px/1 "DM Sans", sans-serif', color: 'rgba(255,255,255,.45)', whiteSpace: 'nowrap' }}>Service</span>
+                <span style={{ font: '600 11px/1 "DM Sans", sans-serif', color: 'white', textAlign: 'right' }}>AC Deep Cleaning</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <span style={{ font: '400 11px/1 "DM Sans", sans-serif', color: 'rgba(255,255,255,.45)' }}>Pro</span>
-                <span style={{ font: '600 11px/1 "DM Sans", sans-serif', color: 'white' }}>Mohammed ★4.9</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', gap: '8px' }}>
+                <span style={{ font: '400 11px/1 "DM Sans", sans-serif', color: 'rgba(255,255,255,.45)', whiteSpace: 'nowrap' }}>Pro</span>
+                <span style={{ font: '600 11px/1 "DM Sans", sans-serif', color: 'white', textAlign: 'right' }}>Mohammed ★4.9</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <span style={{ font: '400 11px/1 "DM Sans", sans-serif', color: 'rgba(255,255,255,.45)' }}>Date</span>
-                <span style={{ font: '600 11px/1 "DM Sans", sans-serif', color: 'white' }}>Wed 9 Jul · 10:00 AM</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', gap: '8px' }}>
+                <span style={{ font: '400 11px/1 "DM Sans", sans-serif', color: 'rgba(255,255,255,.45)', whiteSpace: 'nowrap' }}>Date</span>
+                <span style={{ font: '600 11px/1 "DM Sans", sans-serif', color: 'white', textAlign: 'right' }}>Wed 9 Jul · 10:00 AM</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <span style={{ font: '400 11px/1 "DM Sans", sans-serif', color: 'rgba(255,255,255,.45)' }}>Area</span>
-                <span style={{ font: '600 11px/1 "DM Sans", sans-serif', color: 'white', textTransform: 'capitalize' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', gap: '8px' }}>
+                <span style={{ font: '400 11px/1 "DM Sans", sans-serif', color: 'rgba(255,255,255,.45)', whiteSpace: 'nowrap' }}>Area</span>
+                <span style={{ font: '600 11px/1 "DM Sans", sans-serif', color: 'white', textTransform: 'capitalize', textAlign: 'right' }}>
                   {selectedArea} (selected)
                 </span>
               </div>
