@@ -29,6 +29,19 @@ import PrivacyPolicy from '@/pages/PrivacyPolicy'
 import TermsOfUse from '@/pages/TermsOfUse'
 import SearchPage from '@/pages/SearchPage';
 import AboutUs from '@/pages/AboutUs';
+import BusinessSelection from '@/pages/BusinessSelection';
+import BookingDateTimePickerPage from '@/pages/BookingDateTimePickerPage';
+import BookingAddressPage from '@/pages/BookingAddressPage';
+import BookingPaymentPage from '@/pages/BookingPaymentPage';
+import BookingConfirmationPage from '@/pages/BookingConfirmationPage';
+import MyBookingsPage from '@/pages/MyBookings';
+import BookingLiveTrackingPage from '@/pages/BookingLiveTrackingPage';
+import BookingReceiptPage from '@/pages/BookingReceiptPage';
+import RateProviderPage from '@/pages/RateProviderPage';
+import NotificationsPage from '@/pages/Notifications';
+import AccountOverviewPage from './pages/AccountOverviewPage'
+
+
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -86,13 +99,77 @@ export default function App() {
             <Route path="/" element={<PublicLayout><HomePage /></PublicLayout>} />
             <Route path="/businesses" element={<PublicLayout><BusinessListPage /></PublicLayout>} />
             <Route path="/business/:slug" element={<PublicLayout><BusinessProfilePage /></PublicLayout>} />
-            <Route path="/business/:slug/book"
+            <Route path="/BookingPage"
               element={
                 <ProtectedCustomerRoute>
                   <PublicLayout><BookingPage /></PublicLayout>
                 </ProtectedCustomerRoute>
               }
+            /><Route path="/BookingDateTimePickerPage"
+              element={
+                <ProtectedCustomerRoute>
+                  <PublicLayout><BookingDateTimePickerPage /></PublicLayout>
+                </ProtectedCustomerRoute>
+              }
             />
+            <Route path="/BusinessSelection"
+              element={
+                <ProtectedCustomerRoute>
+                  <PublicLayout><BusinessSelection /></PublicLayout>
+                </ProtectedCustomerRoute>
+              }
+            />
+            <Route path="/BookingAddressPage"
+              element={
+                <ProtectedCustomerRoute>
+                  <PublicLayout><BookingAddressPage /></PublicLayout>
+                </ProtectedCustomerRoute>
+              }
+            />
+            <Route path="/BookingPaymentPage"
+              element={
+                <ProtectedCustomerRoute>
+                  <PublicLayout><BookingPaymentPage /></PublicLayout>
+                </ProtectedCustomerRoute>
+              }
+            />
+            <Route path="/BookingConfirmationPage"
+              element={
+                <ProtectedCustomerRoute>
+                  <PublicLayout><BookingConfirmationPage /></PublicLayout>
+                </ProtectedCustomerRoute>
+              }
+            />
+            <Route path="/MyBookings"
+              element={
+                <ProtectedCustomerRoute>
+                  <PublicLayout><MyBookingsPage /></PublicLayout>
+                </ProtectedCustomerRoute>
+              }
+            />
+            <Route path="/Booking/LiveTracking"
+              element={
+                <ProtectedCustomerRoute>
+                  <PublicLayout><BookingLiveTrackingPage /></PublicLayout>
+                </ProtectedCustomerRoute>
+              }
+            />
+            <Route path="/Booking/Receipt"
+              element={
+                <ProtectedCustomerRoute>
+                  <PublicLayout><BookingReceiptPage /></PublicLayout>
+                </ProtectedCustomerRoute>
+              }
+            />
+            <Route path="/Booking/Rating"
+              element={
+                <ProtectedCustomerRoute>
+                  <PublicLayout><RateProviderPage /></PublicLayout>
+                </ProtectedCustomerRoute>
+              }
+            />
+            <Route path="/Notifications" element={<PublicLayout><NotificationsPage /></PublicLayout>} />
+            <Route path="/Settings" element={<PublicLayout><AccountOverviewPage /></PublicLayout>} /> F
             <Route path="/categories" element={<PublicLayout><CategoriesPage /></PublicLayout>} />
             <Route path="/governorates" element={<PublicLayout><GovernoratesPage /></PublicLayout>} />
             <Route path="/pricing" element={<PublicLayout><PricingPage /></PublicLayout>} />

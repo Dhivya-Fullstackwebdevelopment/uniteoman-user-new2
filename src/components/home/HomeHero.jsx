@@ -238,7 +238,7 @@ export default function HomeHero() {
         <section style={{
           background: 'linear-gradient(145deg,#0a0050,#200030,#0a0a1a)',
           width: '100%',
-          minHeight: isMobile ? 'auto' : '90vh',
+          minHeight: isMobile ? 'auto' : '95vh',
           display: 'flex',
           alignItems: 'center',
           padding: isMobile ? '40px 0 32px' : '0px',

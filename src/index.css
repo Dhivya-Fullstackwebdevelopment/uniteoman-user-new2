@@ -188,7 +188,7 @@ img{display:block;max-width:100%}
 .search-icon{flex-shrink:0;color:var(--dim)}
 .search-inp{flex:1;font-size:13px;color:var(--ink);background:transparent;min-width:0}
 .search-inp::placeholder{color:var(--dim)}
-.search-x{font-size:12px;color:var(--dim);padding:2px 4px;transition:color .15s;display:none}
+.search-x{font-size:12px;color:var(--dim);padding:2px 4px;tansition:color .15s;display:none}
 .search-x:hover{color:var(--ink)}
 .search-x.show{display:block}
 .dd-wrap{position:relative;flex-shrink:0}

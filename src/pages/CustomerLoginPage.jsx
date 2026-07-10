@@ -369,7 +369,7 @@ export default function CustomerLoginPage() {
                                     <span className="text-2xl">{isLogin ?   <User size={30} /> : <User size={30} />}</span>
                                 </div>
                             </div>
-                            <h1 className="text-2xl font-black text-[#0A0A0F] tracking-tight">
+                            <h1 className="text-2xl font-semibold text-[#0A0A0F] tracking-tight">
                                 {isLogin ? 'Customer Login' : 'Create Account'}
                             </h1>
                             <p className="text-sm text-[#9090A0] font-medium mt-1">
