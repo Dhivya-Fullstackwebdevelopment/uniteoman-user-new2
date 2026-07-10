@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useSearchParams, Link, useNavigate } from 'react-router-dom'
 
-// Static categories dataset derived from your HTML structures
 const STATIC_CATEGORIES = [
   { id: 1, slug: 'ac-service', name_en: 'AC Service', starting_price: 'OMR 15', icon: '❄️', bg: '#DBEAFE' },
   { id: 2, slug: 'home-cleaning', name_en: 'Home Cleaning', starting_price: 'OMR 25', icon: '🧹', bg: '#D1FAE5' },
@@ -47,12 +46,65 @@ export default function CategoriesPage() {
   }
 
   return (
-    <div style={{ background: 'white', padding: '28px 56px', minHeight: '100vh' }}>
-      {/* Outer Layout Container wrapper limits maximum desktop text lines and scales cleanly */}
+    <div className="page-wrapper" style={{ background: 'white', minHeight: '100vh' }}>
+      {/* Dynamic styles to handle responsive media queries seamlessly alongside your inline styles */}
+      <style>{`
+        .page-wrapper {
+          padding: 28px 56px;
+        }
+        .header-container {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 22px;
+          gap: 16px;
+        }
+        .actions-wrapper {
+          display: flex;
+          gap: 8px;
+        }
+        .categories-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 12px;
+        }
+        
+        /* Tablet Breakpoint */
+        @media (max-width: 1024px) {
+          .page-wrapper {
+            padding: 24px 32px;
+          }
+          .categories-grid {
+            grid-template-columns: repeat(2, 1fr);
+          }
+        }
+
+        /* Mobile Breakpoint */
+        @media (max-width: 640px) {
+          .page-wrapper {
+            padding: 16px 16px;
+          }
+          .header-container {
+            flex-direction: column;
+            align-items: flex-start;
+          }
+          .actions-wrapper {
+            width: 100%;
+          }
+          .actions-wrapper form {
+            flex: 1;
+            width: auto !important;
+          }
+          .categories-grid {
+            grid-template-columns: 1fr;
+          }
+        }
+      `}</style>
+
       <div style={{ maxWidth: '1240px', margin: '0 auto' }}>
         
         {/* Header Container Area */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '22px' }}>
+        <div className="header-container">
           <div>
             <div style={{ font: '600 28px/1 "DM Sans", sans-serif', color: '#0A0A0F', letterSpacing: '-1px' }}>
               Household Services
@@ -63,7 +115,7 @@ export default function CategoriesPage() {
           </div>
 
           {/* Filter and Search Actions layout */}
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div className="actions-wrapper">
             <form 
               onSubmit={handleSearchSubmit}
               style={{ display: 'flex', alignItems: 'center', gap: '7px', background: '#F4F5F8', border: '1.5px solid #EBEBEF', borderRadius: '10px', padding: '8px 14px', width: '220px' }}
@@ -91,8 +143,8 @@ export default function CategoriesPage() {
           </div>
         </div>
 
-        {/* Grid Content Layout matching 4 columns and precise gaps */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
+        {/* Grid Content Layout */}
+        <div className="categories-grid">
           {processedCats.map((cat) => (
             <Link
               key={cat.id}
