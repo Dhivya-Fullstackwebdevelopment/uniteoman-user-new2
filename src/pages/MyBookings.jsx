@@ -26,11 +26,28 @@ export default function MyBookingsPage() {
     const displayedBookings = activeTab === 'Upcoming' ? upcomingList : activeTab === 'Completed' ? completedList : []
 
     return (
-        <div style={{ background: '#F8F8FA', minHeight: '100vh', fontFamily: '"DM Sans", sans-serif', padding: '40px 0' }}>
+        <div style={{ background: '#F8F8FA', minHeight: '100vh', fontFamily: '"DM Sans", sans-serif', padding: '40px 0' }} className="mb-page">
+            <style>{`
+                @media (max-width: 768px) {
+                    .mb-page { padding: 16px 0 !important; }
+                    .mb-outer { padding: 0 16px !important; }
+                    .mb-card { padding: 16px !important; }
+                    .mb-tabs { width: 100% !important; overflow-x: auto !important; -webkit-overflow-scrolling: touch !important; }
+                    .mb-tabs > div { padding: 10px 14px !important; white-space: nowrap !important; }
+                    .mb-booking-row { flex-wrap: wrap !important; }
+                    .mb-booking-content { min-width: 55% !important; }
+                    .mb-booking-price { text-align: left !important; margin-top: 10px !important; width: 100% !important; display: flex !important; align-items: center !important; justify-content: space-between !important; }
+                    .mb-booking-actions { justify-content: flex-start !important; flex-wrap: wrap !important; }
+                }
+                @media (max-width: 480px) {
+                    .mb-card { padding: 12px !important; }
+                    .mb-booking-actions div, .mb-booking-actions button { flex: 1 1 auto !important; text-align: center !important; }
+                }
+            `}</style>
 
             {/* Outer Layout Alignment Framework preserving exact left and right spaces across application screens */}
-            <div style={{ maxWidth: '1240px', margin: '0 auto', padding: '0 56px' }}>
-                <div style={{ background: '#F4F5F8', padding: '28px 56px', borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,.02)' }}>
+            <div style={{ maxWidth: '1240px', margin: '0 auto', padding: '0 56px' }} className="mb-outer">
+                <div style={{ background: '#F4F5F8', padding: '28px 56px', borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,.02)' }} className="mb-card">
 
                     <div style={{ font: '600 26px/1 "DM Sans", sans-serif', color: '#0A0A0F', letterSpacing: '-1px', marginBottom: '4px' }}>
                         My Bookings
@@ -40,7 +57,7 @@ export default function MyBookingsPage() {
                     </div>
 
                     {/* Interactive Navigation Filter Tabs Bar */}
-                    <div style={{ display: 'flex', gap: '0', background: 'white', borderRadius: '12px', overflow: 'hidden', marginBottom: '20px', boxShadow: '0 1px 5px rgba(0,0,0,.06)', width: 'fit-content' }}>
+                    <div style={{ display: 'flex', gap: '0', background: 'white', borderRadius: '12px', overflow: 'hidden', marginBottom: '20px', boxShadow: '0 1px 5px rgba(0,0,0,.06)', width: 'fit-content' }} className="mb-tabs">
                         <div
                             onClick={() => setActiveTab('Upcoming')}
                             style={{ padding: '10px 22px', background: activeTab === 'Upcoming' ? BRAND_GRADIENT : 'transparent', font: '700 12px/1 "DM Sans", sans-serif', color: activeTab === 'Upcoming' ? 'white' : '#9090A0', cursor: 'pointer', transition: 'all 0.2s' }}
@@ -78,6 +95,7 @@ export default function MyBookingsPage() {
                                 <div
                                     key={booking.id}
                                     style={{ background: 'white', borderRadius: '16px', padding: '18px', display: 'flex', alignItems: 'center', gap: '16px', boxShadow: '0 2px 8px rgba(0,0,0,.06)', border: '1.5px solid #EBEBEF' }}
+                                    className="mb-booking-row"
                                 >
                                     {/* Category Box Icon Frame */}
                                     <div style={{ width: '52px', height: '52px', background: booking.iconBg, borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', flexShrink: 0 }}>
@@ -85,7 +103,7 @@ export default function MyBookingsPage() {
                                     </div>
 
                                     {/* Core Content Booking Metadata Details */}
-                                    <div style={{ flex: 1 }}>
+                                    <div style={{ flex: 1 }} className="mb-booking-content">
                                         <div style={{ font: '700 14px/1 "DM Sans", sans-serif', color: '#0A0A0F', marginBottom: '4px' }}>
                                             {booking.type}
                                         </div>
@@ -98,7 +116,7 @@ export default function MyBookingsPage() {
                                     </div>
 
                                     {/* Pricing metrics and operational workflow action nodes */}
-                                    <div style={{ textAlign: 'right' }}>
+                                    <div style={{ textAlign: 'right' }} className="mb-booking-price">
                                         <div style={{ font: '700 16px/1 "DM Sans", sans-serif', color: '#0A0A0F', marginBottom: '6px' }}>
                                             {booking.cost}
                                         </div>
@@ -107,7 +125,7 @@ export default function MyBookingsPage() {
                                         </div>
 
                                         {/* Contextual actions layout options split mapping configuration properties */}
-                                        <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
+                                        <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }} className="mb-booking-actions">
                                             {booking.label === 'En Route' && (
                                                 <button
                                                     onClick={() => navigate('/Booking/LiveTracking')}

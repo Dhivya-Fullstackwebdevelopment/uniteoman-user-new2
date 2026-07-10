@@ -44,14 +44,29 @@ export default function RateProviderPage() {
   }
 
   return (
-    <div style={{ background: '#F4F5F8', minHeight: '100vh', fontFamily: '"DM Sans", sans-serif', padding: '40px 0' }}>
+    <div style={{ background: '#F4F5F8', minHeight: '100vh', fontFamily: '"DM Sans", sans-serif', padding: '40px 0' }} className="rp-page">
+      <style>{`
+        @media (max-width: 768px) {
+          .rp-page { padding: 16px 0 !important; }
+          .rp-outer { padding: 0 16px !important; }
+          .rp-card { padding: 18px !important; border-radius: 16px !important; }
+          .rp-header { padding: 16px !important; }
+          .rp-stars span { font-size: 34px !important; }
+          .rp-photos > div { width: 64px !important; height: 64px !important; }
+        }
+        @media (max-width: 420px) {
+          .rp-stars { gap: 6px !important; }
+          .rp-stars span { font-size: 28px !important; }
+          .rp-actions { flex-direction: column !important; }
+        }
+      `}</style>
       
       {/* Outer Content Base alignment frame mapping explicit horizontal side limits */}
-      <div style={{ maxWidth: '1240px', margin: '0 auto', padding: '0 56px', boxSizing: 'border-box', display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
+      <div style={{ maxWidth: '1240px', margin: '0 auto', padding: '0 56px', boxSizing: 'border-box', display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }} className="rp-outer">
         <div style={{ maxWidth: '600px', width: '100%' }}>
           
           {/* Professional Provider Profile Short Header Block */}
-          <div style={{ background: 'white', borderRadius: '20px', padding: '22px', boxShadow: '0 2px 10px rgba(0,0,0,.07)', marginBottom: '18px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ background: 'white', borderRadius: '20px', padding: '22px', boxShadow: '0 2px 10px rgba(0,0,0,.07)', marginBottom: '18px', display: 'flex', alignItems: 'center', gap: '16px' }} className="rp-header">
             <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: BRAND_GRADIENT, display: 'flex', alignItems: 'center', justifyContent: 'center', font: '800 24px "DM Sans", sans-serif', color: 'white', flexShrink: 0 }}>
               M
             </div>
@@ -62,12 +77,12 @@ export default function RateProviderPage() {
           </div>
 
           {/* Central Interactive Feedback Core Wrapper */}
-          <div style={{ background: 'white', borderRadius: '20px', padding: '28px', boxShadow: '0 2px 10px rgba(0,0,0,.07)', marginBottom: '16px' }}>
+          <div style={{ background: 'white', borderRadius: '20px', padding: '28px', boxShadow: '0 2px 10px rgba(0,0,0,.07)', marginBottom: '16px' }} className="rp-card">
             
             {/* Interactive Star Scale Module */}
             <div style={{ textAlign: 'center', marginBottom: '22px' }}>
               <div style={{ font: '600 14px/1 "DM Sans", sans-serif', color: '#9090A0', marginBottom: '16px' }}>How was the service?</div>
-              <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }} className="rp-stars">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <span
                     key={star}
@@ -120,14 +135,14 @@ export default function RateProviderPage() {
 
             {/* Optional Photo Attachment Slots */}
             <div style={{ font: '600 12px/1 "DM Sans", sans-serif', color: '#9090A0', textTransform: 'uppercase', letterSpacing: '.6px', marginTop: '20px', marginBottom: '9px' }}>Add Photo (optional)</div>
-            <div style={{ display: 'flex', gap: '9px', marginBottom: '20px' }}>
+            <div style={{ display: 'flex', gap: '9px', marginBottom: '20px' }} className="rp-photos">
               <div style={{ width: '72px', height: '72px', background: '#F4F5F8', border: '2px dashed #D0D0D8', borderRadius: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center', font: '400 22px "DM Sans", sans-serif', color: '#9090A0', cursor: 'pointer' }}>📷</div>
               <div style={{ width: '72px', height: '72px', background: '#F4F5F8', border: '2px dashed #D0D0D8', borderRadius: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center', font: '400 22px "DM Sans", sans-serif', color: '#9090A0', cursor: 'pointer' }}></div>
               <div style={{ width: '72px', height: '72px', background: '#F4F5F8', border: '2px dashed #D0D0D8', borderRadius: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center', font: '400 22px "DM Sans", sans-serif', color: '#9090A0', cursor: 'pointer' }}></div>
             </div>
 
             {/* Form Routing Submission Action Triggers split row */}
-            <div style={{ display: 'flex', gap: '12px' }}>
+            <div style={{ display: 'flex', gap: '12px' }} className="rp-actions">
               <button 
                 onClick={() => navigate('/MyBookings')}
                 style={{ flex: 1, padding: '13px', background: '#F4F5F8', border: '1.5px solid #EBEBEF', borderRadius: '12px', textAlign: 'center', font: '600 14px/1 "DM Sans", sans-serif', color: '#9090A0', cursor: 'pointer', outline: 'none' }}

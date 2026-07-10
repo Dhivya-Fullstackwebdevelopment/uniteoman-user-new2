@@ -32,9 +32,21 @@ export default function BusinessListPage() {
 
   return (
     <div style={{ background: 'white', minHeight: '100vh', fontFamily: '"DM Sans", sans-serif' }}>
+      <style>{`
+        @media (max-width: 900px) {
+          .bl-grid { grid-template-columns: 1fr !important; }
+          .bl-left { border-right: none !important; border-bottom: 1px solid #EBEBEF !important; padding: 20px 20px !important; }
+          .bl-right { padding: 20px !important; }
+          .bl-breadcrumbs { padding: 12px 20px !important; }
+        }
+        @media (max-width: 560px) {
+          .bl-service-row { flex-wrap: wrap !important; }
+          .bl-service-price { width: 100% !important; display: flex !important; align-items: center !important; justify-content: space-between !important; margin-top: 8px !important; text-align: left !important; }
+        }
+      `}</style>
       
       {/* Breadcrumbs Navigation Strip */}
-      <div style={{ padding: '12px 56px', borderBottom: '1px solid #EBEBEF', font: '400 12px/1 "DM Sans", sans-serif', color: '#9090A0' }}>
+      <div style={{ padding: '12px 56px', borderBottom: '1px solid #EBEBEF', font: '400 12px/1 "DM Sans", sans-serif', color: '#9090A0' }} className="bl-breadcrumbs">
         <div style={{ maxWidth: '1240px', margin: '0 auto' }}>
           <Link to="/" style={{ color: '#9090A0', textDecoration: 'none' }}>Home</Link> ›{' '}
           <Link to="/categories" style={{ color: '#9090A0', textDecoration: 'none' }}>Services</Link> ›{' '}
@@ -44,10 +56,10 @@ export default function BusinessListPage() {
 
       {/* Grid Canvas Frame Workspace Container */}
       <div style={{ maxWidth: '1240px', margin: '0 auto' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 360px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 360px' }} className="bl-grid">
           
           {/* LEFT SECTION CONTAINER */}
-          <div style={{ padding: '26px 40px 26px 56px', borderRight: '1px solid #EBEBEF' }}>
+          <div style={{ padding: '26px 40px 26px 56px', borderRight: '1px solid #EBEBEF' }} className="bl-left">
             
             {/* Category Brand Heading Details */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '22px' }}>
@@ -58,7 +70,7 @@ export default function BusinessListPage() {
                 <h1 style={{ font: '600 26px/1 "DM Sans", sans-serif', color: '#0A0A0F', letterSpacing: '-.8px', margin: 0 }}>
                   AC Service
                 </h1>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '9px', marginTop: '5px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '9px', marginTop: '5px', flexWrap: 'wrap' }}>
                   <span style={{ font: '700 12px/1 "DM Sans", sans-serif', color: '#F59E0B' }}>★ 4.9</span>
                   <span style={{ font: '400 12px/1 "DM Sans", sans-serif', color: '#9090A0' }}>(2,347 reviews)</span>
                   <span style={{ font: '600 12px/1 "DM Sans", sans-serif', color: '#10B981' }}>312 pros available</span>
@@ -89,13 +101,14 @@ export default function BusinessListPage() {
                       background: isSelected ? 'rgba(214,28,168,.03)' : '#F4F5F8',
                       transition: 'all 0.2s ease'
                     }}
+                    className="bl-service-row"
                   >
                     <div style={{ width: '42px', height: '42px', background: '#DBEAFE', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', flexShrink: 0 }}>
                       {service.icon}
                     </div>
 
-                    <div style={{ flex: 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
+                    <div style={{ flex: 1, minWidth: '150px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '7px', flexWrap: 'wrap' }}>
                         <div style={{ font: '700 13px/1 "DM Sans", sans-serif', color: '#0A0A0F' }}>
                           {service.name}
                         </div>
@@ -113,14 +126,14 @@ export default function BusinessListPage() {
                       </div>
                     </div>
 
-                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                    <div style={{ textAlign: 'right', flexShrink: 0 }} className="bl-service-price">
                       <div style={{ font: '600 15px/1 "DM Sans", sans-serif', color: '#0A0A0F', marginBottom: '6px' }}>
                         {service.price}
                       </div>
                       <button 
                         onClick={(e) => {
                           e.stopPropagation();
-                          navigate(`/BusinessSelection?pro=${encodeURIComponent(name)}`)
+                          navigate(`/BusinessSelection?pro=${encodeURIComponent(service.name)}`)
                         }}
                         style={{ padding: '6px 13px', background: BRAND_GRADIENT, borderRadius: '8px', font: '700 11px/1 "DM Sans", sans-serif', color: 'white', cursor: 'pointer', border: 'none', outline: 'none' }}
                       >
@@ -134,7 +147,7 @@ export default function BusinessListPage() {
           </div>
 
           {/* RIGHT SIDEBAR PANEL CONTAINER */}
-          <div style={{ padding: '24px', background: '#F4F5F8' }}>
+          <div style={{ padding: '24px', background: '#F4F5F8' }} className="bl-right">
             <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '12px' }}>
               <span style={{ fontSize: '13px' }}>✨</span>
               <div style={{ font: '700 13px/1 "DM Sans", sans-serif', color: '#0A0A0F' }}>
