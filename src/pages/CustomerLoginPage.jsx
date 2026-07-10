@@ -19,7 +19,7 @@ export default function CustomerLoginPage() {
     const [searchParams] = useSearchParams()
     
     // Get redirect URL from query params, default to a specific page if not provided
-    const redirectTo = searchParams.get('redirect') || '/business/the-psychology-clinic/book'
+    const redirectTo = searchParams.get('redirect')
     
     const [otpTimer, setOtpTimer] = useState(600)
     const [canResendOtp, setCanResendOtp] = useState(false)

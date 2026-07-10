@@ -40,7 +40,7 @@ import BookingReceiptPage from '@/pages/BookingReceiptPage';
 import RateProviderPage from '@/pages/RateProviderPage';
 import NotificationsPage from '@/pages/Notifications';
 import AccountOverviewPage from './pages/AccountOverviewPage'
-
+import Help from './pages/Help'
 
 
 const queryClient = new QueryClient({
@@ -101,71 +101,71 @@ export default function App() {
             <Route path="/business/:slug" element={<PublicLayout><BusinessProfilePage /></PublicLayout>} />
             <Route path="/BookingPage"
               element={
-                <ProtectedCustomerRoute>
+                //<ProtectedCustomerRoute>
                   <PublicLayout><BookingPage /></PublicLayout>
-                </ProtectedCustomerRoute>
+                //</ProtectedCustomerRoute>
               }
             /><Route path="/BookingDateTimePickerPage"
               element={
-                <ProtectedCustomerRoute>
+                // <ProtectedCustomerRoute>
                   <PublicLayout><BookingDateTimePickerPage /></PublicLayout>
-                </ProtectedCustomerRoute>
+                // </ProtectedCustomerRoute> 
               }
             />
             <Route path="/BusinessSelection"
               element={
-                <ProtectedCustomerRoute>
+                // <ProtectedCustomerRoute>
                   <PublicLayout><BusinessSelection /></PublicLayout>
-                </ProtectedCustomerRoute>
+                // </ProtectedCustomerRoute>
               }
             />
             <Route path="/BookingAddressPage"
               element={
-                <ProtectedCustomerRoute>
+                // <ProtectedCustomerRoute>
                   <PublicLayout><BookingAddressPage /></PublicLayout>
-                </ProtectedCustomerRoute>
+                // </ProtectedCustomerRoute>
               }
             />
             <Route path="/BookingPaymentPage"
               element={
-                <ProtectedCustomerRoute>
+                // <ProtectedCustomerRoute>
                   <PublicLayout><BookingPaymentPage /></PublicLayout>
-                </ProtectedCustomerRoute>
+                // </ProtectedCustomerRoute> 
               }
             />
             <Route path="/BookingConfirmationPage"
               element={
-                <ProtectedCustomerRoute>
+                // <ProtectedCustomerRoute>
                   <PublicLayout><BookingConfirmationPage /></PublicLayout>
-                </ProtectedCustomerRoute>
+                // </ProtectedCustomerRoute> 
               }
             />
             <Route path="/MyBookings"
               element={
-                <ProtectedCustomerRoute>
+                // <ProtectedCustomerRoute>
                   <PublicLayout><MyBookingsPage /></PublicLayout>
-                </ProtectedCustomerRoute>
+              //</ProtectedCustomerRoute> 
               }
             />
             <Route path="/Booking/LiveTracking"
               element={
-                <ProtectedCustomerRoute>
+                // <ProtectedCustomerRoute>
                   <PublicLayout><BookingLiveTrackingPage /></PublicLayout>
-                </ProtectedCustomerRoute>
+                // </ProtectedCustomerRoute>
               }
             />
             <Route path="/Booking/Receipt"
               element={
-                <ProtectedCustomerRoute>
+                // <ProtectedCustomerRoute>
                   <PublicLayout><BookingReceiptPage /></PublicLayout>
-                </ProtectedCustomerRoute>
+                // </ProtectedCustomerRoute>
               }
             />
             <Route path="/Booking/Rating"
               element={
-                <ProtectedCustomerRoute>
+                // <ProtectedCustomerRoute>
                   <PublicLayout><RateProviderPage /></PublicLayout>
-                </ProtectedCustomerRoute>
+                // </ProtectedCustomerRoute>
               }
             />
             <Route path="/Notifications" element={<PublicLayout><NotificationsPage /></PublicLayout>} />
@@ -181,9 +181,16 @@ export default function App() {
             <Route path="/AboutUs" element={<PublicLayout><AboutUs /></PublicLayout>} />
             <Route path="/contact"
               element={
-                <ProtectedCustomerRoute message="Please login to access the contact page">
+                // <ProtectedCustomerRoute>
                   <PublicLayout><ContactPage /></PublicLayout>
-                </ProtectedCustomerRoute>
+                //</ProtectedCustomerRoute>
+              }
+            />
+             <Route path="/help"
+              element={
+                // <ProtectedCustomerRoute>
+                  <PublicLayout><Help /></PublicLayout>
+                //</ProtectedCustomerRoute>
               }
             />
             <Route path="/customer/login" element={<PublicLayout><CustomerLoginPage /></PublicLayout>} />
