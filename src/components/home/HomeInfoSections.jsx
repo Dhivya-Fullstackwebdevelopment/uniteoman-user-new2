@@ -18,45 +18,82 @@ import {
   Key,
   Store,
   Smartphone,
-  Building2
+  Building2,
+  Droplets,
+  PaintBucket,
+  Car,
+  Waves,
+  Ruler,
+  Scissors,
+  Truck,
+  Droplet,
+  Video,
+  GlassWater,
+  Dumbbell,
+  Baby,
+  PawPrint,
+  Shirt,
+  Hammer
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
-import { categoryApi, reviewApi } from '@/lib/api'
 
 const CATEGORY_ICONS = {
-  restaurants: Utensils,
-  cleaning: Brush,
-  repairing: Wrench,
-  health: HeartPulse,
-  beauty: Sparkles,
-  technical: Monitor,
-  moving: Package,
-  events: PartyPopper,
-  education: GraduationCap,
-  clinic: Stethoscope,
-  pharmacy: Pill,
-  'car-rental': Key,
-  'car-repair': Wrench,
-  supermarket: Store,
-  electronic: Smartphone,
-  'it-company': Briefcase
+  'ac-service': Zap,
+  'home-cleaning': Brush,
+  'plumbing': Wrench,
+  'electrical': Zap,
+  'beauty-at-home': Sparkles,
+  'carpentry': Ruler,
+  'pest-control': ShieldCheck,
+  'painting': PaintBucket,
+  'car-detailing': Car,
+  'pool-service': Waves,
+  'appliance-repair': Wrench,
+  'landscaping': Scissors,
+  'moving-packing': Truck,
+  'water-tank-clean': Droplet,
+  'cctv-smart-home': Video,
+  'glazing-windows': GlassWater,
+  'fitness-wellness': Dumbbell,
+  'babysitting': Baby,
+  'pet-care': PawPrint,
+  'laundry-ironing': Shirt,
+  'home-renovation': Hammer
 }
+
+const SERVICES = [
+  { id: 1, name_en: 'AC Service', slug: 'ac-service', price: '15', icon: Zap },
+  { id: 2, name_en: 'Home Cleaning', slug: 'home-cleaning', price: '25', icon: Brush },
+  { id: 3, name_en: 'Plumbing', slug: 'plumbing', price: '12', icon: Wrench },
+  { id: 4, name_en: 'Electrical', slug: 'electrical', price: '8', icon: Zap },
+  { id: 5, name_en: 'Beauty at Home', slug: 'beauty-at-home', price: '12', icon: Sparkles },
+  { id: 6, name_en: 'Carpentry', slug: 'carpentry', price: '15', icon: Ruler },
+  { id: 7, name_en: 'Pest Control', slug: 'pest-control', price: '18', icon: ShieldCheck },
+  { id: 8, name_en: 'Painting', slug: 'painting', price: '25', icon: PaintBucket },
+  { id: 9, name_en: 'Car Detailing', slug: 'car-detailing', price: '5', icon: Car },
+  { id: 10, name_en: 'Pool Service', slug: 'pool-service', price: '25', icon: Waves },
+  { id: 11, name_en: 'Appliance Repair', slug: 'appliance-repair', price: '12', icon: Wrench },
+  { id: 12, name_en: 'Landscaping', slug: 'landscaping', price: '15', icon: Scissors },
+  { id: 13, name_en: 'Moving & Packing', slug: 'moving-packing', price: '25', icon: Truck },
+  { id: 14, name_en: 'Water Tank Clean', slug: 'water-tank-clean', price: '35', icon: Droplet },
+  { id: 15, name_en: 'CCTV & Smart Home', slug: 'cctv-smart-home', price: '30', icon: Video },
+  { id: 16, name_en: 'Glazing & Windows', slug: 'glazing-windows', price: '18', icon: GlassWater },
+  { id: 17, name_en: 'Fitness & Wellness', slug: 'fitness-wellness', price: '20', icon: Dumbbell },
+  { id: 18, name_en: 'Babysitting', slug: 'babysitting', price: '5/hr', icon: Baby },
+  { id: 19, name_en: 'Pet Care', slug: 'pet-care', price: '8', icon: PawPrint },
+  { id: 20, name_en: 'Laundry & Ironing', slug: 'laundry-ironing', price: '5', icon: Shirt },
+  { id: 21, name_en: 'Home Renovation', slug: 'home-renovation', price: '40', icon: Hammer }
+]
 
 export function CategoryGrid() {
   const navigate = useNavigate()
 
-  const { data: categories = [] } = useQuery({
-    queryKey: ["categories", "top-level"],
-    queryFn: () => categoryApi.list(null, 0, null),
-  })
-
   // Show only first 7 categories
-  const visibleCategories = categories.slice(0, 7)
+  const visibleCategories = SERVICES.slice(0, 7)
 
   // Remaining categories count
-  const remainingCount = Math.max(categories.length - 7, 0)
-  const remainingCategories = categories.slice(7)
+  const remainingCount = Math.max(SERVICES.length - 7, 0)
+  const remainingCategories = SERVICES.slice(7)
 
   const CARD_GRADIENTS = [
     {
@@ -116,7 +153,7 @@ export function CategoryGrid() {
           <div>
             <div className="inline-flex items-center bg-gradient-to-r from-[#D61CA8] to-[#8B2EF5] rounded-md px-3 py-1 mb-4">
               <span className="text-[10px] font-bold tracking-[2px] uppercase text-white">
-                {categories.length}+ Categories
+                {SERVICES.length}+ Categories
               </span>
             </div>
 
@@ -153,19 +190,15 @@ export function CategoryGrid() {
         {/* Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
 
-          {visibleCategories.map((cat, index) => {
-            const Icon = CATEGORY_ICONS[cat.slug] || Briefcase
+          {visibleCategories.map((service, index) => {
+            const Icon = service.icon
             const style = CARD_GRADIENTS[index % CARD_GRADIENTS.length]
 
-            const linkTo = cat.has_children
-              ? `/categories?parent_slug=${cat.slug}&name=${encodeURIComponent(
-                cat.name_en
-              )}`
-              : `/businesses?category=${cat.slug}`
+            const linkTo = `/services/${service.slug}`
 
             return (
               <div
-                key={cat.id}
+                key={service.id}
                 onClick={() => navigate(linkTo)}
                 className="cat-card group relative h-[240px] w-full overflow-hidden rounded-[22px] bg-white p-6 cursor-pointer shadow-[0_2px_16px_rgba(0,0,0,.05)] hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col"
                 style={{ animationDelay: `${index * 0.08}s` }}
@@ -182,20 +215,18 @@ export function CategoryGrid() {
 
                 {/* Name */}
                 <h3 className="text-[18px] font-bold text-[#0A0A0F] h-[56px] overflow-hidden mb-2">
-                  {cat.name_en}
+                  {service.name_en}
                 </h3>
 
                 {/* Description */}
                 <p className="text-[12px] leading-5 text-[#9090A0] h-[40px] overflow-hidden">
-                  {cat.has_children
-                    ? "Browse all available services in this category."
-                    : `${cat.business_count || 0} verified listings available.`}
+                  Professional {service.name_en.toLowerCase()} services available.
                 </p>
 
                 {/* Footer */}
                 <div className="flex items-center justify-between">
                   <span className="text-[#D61CA8] font-bold text-[15px]">
-                    From OMR 20
+                    From OMR {service.price}
                   </span>
 
                   <div
@@ -226,7 +257,7 @@ export function CategoryGrid() {
               <p className="text-[12px] leading-5 text-white/60 flex-1">
                 {remainingCategories
                   .slice(0, 4)
-                  .map((cat) => cat.name_en)
+                  .map((service) => service.name_en)
                   .join(" • ")}
                 {remainingCount > 4 && " • and more"}
               </p>
