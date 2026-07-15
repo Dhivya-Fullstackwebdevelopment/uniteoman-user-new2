@@ -8,13 +8,13 @@ const BRAND_GRADIENT = 'linear-gradient(135deg, #D61CA8, #8B2EF5)'
 export default function BusinessSelection() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
-  
-  // Get URL parameters
+
   const professionalId = searchParams.get('professional_id') || ''
   const serviceTypeId = searchParams.get('service_type_id') || ''
   const proName = searchParams.get('pro') || ''
-  
-  // States
+  const locationId = searchParams.get('location_id') || '1'  // ← ADD THIS
+  const serviceId = searchParams.get('service_id') || '1'    // ← ADD THIS
+
   const [professionals, setProfessionals] = useState([])
   const [loading, setLoading] = useState(true)
   const [activeFilterTab, setActiveFilterTab] = useState('All')
@@ -35,65 +35,88 @@ export default function BusinessSelection() {
     search: ''
   })
 
-  // Fetch professionals with filters
+
+  // Fetch professionals conditionally based on query presence
   useEffect(() => {
     const fetchProfessionals = async () => {
       setLoading(true)
       try {
-        // Build query params
         const params = new URLSearchParams()
-        params.append('location_id', '1')
-        params.append('service_id', '1')
-        
-        if (filters.service_type_id) {
-          params.append('service_type_id', filters.service_type_id)
-        }
-        if (filters.min_rating) {
-          params.append('min_rating', filters.min_rating)
-        }
-        if (filters.price_min) {
-          params.append('price_min', filters.price_min)
-        }
-        if (filters.price_max) {
-          params.append('price_max', filters.price_max)
-        }
-        if (filters.sort) {
-          params.append('sort', filters.sort)
-        }
-        if (filters.search) {
-          params.append('search', filters.search)
+
+        // Append optional layout filters
+        if (filters.service_type_id) params.append('service_type_id', filters.service_type_id)
+        if (filters.min_rating) params.append('min_rating', filters.min_rating)
+        if (filters.price_min) params.append('price_min', filters.price_min)
+        if (filters.price_max) params.append('price_max', filters.price_max)
+        if (filters.sort) params.append('sort', filters.sort)
+        if (filters.search) params.append('search', filters.search)
+
+        // Always provide fallback location and service identifiers context
+        params.append('location_id', locationId)
+        params.append('service_id', serviceId)
+
+        let url = ''
+
+        // Context Check: Are we requesting a targeted individual review payload?
+        if (professionalId) {
+          const baseUrl = API_ENDPOINTS.PROFESSIONAL_DETAIL(professionalId)
+          url = `${baseUrl}?${params.toString()}`
+        } else {
+          const baseUrl = API_ENDPOINTS.PROFESSIONALS_BY_LOCATION_AND_SERVICE(locationId, serviceId)
+          url = `${baseUrl}&${params.toString()}`
         }
 
-        const response = await axios.get(
-          `${API_ENDPOINTS.PROFESSIONALS_BY_LOCATION_AND_SERVICE(1, 1)}?${params.toString()}`
-        )
-        
+        const response = await axios.get(url)
+
         if (response.data && response.data.status === 'success') {
-          setProfessionals(response.data.data || [])
-          setAiTopPicks(response.data.ai_top_picks || [])
-          setAiSummaryNote(response.data.ai_summary_note || '')
-          setCounts(response.data.counts || { all: 0, available_today: 0, top_rated: 0, nearest: 0 })
-          
-          // Set AI context
+          const fetchedData = response.data.data;
+
+          if (professionalId) {
+            // Case A: Response contains a single object model data wrap
+            // Format array to show targeted professional profile followed by related top recommendations
+            const individualPro = {
+              id: fetchedData.id,
+              name: fetchedData.name,
+              specialty: fetchedData.specialty,
+              area: fetchedData.area,
+              rating: fetchedData.rating,
+              jobs_done: fetchedData.jobs_done,
+              price: fetchedData.services_offered?.[0]?.price || '0',
+              distance_km: fetchedData.distance_km,
+              ai_match_score: fetchedData.ai_match_score,
+              initial: fetchedData.name?.charAt(0) || 'P'
+            }
+
+            setProfessionals([individualPro])
+            setAiTopPicks(response.data.data.ai_top_picks || [])
+            setAiSummaryNote(response.data.data.ai_summary_note || '')
+          } else {
+            // Case B: Broad directory fallback array allocation
+            setProfessionals(fetchedData || [])
+            setAiTopPicks(response.data.ai_top_picks || [])
+            setAiSummaryNote(response.data.ai_summary_note || '')
+            setCounts(response.data.counts || { all: 0, available_today: 0, top_rated: 0, nearest: 0 })
+          }
+
           if (response.data.search_label) {
             setAiContext(response.data.search_label)
           }
         }
       } catch (error) {
-        console.error("Error fetching professionals:", error)
+        console.error("Error managing professionals allocation stream:", error)
       } finally {
         setLoading(false)
       }
     }
 
     fetchProfessionals()
-  }, [filters])
+  }, [filters, locationId, serviceId, professionalId])
 
   // Fetch available services (service types) for filter
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        const response = await axios.get(`${API_ENDPOINTS.SERVICES}?service_id=1`)
+        const response = await axios.get(`${API_ENDPOINTS.SERVICES}?service_id=${serviceId}`)  // ← USE serviceId
         if (response.data && response.data.status === 'success' && response.data.data.length > 0) {
           const service = response.data.data[0]
           if (service.service_types) {
@@ -109,20 +132,20 @@ export default function BusinessSelection() {
       }
     }
     fetchServices()
-  }, [serviceTypeId])
+  }, [serviceTypeId, serviceId])  // ← ADD dependency
 
   const handleProfileNavigation = (id, name) => {
     navigate(`/business/${id}/${encodeURIComponent(name.toLowerCase().replace(/\s+/g, '-'))}`)
   }
 
   const handleBook = (id, name) => {
-    navigate(`/BookingPage?professional_id=${id}&name=${encodeURIComponent(name)}`)
+    navigate(`/BookingPage?professional_id=${id}&name=${encodeURIComponent(name)}&service_id=${serviceId}&location_id=${locationId}`)  // ← ADD service_id & location_id
   }
 
   const handleFilterTab = (tab) => {
     setActiveFilterTab(tab)
     let sort = ''
-    switch(tab) {
+    switch (tab) {
       case 'Available Today':
         sort = 'available_today'
         break
@@ -159,7 +182,7 @@ export default function BusinessSelection() {
   const handlePriceRange = (range) => {
     setSelectedPriceRange(range)
     let priceMin = '', priceMax = ''
-    switch(range) {
+    switch (range) {
       case '0-15':
         priceMin = '0'
         priceMax = '15'
@@ -191,12 +214,12 @@ export default function BusinessSelection() {
   // Filter professionals based on selected filters
   const getFilteredProfessionals = () => {
     let filtered = [...professionals]
-    
+
     // Filter by selected services
     if (selectedServices.length > 0) {
       filtered = filtered.filter(p => selectedServices.includes(p.service_type_id))
     }
-    
+
     return filtered
   }
 
@@ -204,7 +227,7 @@ export default function BusinessSelection() {
 
   // Get tab counts
   const getTabCount = (tab) => {
-    switch(tab) {
+    switch (tab) {
       case 'All': return counts.all || filteredProfessionals.length
       case 'Available Today': return counts.available_today || 0
       case 'Top Rated': return counts.top_rated || 0
@@ -217,35 +240,35 @@ export default function BusinessSelection() {
   const renderShimmer = () => (
     <>
       {Array.from({ length: 4 }).map((_, idx) => (
-        <div key={`shimmer-${idx}`} style={{ 
-          background: 'white', 
-          borderRadius: '14px', 
+        <div key={`shimmer-${idx}`} style={{
+          background: 'white',
+          borderRadius: '14px',
           padding: '16px',
           border: '1.5px solid #EBEBEF'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <div style={{ 
-              width: '52px', 
-              height: '52px', 
-              borderRadius: '50%', 
+            <div style={{
+              width: '52px',
+              height: '52px',
+              borderRadius: '50%',
               background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)',
               backgroundSize: '200% 100%',
               animation: 'shimmer 1.5s infinite',
               flexShrink: 0
             }} />
             <div style={{ flex: 1 }}>
-              <div style={{ 
-                height: '18px', 
-                width: '60%', 
+              <div style={{
+                height: '18px',
+                width: '60%',
                 background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)',
                 backgroundSize: '200% 100%',
                 animation: 'shimmer 1.5s infinite',
                 borderRadius: '4px',
                 marginBottom: '8px'
               }} />
-              <div style={{ 
-                height: '14px', 
-                width: '40%', 
+              <div style={{
+                height: '14px',
+                width: '40%',
                 background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)',
                 backgroundSize: '200% 100%',
                 animation: 'shimmer 1.5s infinite',
@@ -395,31 +418,31 @@ export default function BusinessSelection() {
                 {availableServices.map((service) => {
                   const isChecked = selectedServices.includes(service.id)
                   return (
-                    <div 
-                      key={service.id} 
+                    <div
+                      key={service.id}
                       onClick={() => handleServiceToggle(service.id)}
-                      style={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: '7px', 
-                        marginBottom: '6px', 
-                        cursor: 'pointer' 
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '7px',
+                        marginBottom: '6px',
+                        cursor: 'pointer'
                       }}
                     >
-                      <div style={{ 
-                        width: '14px', 
-                        height: '14px', 
-                        borderRadius: '3px', 
+                      <div style={{
+                        width: '14px',
+                        height: '14px',
+                        borderRadius: '3px',
                         background: isChecked ? '#D61CA8' : 'transparent',
                         border: isChecked ? '2px solid #D61CA8' : '2px solid #EBEBEF',
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center', 
-                        flexShrink: 0 
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0
                       }}>
                         {isChecked && <span style={{ fontSize: '9px', color: 'white' }}>✓</span>}
                       </div>
-                      <span style={{ 
+                      <span style={{
                         font: isChecked ? '600 12px/1 "DM Sans", sans-serif' : '400 12px/1 "DM Sans", sans-serif',
                         color: isChecked ? '#0A0A0F' : '#9090A0'
                       }}>
@@ -439,7 +462,7 @@ export default function BusinessSelection() {
                   {['0-15', '15-30', '30+'].map((range) => {
                     const isSelected = selectedPriceRange === range
                     return (
-                      <div 
+                      <div
                         key={range}
                         onClick={() => handlePriceRange(range)}
                         style={{
@@ -518,26 +541,25 @@ export default function BusinessSelection() {
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {loading ? (
               renderShimmer()
-            ) : filteredProfessionals.length > 0 ? (
-              filteredProfessionals.map((pro) => {
-                // Check if this pro is in AI top picks
+            ) : (filteredProfessionals.length > 0 || aiTopPicks.length > 0) ? (
+              [...filteredProfessionals, ...aiTopPicks.filter(pick => !filteredProfessionals.some(p => p.id === pick.id))].map((pro) => {
                 const isAIPick = aiTopPicks.some(p => p.id === pro.id)
-                const aiMatch = aiTopPicks.find(p => p.id === pro.id)
-                
+                const aiMatch = aiTopPicks.find(p => p.id === pro.id) || pro // Fallback reference for profile mapping descriptions
+
                 return (
                   <div key={pro.id} className="business-card">
                     {/* Initial Avatar circle */}
-                    <div style={{ 
-                      width: '52px', 
-                      height: '52px', 
-                      borderRadius: '50%', 
-                      background: BRAND_GRADIENT, 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'center', 
-                      font: '700 20px "DM Sans", sans-serif', 
-                      color: 'white', 
-                      flexShrink: 0 
+                    <div style={{
+                      width: '52px',
+                      height: '52px',
+                      borderRadius: '50%',
+                      background: BRAND_GRADIENT,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      font: '700 20px "DM Sans", sans-serif',
+                      color: 'white',
+                      flexShrink: 0
                     }}>
                       {pro.initial || pro.name?.charAt(0) || 'P'}
                     </div>
@@ -598,14 +620,14 @@ export default function BusinessSelection() {
                       <div style={{ display: 'flex', gap: '7px' }}>
                         <div
                           onClick={() => handleProfileNavigation(pro.id, pro.name)}
-                          style={{ 
-                            padding: '7px 12px', 
-                            background: '#F4F5F8', 
-                            border: '1.5px solid #EBEBEF', 
-                            borderRadius: '8px', 
-                            font: '600 12px/1 "DM Sans", sans-serif', 
-                            color: '#9090A0', 
-                            cursor: 'pointer', 
+                          style={{
+                            padding: '7px 12px',
+                            background: '#F4F5F8',
+                            border: '1.5px solid #EBEBEF',
+                            borderRadius: '8px',
+                            font: '600 12px/1 "DM Sans", sans-serif',
+                            color: '#9090A0',
+                            cursor: 'pointer',
                             whiteSpace: 'nowrap',
                             transition: 'all 0.2s ease'
                           }}
@@ -620,13 +642,13 @@ export default function BusinessSelection() {
                         </div>
                         <div
                           onClick={() => handleBook(pro.id, pro.name)}
-                          style={{ 
-                            padding: '7px 16px', 
-                            background: BRAND_GRADIENT, 
-                            borderRadius: '8px', 
-                            font: '700 12px/1 "DM Sans", sans-serif', 
-                            color: 'white', 
-                            cursor: 'pointer', 
+                          style={{
+                            padding: '7px 16px',
+                            background: BRAND_GRADIENT,
+                            borderRadius: '8px',
+                            font: '700 12px/1 "DM Sans", sans-serif',
+                            color: 'white',
+                            cursor: 'pointer',
                             boxShadow: '0 3px 10px rgba(214,28,168,.25)',
                             whiteSpace: 'nowrap',
                             transition: 'all 0.2s ease'
@@ -646,8 +668,8 @@ export default function BusinessSelection() {
                 )
               })
             ) : (
-              <div style={{ 
-                textAlign: 'center', 
+              <div style={{
+                textAlign: 'center',
                 padding: '60px 20px',
                 color: '#9090A0',
                 font: '400 14px/1.5 "DM Sans", sans-serif'

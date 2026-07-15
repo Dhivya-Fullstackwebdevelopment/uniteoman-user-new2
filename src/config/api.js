@@ -9,6 +9,8 @@ export const API_ENDPOINTS = {
   PROFESSIONALS_BY_LOCATION_AND_SERVICE: (locationId, serviceId) => 
     `${API_BASE_URL}/professionals/?location_id=${locationId}&service_id=${serviceId}`,
   SERVICE_BY_ID: (serviceId) => `${API_BASE_URL}/services/?service_id=${serviceId}`,
+  PROFESSIONAL_DETAIL: (professionalId) => `${API_BASE_URL}/professionals/${professionalId}/`,
+  SERVICE_BY_ID: (serviceId) => `${API_BASE_URL}/services/?service_id=${serviceId}`,
 };
 
 export default API_BASE_URL;
