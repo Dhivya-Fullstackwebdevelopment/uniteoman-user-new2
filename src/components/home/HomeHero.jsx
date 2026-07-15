@@ -27,6 +27,11 @@ export default function HomeHero() {
   const selectedLocation = useSelector(selectSelectedLocation)
   const selectedService = useSelector(selectSelectedService)
 
+  useEffect(() => {
+    console.log('selectedLocation:', selectedLocation)
+    console.log('selectedService:', selectedService)
+  }, [selectedLocation, selectedService])
+
   const [quickQuery, setQuickQuery] = useState('')
   const [suggestions, setSuggestions] = useState([])
   const [isSearching, setIsSearching] = useState(false)

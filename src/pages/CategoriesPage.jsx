@@ -1,7 +1,14 @@
 import { useState, useEffect, useRef } from 'react'
 import { useSearchParams, Link, useNavigate } from 'react-router-dom'
+import { useDispatch, useSelector } from 'react-redux'
 import axios from 'axios'
 import { API_ENDPOINTS } from '../config/api'
+import {
+  setSelectedLocation,
+  setSelectedService,
+  selectSelectedLocation,
+  selectSelectedService,
+} from '../store/slices/searchSlice'
 
 // Helper function to match fallback backgrounds if API items don't have them
 const getBgColor = (slug) => {
@@ -35,23 +42,35 @@ const getBgColor = (slug) => {
 export default function CategoriesPage() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
+  const dispatch = useDispatch()
+
+  // Redux state (shared with HomeHero)
+  const selectedLocation = useSelector(selectSelectedLocation)
+  const selectedService = useSelector(selectSelectedService)
+
+   useEffect(() => {
+      console.log('selectedLocation:', selectedLocation)
+      console.log('selectedService:', selectedService)
+    }, [selectedLocation, selectedService])
   
-  // URL parameters passed from Hero section
+
+  // URL parameters passed from Hero section (fallback / source of truth on direct load)
   const urlQuery = searchParams.get('q') || ''
   const urlServiceId = searchParams.get('service_id') || ''
-  const urlLocation = searchParams.get('location_id') || '1'
+  // Prefer Redux location id if present, else URL, else default '1'
+  const urlLocation = searchParams.get('location_id') || selectedLocation.id || '1'
 
   // States
   const [servicesData, setServicesData] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState(urlQuery)
   const [sortBy, setSortBy] = useState('popular')
-  const [selectedServiceName, setSelectedServiceName] = useState('')
-  const [locationName, setLocationName] = useState('')
+  const [selectedServiceName, setSelectedServiceName] = useState(selectedService.name || '')
+  const [locationName, setLocationName] = useState(selectedLocation.name || '')
   const [locations, setLocations] = useState([])
   const [isSearching, setIsSearching] = useState(false)
   const [serviceNameFromId, setServiceNameFromId] = useState('')
-  
+
   // Refs for debounce
   const searchTimeoutRef = useRef(null)
 
@@ -65,12 +84,18 @@ export default function CategoriesPage() {
           // Set location name immediately after fetching locations
           const locName = getLocationNameFromList(response.data.data, urlLocation)
           setLocationName(locName)
+
+          // Sync Redux if it's empty but URL has a location (e.g. direct link/refresh)
+          if (!selectedLocation.id && urlLocation) {
+            dispatch(setSelectedLocation({ id: urlLocation, name: locName }))
+          }
         }
       } catch (error) {
         console.error("Error fetching locations:", error)
       }
     }
     fetchLocations()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Get location name from list (no dependency on locations state)
@@ -90,8 +115,9 @@ export default function CategoriesPage() {
     try {
       const response = await axios.get(`${API_ENDPOINTS.SERVICES}?service_id=${serviceId}`)
       if (response.data && response.data.status === 'success' && response.data.data.length > 0) {
-        setServiceNameFromId(response.data.data[0].name)
-        return response.data.data[0].name
+        const name = response.data.data[0].name
+        setServiceNameFromId(name)
+        return name
       }
     } catch (error) {
       console.error("Error fetching service by ID:", error)
@@ -105,63 +131,64 @@ export default function CategoriesPage() {
     setIsSearching(true)
     try {
       let apiUrl = `${API_ENDPOINTS.SERVICES}?location_id=${locationId}`
-      
-      // If we have a service_id, use it directly
+
       if (serviceId) {
         apiUrl += `&service_id=${serviceId}`
-      }
-      // Otherwise if we have a search query, use it
-      else if (query) {
+      } else if (query) {
         apiUrl += `&search=${encodeURIComponent(query)}`
       }
 
       const response = await axios.get(apiUrl)
       if (response.data && response.data.status === 'success') {
         setServicesData(response.data.data)
-        
+
         // Update location name from API response or from locations list
+        let resolvedLocName = ''
         if (response.data.data.length > 0 && response.data.data[0].location) {
           const locationData = response.data.data[0].location
           if (Array.isArray(locationData) && locationData.length > 0) {
-            const locName = locationData[0].name
-            setLocationName(locName)
+            resolvedLocName = locationData[0].name
           } else if (locationData.name) {
-            setLocationName(locationData.name)
+            resolvedLocName = locationData.name
           } else {
-            // Fallback to locations list
-            const locName = getLocationName(locationId)
-            setLocationName(locName)
+            resolvedLocName = getLocationName(locationId)
           }
         } else {
-          // Fallback to locations list
-          const locName = getLocationName(locationId)
-          setLocationName(locName)
+          resolvedLocName = getLocationName(locationId)
         }
-        
+        setLocationName(resolvedLocName)
+
+        // Keep Redux location in sync (id/name pair)
+        if (String(selectedLocation.id) !== String(locationId) || selectedLocation.name !== resolvedLocName) {
+          dispatch(setSelectedLocation({ id: String(locationId), name: resolvedLocName }))
+        }
+
         // Set service name if service_id is present
         if (serviceId) {
+          let resolvedServiceName = ''
           if (response.data.data.length > 0) {
-            setSelectedServiceName(response.data.data[0].name)
-            setServiceNameFromId(response.data.data[0].name)
+            resolvedServiceName = response.data.data[0].name
           } else {
-            // If service not found in this location, fetch it by ID
-            const serviceName = await fetchServiceById(serviceId)
-            if (serviceName) {
-              setSelectedServiceName(serviceName)
-              setServiceNameFromId(serviceName)
+            resolvedServiceName = await fetchServiceById(serviceId)
+          }
+          if (resolvedServiceName) {
+            setSelectedServiceName(resolvedServiceName)
+            setServiceNameFromId(resolvedServiceName)
+            // Keep Redux service in sync
+            if (String(selectedService.id) !== String(serviceId) || selectedService.name !== resolvedServiceName) {
+              dispatch(setSelectedService({ id: String(serviceId), name: resolvedServiceName }))
             }
           }
         }
       } else {
-        // If API returns no data but we have a service_id, fetch the service by ID
         if (serviceId) {
           const serviceName = await fetchServiceById(serviceId)
           if (serviceName) {
             setSelectedServiceName(serviceName)
             setServiceNameFromId(serviceName)
+            dispatch(setSelectedService({ id: String(serviceId), name: serviceName }))
           }
         }
-        // Fallback to locations list
         const locName = getLocationName(locationId)
         setLocationName(locName)
       }
@@ -169,13 +196,13 @@ export default function CategoriesPage() {
       console.error("Error fetching filtered services from API:", error)
       const locName = getLocationName(locationId)
       setLocationName(locName)
-      
-      // If error but we have a service_id, try to fetch it separately
+
       if (serviceId) {
         const serviceName = await fetchServiceById(serviceId)
         if (serviceName) {
           setSelectedServiceName(serviceName)
           setServiceNameFromId(serviceName)
+          dispatch(setSelectedService({ id: String(serviceId), name: serviceName }))
         }
       }
     } finally {
@@ -189,25 +216,22 @@ export default function CategoriesPage() {
     if (locations.length > 0) {
       fetchServices(urlLocation, urlQuery, urlServiceId)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [urlQuery, urlServiceId, urlLocation, locations])
 
   // Handle search input change with debounce
   const handleSearchChange = (e) => {
     const value = e.target.value
     setSearchQuery(value)
-    
-    // Clear previous timeout
+
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current)
     }
-    
-    // Set new timeout for debounce (500ms delay)
+
     searchTimeoutRef.current = setTimeout(() => {
       if (value.trim()) {
-        // Navigate with search query using 'q' parameter
         navigate(`/categories?location_id=${urlLocation}&q=${encodeURIComponent(value.trim())}`)
       } else {
-        // If empty, go to categories without search
         navigate(`/categories?location_id=${urlLocation}`)
       }
     }, 500)
@@ -226,13 +250,14 @@ export default function CategoriesPage() {
     }
   }
 
-  // Handle location change
+  // Handle location change — updates Redux + URL together
   const handleLocationChange = (e) => {
     const newLocation = e.target.value
-    // Update location name immediately when location changes
     const newLocationName = getLocationName(newLocation)
     setLocationName(newLocationName)
-    
+
+    dispatch(setSelectedLocation({ id: newLocation, name: newLocationName }))
+
     if (urlQuery) {
       navigate(`/categories?location_id=${newLocation}&q=${encodeURIComponent(urlQuery)}`)
     } else if (urlServiceId) {
@@ -255,9 +280,8 @@ export default function CategoriesPage() {
 
   // Get header title based on what was searched
   const getHeaderTitle = () => {
-    // Priority: service name from URL service_id
-    if (urlServiceId && (selectedServiceName || serviceNameFromId)) {
-      return selectedServiceName || serviceNameFromId
+    if (urlServiceId && (selectedServiceName || serviceNameFromId || selectedService.name)) {
+      return selectedServiceName || serviceNameFromId || selectedService.name
     }
     if (urlQuery) {
       return `Search Results for "${urlQuery}"`
@@ -269,27 +293,24 @@ export default function CategoriesPage() {
   const getSubtitle = () => {
     const count = loading ? '...' : processedCats.length
     const categoryText = processedCats.length === 1 ? 'category' : 'categories'
-    
+
     let subtitle = `${count} ${categoryText}`
-    
-    // Show location name if available
+
     if (locationName) {
       subtitle += ` · ${locationName}`
     } else if (urlLocation) {
       const fallbackName = getLocationName(urlLocation)
       subtitle += ` · ${fallbackName}`
     }
-    
-    // Show service name if available
+
     if (urlServiceId && (selectedServiceName || serviceNameFromId)) {
       subtitle += ` · ${selectedServiceName || serviceNameFromId}`
     }
-    
-    // Show searching indicator
+
     if (isSearching) {
       subtitle += ' · Searching...'
     }
-    
+
     return subtitle
   }
 
@@ -417,8 +438,7 @@ export default function CategoriesPage() {
         .category-card:active {
           transform: translateY(0);
         }
-        
-        /* Tablet Breakpoint */
+
         @media (max-width: 1024px) {
           .page-wrapper {
             padding: 24px 32px;
@@ -428,7 +448,6 @@ export default function CategoriesPage() {
           }
         }
 
-        /* Mobile Breakpoint */
         @media (max-width: 640px) {
           .page-wrapper {
             padding: 16px 16px;
@@ -460,8 +479,7 @@ export default function CategoriesPage() {
       `}</style>
 
       <div style={{ maxWidth: '1240px', margin: '0 auto' }}>
-        
-        {/* Header Container Area */}
+
         <div className="header-container">
           <div className="header-left">
             <div style={{ font: '600 28px/1 "DM Sans", sans-serif', color: '#0A0A0F', letterSpacing: '-1px' }}>
@@ -472,10 +490,8 @@ export default function CategoriesPage() {
             </div>
           </div>
 
-          {/* Filter and Search Actions layout */}
           <div className="actions-wrapper">
-            {/* Location Selector */}
-            <select 
+            <select
               value={urlLocation}
               onChange={handleLocationChange}
               className="location-select"
@@ -485,7 +501,7 @@ export default function CategoriesPage() {
               ))}
             </select>
 
-            <form 
+            <form
               onSubmit={handleSearchSubmit}
               className="search-form"
             >
@@ -493,7 +509,7 @@ export default function CategoriesPage() {
                 <circle cx="10.5" cy="10.5" r="7" stroke="#9090A0" strokeWidth="2"/>
                 <path d="M15.5 15.5L21 21" stroke="#9090A0" strokeWidth="2" strokeLinecap="round"/>
               </svg>
-              <input 
+              <input
                 className="search-input"
                 placeholder="Search services..."
                 value={searchQuery}
@@ -521,18 +537,18 @@ export default function CategoriesPage() {
                 }} />
               )}
             </form>
-            
-            <select 
+
+            <select
               value={sortBy}
               onChange={handleSortChange}
-              style={{ 
-                padding: '8px 14px', 
-                background: '#F4F5F8', 
-                border: '1.5px solid #EBEBEF', 
-                borderRadius: '10px', 
-                font: '500 12px/1 "DM Sans", sans-serif', 
-                color: '#9090A0', 
-                cursor: 'pointer', 
+              style={{
+                padding: '8px 14px',
+                background: '#F4F5F8',
+                border: '1.5px solid #EBEBEF',
+                borderRadius: '10px',
+                font: '500 12px/1 "DM Sans", sans-serif',
+                color: '#9090A0',
+                cursor: 'pointer',
                 outline: 'none',
                 minWidth: '120px',
                 transition: 'border-color 0.2s ease'
@@ -546,10 +562,8 @@ export default function CategoriesPage() {
           </div>
         </div>
 
-        {/* Grid Content Layout */}
         <div className="categories-grid">
           {loading ? (
-            // Shimmer skeletons while API loads
             Array.from({ length: 8 }).map((_, idx) => (
               <div key={`skel-${idx}`} className="skel-card" />
             ))
@@ -561,18 +575,18 @@ export default function CategoriesPage() {
                   key={cat.id}
                   to={`/businesses?service_id=${cat.id}&location_id=${urlLocation}`}
                   className="category-card"
+                  onClick={() => dispatch(setSelectedService({ id: String(cat.id), name: cat.name }))}
                 >
-                  {/* Box Icon Container */}
-                  <div style={{ 
-                    width: '46px', 
-                    height: '46px', 
-                    background: getBgColor(currentSlug), 
-                    borderRadius: '12px', 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'center', 
-                    flexShrink: 0, 
-                    overflow: 'hidden' 
+                  <div style={{
+                    width: '46px',
+                    height: '46px',
+                    background: getBgColor(currentSlug),
+                    borderRadius: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                    overflow: 'hidden'
                   }}>
                     {cat.icon && (cat.icon.startsWith('http') || cat.icon.startsWith('/')) ? (
                       <img src={cat.icon} alt={cat.name} style={{ width: '24px', height: '24px', objectFit: 'contain' }} />
@@ -581,7 +595,6 @@ export default function CategoriesPage() {
                     )}
                   </div>
 
-                  {/* Labels */}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ font: '700 13px/1.2 "DM Sans", sans-serif', color: '#0A0A0F' }}>
                       {cat.name}
@@ -591,9 +604,8 @@ export default function CategoriesPage() {
                     </div>
                   </div>
 
-                  {/* Arrow Element */}
-                  <div style={{ 
-                    font: '700 16px/1 "DM Sans", sans-serif', 
+                  <div style={{
+                    font: '700 16px/1 "DM Sans", sans-serif',
                     color: '#D61CA8',
                     flexShrink: 0
                   }}>
@@ -611,19 +623,19 @@ export default function CategoriesPage() {
               <div>
                 {urlQuery ? `No results for "${urlQuery}" in ${locationName || getLocationName(urlLocation)}` : `No services available in ${locationName || getLocationName(urlLocation)}`}
               </div>
-              <button 
+              <button
                 onClick={() => {
                   setSearchQuery('')
                   navigate(`/categories?location_id=${urlLocation}`)
                 }}
-                style={{ 
-                  marginTop: '16px', 
-                  padding: '8px 24px', 
-                  background: 'linear-gradient(135deg,#D61CA8,#8B2EF5)', 
-                  color: 'white', 
-                  border: 'none', 
-                  borderRadius: '8px', 
-                  cursor: 'pointer', 
+                style={{
+                  marginTop: '16px',
+                  padding: '8px 24px',
+                  background: 'linear-gradient(135deg,#D61CA8,#8B2EF5)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
                   font: '600 13px "DM Sans"',
                   transition: 'transform 0.2s ease, box-shadow 0.2s ease'
                 }}
@@ -642,7 +654,6 @@ export default function CategoriesPage() {
           )}
         </div>
 
-        {/* Add spin animation for loader */}
         <style>{`
           @keyframes spin {
             0% { transform: rotate(0deg); }
