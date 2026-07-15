@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
+import { useDispatch, useSelector } from 'react-redux'
 import axios from 'axios'
 import {
   Search, Building2, ChevronRight, X,
@@ -11,11 +12,22 @@ import {
   Smartphone, MapPin, Clock, CheckCircle2, Phone
 } from 'lucide-react'
 import API_BASE_URL, { API_ENDPOINTS } from '../../config/api'
+import {
+  setSelectedLocation,
+  setSelectedService,
+  selectSelectedLocation,
+  selectSelectedService,
+} from '../../store/slices/searchSlice'
 
 export default function HomeHero() {
   const navigate = useNavigate()
+  const dispatch = useDispatch()
+
+  // Redux state
+  const selectedLocation = useSelector(selectSelectedLocation)
+  const selectedService = useSelector(selectSelectedService)
+
   const [quickQuery, setQuickQuery] = useState('')
-  const [quickLocation, setQuickLocation] = useState('')
   const [suggestions, setSuggestions] = useState([])
   const [isSearching, setIsSearching] = useState(false)
   const [showDropdown, setShowDropdown] = useState(false)
@@ -99,7 +111,6 @@ export default function HomeHero() {
   useEffect(() => {
     if (!showDropdown) return
 
-    // If query is empty, show all services from API
     if (!quickQuery.trim()) {
       setIsSearching(false)
       const mappedServices = services.map(service => ({
@@ -141,8 +152,7 @@ export default function HomeHero() {
         }
       } catch (err) {
         console.error('Autocomplete error via axios filtering:', err)
-        // Fallback to local filtering if API fails
-        const filtered = services.filter(s => 
+        const filtered = services.filter(s =>
           s.name.toLowerCase().includes(quickQuery.toLowerCase())
         )
         const mappedResults = filtered.map(item => ({
@@ -168,7 +178,6 @@ export default function HomeHero() {
 
   const handleQuickSearch = (e) => {
     e?.preventDefault()
-
     setLocationError('')
 
     if (!quickQuery.trim()) {
@@ -176,7 +185,7 @@ export default function HomeHero() {
       return
     }
 
-    if (!quickLocation) {
+    if (!selectedLocation.id) {
       setLocationError('Please select a location before searching')
       const locationSelect = document.querySelector('select')
       if (locationSelect) {
@@ -189,7 +198,6 @@ export default function HomeHero() {
       return
     }
 
-    // Find matching service by name
     const matchedService = services.find(
       (s) => s.name.toLowerCase() === quickQuery.trim().toLowerCase()
     )
@@ -197,19 +205,20 @@ export default function HomeHero() {
     const params = new URLSearchParams()
 
     if (matchedService) {
+      dispatch(setSelectedService({ id: matchedService.id, name: matchedService.name }))
       params.set('service_id', matchedService.id)
     } else {
       params.set('q', quickQuery.trim())
     }
 
-    params.set('location_id', quickLocation)
+    params.set('location_id', selectedLocation.id)
 
     navigate(`/categories?${params.toString()}`)
     setShowDropdown(false)
   }
 
   const handleSuggestionClick = (s) => {
-    if (!quickLocation) {
+    if (!selectedLocation.id) {
       setLocationError('Please select a location first')
       const locationSelect = document.querySelector('select')
       if (locationSelect) {
@@ -222,9 +231,11 @@ export default function HomeHero() {
       return
     }
 
+    dispatch(setSelectedService({ id: s.id, name: s.name }))
+
     const params = new URLSearchParams()
     params.set('service_id', s.id)
-    params.set('location_id', quickLocation)
+    params.set('location_id', selectedLocation.id)
 
     navigate(`/categories?${params.toString()}`)
     setShowDropdown(false)
@@ -233,7 +244,9 @@ export default function HomeHero() {
   }
 
   const handleLocationChange = (e) => {
-    setQuickLocation(e.target.value)
+    const id = e.target.value
+    const locObj = locations.find((l) => String(l.id) === String(id))
+    dispatch(setSelectedLocation({ id, name: locObj?.name || '' }))
     setLocationError('')
   }
 
@@ -247,7 +260,6 @@ export default function HomeHero() {
     setShowDropdown(true)
   }
 
-  // Get random color for service icon background
   const getRandomColor = () => {
     const colors = ['#DBEAFE', '#D1FAE5', '#CFFAFE', '#FCE7F3', '#FEF3C7', '#E0F2FE', '#EDE9FE', '#FFE4E6', '#FEFCE8', '#ECFDF5', '#F0FDF4', '#FFF7ED']
     return colors[Math.floor(Math.random() * colors.length)]
@@ -296,8 +308,7 @@ export default function HomeHero() {
         .search-cta { transition: transform 0.2s ease, box-shadow 0.2s ease; }
         .search-cta:hover { transform: translateY(-2px); box-shadow: 0 10px 22px rgba(214,28,168,.35); }
         .search-cta:active { transform: translateY(0); }
-        
-        /* Custom scrollbar for dropdown */
+
         .dropdown-scroll::-webkit-scrollbar {
           width: 6px;
         }
@@ -327,7 +338,6 @@ export default function HomeHero() {
           overflow: 'hidden',
           boxSizing: 'border-box'
         }}>
-          {/* Gradient Orbs */}
           <div style={{
             position: 'absolute',
             top: '-100px',
@@ -350,7 +360,6 @@ export default function HomeHero() {
             pointerEvents: 'none'
           }}></div>
 
-          {/* Content Container */}
           <div style={{
             maxWidth: '1300px',
             width: '100%',
@@ -364,7 +373,6 @@ export default function HomeHero() {
             gap: isDesktop ? '40px' : '0px'
           }}>
 
-            {/* LEFT: Copy + Search */}
             <div style={{
               display: 'flex',
               flexDirection: 'column',
@@ -375,7 +383,6 @@ export default function HomeHero() {
               flexShrink: 0,
               width: isDesktop ? 'auto' : '100%'
             }}>
-              {/* Status Badge */}
               <div className="rv" style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -396,7 +403,6 @@ export default function HomeHero() {
                 </span>
               </div>
 
-              {/* Headline */}
               <h1 className="rv d2" style={{
                 font: isMobile ? '400 32px/1.1 "DM Sans",sans-serif' : '600 68px/1.1 "DM Sans",sans-serif',
                 color: 'white',
@@ -415,7 +421,6 @@ export default function HomeHero() {
                 </span>
               </h1>
 
-              {/* Description */}
               <p className="rv d3" style={{
                 font: isMobile ? '400 15px/1.6 "DM Sans",sans-serif' : '400 19px/1.6 "DM Sans",sans-serif',
                 color: 'rgba(255,255,255,.6)',
@@ -426,7 +431,6 @@ export default function HomeHero() {
                 Trusted professionals for AC, cleaning, plumbing, electrical and more home services — booked in 60 seconds.
               </p>
 
-              {/* Search Container */}
               <div
                 ref={formRef}
                 className="rv d4"
@@ -483,7 +487,7 @@ export default function HomeHero() {
                   gap: '4px'
                 }}>
                   <select
-                    value={quickLocation}
+                    value={selectedLocation.id}
                     onChange={handleLocationChange}
                     style={{
                       background: 'transparent',
@@ -535,7 +539,6 @@ export default function HomeHero() {
                 </div>
               </div>
 
-              {/* Trust Badges */}
               <div className="rv d5" style={{
                 display: 'flex',
                 gap: '24px',
@@ -557,7 +560,6 @@ export default function HomeHero() {
               </div>
             </div>
 
-            {/* RIGHT: Live booking visual (Desktop only) */}
             {isDesktop && (
               <div className="rv d3" style={{
                 position: 'relative',
@@ -565,7 +567,6 @@ export default function HomeHero() {
                 height: '480px',
                 flexShrink: 0
               }}>
-                {/* Ambient glow behind the card stack */}
                 <div style={{
                   position: 'absolute',
                   top: '50%',
@@ -577,7 +578,6 @@ export default function HomeHero() {
                   pointerEvents: 'none'
                 }} />
 
-                {/* Main glass card: live tracking */}
                 <div style={{
                   position: 'absolute',
                   top: '20px',
@@ -592,7 +592,6 @@ export default function HomeHero() {
                   boxShadow: '0 24px 60px rgba(0,0,0,.35)',
                   animation: 'float 6s ease-in-out infinite'
                 }}>
-                  {/* Header row */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <div style={{
@@ -618,7 +617,6 @@ export default function HomeHero() {
                     </div>
                   </div>
 
-                  {/* Mini map */}
                   <div style={{
                     position: 'relative',
                     height: '140px',
@@ -657,7 +655,6 @@ export default function HomeHero() {
                     </div>
                   </div>
 
-                  {/* Bottom row: price + CTA */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div>
                       <div style={{ font: '400 10px "DM Sans",sans-serif', color: 'rgba(255,255,255,.5)' }}>Total</div>
@@ -674,7 +671,6 @@ export default function HomeHero() {
                   </div>
                 </div>
 
-                {/* Floating stat chip: rating */}
                 <div style={{
                   position: 'absolute',
                   top: '-6px',
@@ -701,7 +697,6 @@ export default function HomeHero() {
                   </div>
                 </div>
 
-                {/* Floating stat chip: booking confirmed */}
                 <div style={{
                   position: 'absolute',
                   bottom: '10px',
@@ -729,7 +724,6 @@ export default function HomeHero() {
                   </div>
                 </div>
 
-                {/* Floating stat chip: fast booking */}
                 <div style={{
                   position: 'absolute',
                   bottom: '90px',
@@ -756,7 +750,6 @@ export default function HomeHero() {
         </section>
       </div>
 
-      {/* Dropdown Portal with scrollable content */}
       {showDropdown && dropdownPos.width > 0 && createPortal(
         <div
           ref={portalRef}
@@ -805,7 +798,6 @@ export default function HomeHero() {
             </div>
           </div>
 
-          {/* Scrollable content area */}
           <div
             className="dropdown-scroll"
             style={{
@@ -882,11 +874,9 @@ export default function HomeHero() {
                       <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
                         <div style={{ font: '700 13px "DM Sans"', color: '#0A0A0F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</div>
                         <div style={{ font: '400 11px "DM Sans"', color: '#6B7280', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                       
                           {s.starting_price && `From OMR ${s.starting_price}`}
                         </div>
                       </div>
-                     
                     </div>
                   ))}
                 </div>
