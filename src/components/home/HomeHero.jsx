@@ -563,13 +563,14 @@ export default function HomeHero() {
             </div>
 
             {/* RIGHT: Live booking visual (Desktop only) */}
-            {isDesktop && (
+              {isDesktop && (
               <div className="rv d3" style={{
                 position: 'relative',
                 width: '420px',
                 height: '480px',
                 flexShrink: 0
               }}>
+                {/* Ambient glow behind the card stack */}
                 <div style={{
                   position: 'absolute',
                   top: '50%',
@@ -581,6 +582,7 @@ export default function HomeHero() {
                   pointerEvents: 'none'
                 }} />
 
+                {/* Main glass card: live tracking */}
                 <div style={{
                   position: 'absolute',
                   top: '20px',
@@ -595,6 +597,7 @@ export default function HomeHero() {
                   boxShadow: '0 24px 60px rgba(0,0,0,.35)',
                   animation: 'float 6s ease-in-out infinite'
                 }}>
+                  {/* Header row */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <div style={{
@@ -620,6 +623,7 @@ export default function HomeHero() {
                     </div>
                   </div>
 
+                  {/* Mini map */}
                   <div style={{
                     position: 'relative',
                     height: '140px',
@@ -658,10 +662,11 @@ export default function HomeHero() {
                     </div>
                   </div>
 
+                  {/* Bottom row: price + CTA */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div>
                       <div style={{ font: '400 10px "DM Sans",sans-serif', color: 'rgba(255,255,255,.5)' }}>Total</div>
-                      <div style={{ font: '700 16px "DM Sans",sans-serif', color: '#fff' }}>OMR 15.000</div>
+                      <div style={{ font: '700 16px "DM Sans",sans-serif', color: '#fff' }}>OMR 17.885</div>
                     </div>
                     <div style={{
                       display: 'flex', alignItems: 'center', gap: '6px',
@@ -674,6 +679,7 @@ export default function HomeHero() {
                   </div>
                 </div>
 
+                {/* Floating stat chip: rating */}
                 <div style={{
                   position: 'absolute',
                   top: '-6px',
@@ -696,7 +702,57 @@ export default function HomeHero() {
                   </div>
                   <div>
                     <div style={{ font: '700 13px "DM Sans",sans-serif', color: '#0A0A0F' }}>4.8/5</div>
-                    <div style={{ font: '400 9px "DM Sans",sans-serif', color: '#9090A0' }}>Top Rated Providers</div>
+                    <div style={{ font: '400 9px "DM Sans",sans-serif', color: '#9090A0' }}>2,140 reviews</div>
+                  </div>
+                </div>
+
+                {/* Floating stat chip: booking confirmed */}
+                <div style={{
+                  position: 'absolute',
+                  bottom: '10px',
+                  right: '-18px',
+                  background: 'rgba(255,255,255,0.95)',
+                  borderRadius: '14px',
+                  padding: '12px 16px',
+                  boxShadow: '0 12px 30px rgba(0,0,0,.25)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  animation: 'float 8s ease-in-out infinite',
+                  animationDelay: '.5s'
+                }}>
+                  <div style={{
+                    width: '32px', height: '32px', borderRadius: '50%',
+                    background: 'rgba(74,222,128,.15)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                  }}>
+                    <CheckCircle2 size={16} color="#22c55e" />
+                  </div>
+                  <div>
+                    <div style={{ font: '700 12px "DM Sans",sans-serif', color: '#0A0A0F' }}>Booking Confirmed</div>
+                    <div style={{ font: '400 9px "DM Sans",sans-serif', color: '#9090A0' }}>#UO-4601 · Just now</div>
+                  </div>
+                </div>
+
+                {/* Floating stat chip: fast booking */}
+                <div style={{
+                  position: 'absolute',
+                  bottom: '90px',
+                  left: '-24px',
+                  background: 'rgba(255,255,255,0.95)',
+                  borderRadius: '14px',
+                  padding: '10px 14px',
+                  boxShadow: '0 12px 30px rgba(0,0,0,.25)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  animation: 'floatSlow 6.5s ease-in-out infinite',
+                  animationDelay: '1s'
+                }}>
+                  <Zap size={16} color="#D61CA8" fill="#D61CA8" />
+                  <div>
+                    <div style={{ font: '700 12px "DM Sans",sans-serif', color: '#0A0A0F' }}>60-sec booking</div>
+                    <div style={{ font: '400 9px "DM Sans",sans-serif', color: '#9090A0' }}>No calls needed</div>
                   </div>
                 </div>
               </div>
