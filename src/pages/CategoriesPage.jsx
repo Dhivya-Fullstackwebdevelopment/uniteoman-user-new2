@@ -559,7 +559,7 @@ export default function CategoriesPage() {
               return (
                 <Link
                   key={cat.id}
-                  to={`/businesses?category=${currentSlug}&location_id=${urlLocation}`}
+                  to={`/businesses?service_id=${cat.id}&location_id=${urlLocation}`}
                   className="category-card"
                 >
                   {/* Box Icon Container */}
