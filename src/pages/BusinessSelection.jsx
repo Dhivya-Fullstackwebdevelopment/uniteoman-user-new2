@@ -75,9 +75,6 @@ export default function BusinessSelection() {
         if (filters.sort) params.append('sort', filters.sort)
         if (filters.search) params.append('search', filters.search)
 
-        params.append('location_id', locationId)
-        params.append('service_id', serviceId)
-
         let url = ''
 
         if (professionalId) {

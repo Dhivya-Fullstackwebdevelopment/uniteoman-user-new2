@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import axios from 'axios'
+import { API_ENDPOINTS } from '../config/api'
 
-// Static dataset for payment gateways mapping text definitions from your layout specification
 const STATIC_METHODS = [
-  { id: 'bom', name: 'Bank of Muscat Card', subtext: 'Maisarah · Visa · AMEX · OMR cards', icon: '🏦' },
-  { id: 'apple', name: 'Apple Pay', subtext: 'Double-click to pay', icon: '📱' },
-  { id: 'google', name: 'Google Pay', subtext: 'Touch to pay', icon: '🤳' },
+  { id: 'bank_of_muscat_card', name: 'Bank of Muscat Card', subtext: 'Maisarah · Visa · AMEX · OMR cards', icon: '🏦' },
+  { id: 'apple_pay', name: 'Apple Pay', subtext: 'Double-click to pay', icon: '📱' },
+  { id: 'google_pay', name: 'Google Pay', subtext: 'Touch to pay', icon: '🤳' },
   { id: 'thawani', name: 'Thawani', subtext: 'Oman local debit card', icon: '💳' },
-  { id: 'cash', name: 'Cash on Completion', subtext: 'Pay after service is done', icon: '💵' }
+  { id: 'cash_on_completion', name: 'Cash on Completion', subtext: 'Pay after service is done', icon: '💵' }
 ]
 
 const BRAND_GRADIENT = 'linear-gradient(135deg, #D61CA8, #8B2EF5)'
@@ -16,22 +17,86 @@ export default function BookingPaymentPage() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
 
-  // Interactive step controllers for selecting standard gateway methods
-  const [paymentMethod, setPaymentMethod] = useState('bom')
+  const [paymentMethod, setPaymentMethod] = useState('bank_of_muscat_card')
   const [saveCard, setSaveCard] = useState(true)
-
-  // Card attributes entry fields control state bounds
-  const [cardNumber, setCardNumber] = useState('•••• •••• •••• 4521')
+  const [cardNumber, setCardNumber] = useState('4521 XXXX XXXX 4521')
   const [expiry, setExpiry] = useState('09 / 28')
-  const [cvv, setCvv] = useState('•••')
+  const [cvv, setCvv] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState('')
 
-  const handleProcessCheckoutPayment = () => {
-    navigate('/BookingConfirmationPage')
+  const professionalId = searchParams.get('professional_id') || ''
+  const serviceTypeId = searchParams.get('service_type_id') || ''
+  const date = searchParams.get('date') || ''   // e.g. "Wed,9 Jul 2026"
+  const time = searchParams.get('time') || ''   // e.g. "10:00 AM"
+
+  // Convert "Wed,9 Jul 2026" + "10:00 AM" into API-friendly formats
+  const toApiDate = (rawDate) => {
+    try {
+      const [, dm] = rawDate.split(',') // "9 Jul 2026"
+      const d = new Date(dm.trim())
+      const yyyy = d.getFullYear()
+      const mm = String(d.getMonth() + 1).padStart(2, '0')
+      const dd = String(d.getDate()).padStart(2, '0')
+      return `${yyyy}-${mm}-${dd}`
+    } catch {
+      return ''
+    }
+  }
+
+  const toApiTime = (rawTime) => {
+    // "10:00 AM" -> "10:00" (24h)
+    const match = rawTime.match(/(\d+):(\d+)\s?(AM|PM)/i)
+    if (!match) return rawTime
+    let [, h, m, period] = match
+    h = parseInt(h, 10)
+    if (period.toUpperCase() === 'PM' && h !== 12) h += 12
+    if (period.toUpperCase() === 'AM' && h === 12) h = 0
+    return `${String(h).padStart(2, '0')}:${m}`
+  }
+
+  const handleProcessCheckoutPayment = async () => {
+    setError('')
+    setSubmitting(true)
+    try {
+      const payload = {
+        professional_id: Number(professionalId),
+        service_type_id: Number(serviceTypeId),
+        booking_date: toApiDate(date),
+        booking_time: toApiTime(time),
+        user_name: searchParams.get('user_name') || '',
+        user_email: searchParams.get('user_email') || '',
+        user_mobile: searchParams.get('user_mobile') || '',
+        area: searchParams.get('area') || '',
+        villa_apartment_no: searchParams.get('villa_apartment_no') || '',
+        street_name: searchParams.get('street_name') || '',
+        building_floor: searchParams.get('building_floor') || '',
+        nearest_landmark: searchParams.get('nearest_landmark') || '',
+        latitude: Number(searchParams.get('latitude')) || 23.5810,
+        longitude: Number(searchParams.get('longitude')) || 58.3850,
+        payment_method: paymentMethod,
+        card_last4: paymentMethod === 'bank_of_muscat_card' ? cardNumber.slice(-4) : undefined,
+        save_card: paymentMethod === 'bank_of_muscat_card' ? saveCard : undefined
+      }
+
+      const response = await axios.post(API_ENDPOINTS.CREATE_BOOKING, payload)
+
+      if (response.data && response.data.status === 'success') {
+        navigate('/BookingConfirmationPage', { state: { booking: response.data.data } })
+      } else {
+        setError(response.data?.message || 'Booking failed. Please try again.')
+      }
+    } catch (err) {
+      console.error('Booking creation error:', err)
+      setError(err.response?.data?.message || 'Something went wrong. Please try again.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
     <div className="page-root-wrapper" style={{ background: '#F8F8FA', minHeight: '100vh', fontFamily: '"DM Sans", sans-serif', padding: '40px 0' }}>
-      
+
       {/* Optimized styling structure with correct fallback parameters for narrow viewports */}
       <style>{`
         .outer-layout-box {
@@ -98,13 +163,13 @@ export default function BookingPaymentPage() {
           }
         }
       `}</style>
-      
+
       <div className="outer-layout-box">
         <div className="inner-content-card">
-          
+
           {/* LEFT AREA PANEL: PROGRESS TIMELINE & CHANNELS */}
           <div style={{ minWidth: 0 }}>
-            
+
             {/* Horizontal Step-by-Step Checkout Flow Timeline Banner */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '0', marginBottom: '28px' }}>
               <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
@@ -114,7 +179,7 @@ export default function BookingPaymentPage() {
                 </div>
                 <div style={{ flex: 1, height: '2px', background: '#10B981', marginBottom: '13px', marginLeft: '8px', marginRight: '8px' }}></div>
               </div>
-              
+
               <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
                   <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center', font: '700 11px "DM Sans", sans-serif', color: 'white' }}>✓</div>
@@ -122,7 +187,7 @@ export default function BookingPaymentPage() {
                 </div>
                 <div style={{ flex: 1, height: '2px', background: '#10B981', marginBottom: '13px', marginLeft: '8px', marginRight: '8px' }}></div>
               </div>
-              
+
               <div style={{ display: 'flex', alignItems: 'center' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
                   <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: BRAND_GRADIENT, display: 'flex', alignItems: 'center', justifyContent: 'center', font: '700 11px "DM Sans", sans-serif', color: 'white' }}>3</div>
@@ -132,7 +197,7 @@ export default function BookingPaymentPage() {
             </div>
 
             <div style={{ font: '700 16px/1 "DM Sans", sans-serif', color: '#0A0A0F', marginBottom: '16px' }}>Choose Payment Method</div>
-            
+
             {/* Dynamic Payment Gateways Option List */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '9px', marginBottom: '20px' }}>
               {STATIC_METHODS.map((method) => {
@@ -168,37 +233,37 @@ export default function BookingPaymentPage() {
             {paymentMethod === 'bom' && (
               <div style={{ background: '#F4F5F8', borderRadius: '14px', padding: '18px', border: '1.5px solid rgba(214,28,168,.2)', marginBottom: '16px', transition: 'all 0.2s ease' }}>
                 <div style={{ font: '700 13px/1 "DM Sans", sans-serif', color: '#0A0A0F', marginBottom: '14px' }}>Bank of Muscat Card Details</div>
-                
+
                 <div className="card-inputs-grid">
                   <div style={{ gridColumn: 'span 2' }}>
                     <label style={{ font: '600 11px/1 "DM Sans", sans-serif', color: '#9090A0', display: 'block', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '.6px' }}>Card Number</label>
-                    <input 
+                    <input
                       value={cardNumber}
                       onChange={(e) => setCardNumber(e.target.value)}
-                      style={{ width: '100%', boxSizing: 'border-box', background: 'white', border: '1.5px solid #EBEBEF', borderRadius: '11px', padding: '12px 14px', font: '600 14px/1 "DM Mono", monospace', color: '#0A0A0F', outline: 'none' }} 
+                      style={{ width: '100%', boxSizing: 'border-box', background: 'white', border: '1.5px solid #EBEBEF', borderRadius: '11px', padding: '12px 14px', font: '600 14px/1 "DM Mono", monospace', color: '#0A0A0F', outline: 'none' }}
                     />
                   </div>
                   <div>
                     <label style={{ font: '600 11px/1 "DM Sans", sans-serif', color: '#9090A0', display: 'block', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '.6px' }}>Expiry</label>
-                    <input 
+                    <input
                       value={expiry}
                       onChange={(e) => setExpiry(e.target.value)}
-                      style={{ width: '100%', boxSizing: 'border-box', background: 'white', border: '1.5px solid #EBEBEF', borderRadius: '11px', padding: '12px 14px', font: '400 13px/1 "DM Sans", sans-serif', color: '#0A0A0F', outline: 'none' }} 
+                      style={{ width: '100%', boxSizing: 'border-box', background: 'white', border: '1.5px solid #EBEBEF', borderRadius: '11px', padding: '12px 14px', font: '400 13px/1 "DM Sans", sans-serif', color: '#0A0A0F', outline: 'none' }}
                     />
                   </div>
                   <div>
                     <label style={{ font: '600 11px/1 "DM Sans", sans-serif', color: '#9090A0', display: 'block', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '.6px' }}>CVV</label>
-                    <input 
+                    <input
                       value={cvv}
                       type="password"
                       maxLength={3}
                       onChange={(e) => setCvv(e.target.value)}
-                      style={{ width: '100%', boxSizing: 'border-box', background: 'white', border: '1.5px solid #EBEBEF', borderRadius: '11px', padding: '12px 14px', font: '400 13px/1 "DM Sans", sans-serif', color: '#0A0A0F', outline: 'none' }} 
+                      style={{ width: '100%', boxSizing: 'border-box', background: 'white', border: '1.5px solid #EBEBEF', borderRadius: '11px', padding: '12px 14px', font: '400 13px/1 "DM Sans", sans-serif', color: '#0A0A0F', outline: 'none' }}
                     />
                   </div>
                 </div>
 
-                <div 
+                <div
                   onClick={() => setSaveCard(!saveCard)}
                   style={{ display: 'flex', alignItems: 'center', gap: '7px', cursor: 'pointer', marginTop: '12px' }}
                 >
@@ -227,7 +292,7 @@ export default function BookingPaymentPage() {
           <div style={{ minWidth: 0 }}>
             <div className="summary-sticky-panel" style={{ background: '#0A0A0F', borderRadius: '18px', padding: '20px', position: 'sticky', top: '20px' }}>
               <div style={{ font: '700 13px/1 "DM Sans", sans-serif', color: 'white', marginBottom: '16px' }}>Order Summary</div>
-              
+
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', gap: '8px' }}>
                 <span style={{ font: '400 11px/1 "DM Sans", sans-serif', color: 'rgba(255,255,255,.45)', whiteSpace: 'nowrap' }}>Service</span>
                 <span style={{ font: '600 11px/1 "DM Sans", sans-serif', color: 'white', textAlign: 'right' }}>AC Deep Cleaning</span>
@@ -246,7 +311,7 @@ export default function BookingPaymentPage() {
               </div>
 
               <div style={{ height: '1px', background: 'rgba(255,255,255,.08)', margin: '12px 0' }}></div>
-              
+
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '7px' }}>
                 <span style={{ font: '400 11px/1 "DM Sans", sans-serif', color: 'rgba(255,255,255,.4)' }}>Service fee</span>
                 <span style={{ font: '500 11px/1 "DM Sans", sans-serif', color: 'rgba(255,255,255,.65)' }}>OMR 15.000</span>
@@ -261,18 +326,22 @@ export default function BookingPaymentPage() {
               </div>
 
               <div style={{ height: '1px', background: 'rgba(255,255,255,.08)', margin: '12px 0' }}></div>
-              
+
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                 <span style={{ font: '700 14px/1 "DM Sans", sans-serif', color: 'white' }}>Total</span>
                 <span style={{ font: '800 20px/1 "DM Sans", sans-serif', color: '#D61CA8' }}>OMR 17.985</span>
               </div>
               <div style={{ font: '400 10px/1 "DM Sans", sans-serif', color: 'rgba(255,255,255,.3)', marginBottom: '16px' }}>Charged after completion</div>
-              
+              {error && (
+                <div style={{ color: '#EF4444', font: '500 12px/1.4 "DM Sans", sans-serif', marginBottom: '10px', textAlign: 'center' }}>
+                  {error}
+                </div>
+              )}
               <button
-                onClick={handleProcessCheckoutPayment}
+                onClick={handleProcessCheckoutPayment} disabled={submitting}
                 style={{ width: '100%', border: 'none', outline: 'none', padding: '13px', background: BRAND_GRADIENT, borderRadius: '12px', textAlign: 'center', font: '700 14px/1 "DM Sans", sans-serif', color: 'white', cursor: 'pointer', boxShadow: '0 4px 14px rgba(214,28,168,.35)' }}
               >
-                Confirm & Pay OMR 17.985 →
+                {submitting ? 'Processing...' : 'Confirm & Pay OMR 17.985 →'}
               </button>
             </div>
           </div>
@@ -282,3 +351,4 @@ export default function BookingPaymentPage() {
     </div>
   )
 }
+

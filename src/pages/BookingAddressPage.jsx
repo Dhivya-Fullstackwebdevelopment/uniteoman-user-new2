@@ -2,16 +2,16 @@ import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
 const STATIC_AREAS = [
-  { name: 'Qurum', slug: 'qurum' },
-  { name: 'Al Khuwair', slug: 'al-khuwair' },
-  { name: 'Bowsher', slug: 'bowsher' },
-  { name: 'MSQ Hills', slug: 'msq-hills' },
-  { name: 'Al Ghubrah', slug: 'al-ghubrah' },
-  { name: 'Seeb', slug: 'seeb' },
-  { name: 'Ruwi', slug: 'ruwi' },
-  { name: 'Mutrah', slug: 'mutrah' },
-  { name: 'Al Amerat', slug: 'al-amerat' },
-  { name: 'Azaibah', slug: 'azaibah' }
+  { name: 'Qurum', slug: 'Qurum' },
+  { name: 'Al Khuwair', slug: 'Al Khuwair' },
+  { name: 'Bowsher', slug: 'Bowsher' },
+  { name: 'MSQ Hills', slug: 'MSQ Hills' },
+  { name: 'Al Ghubrah', slug: 'Al Ghubrah' },
+  { name: 'Seeb', slug: 'Seeb' },
+  { name: 'Ruwi', slug: 'Ruwi' },
+  { name: 'Mutrah', slug: 'Mutrah' },
+  { name: 'Al Amerat', slug: 'Al Amerat' },
+  { name: 'Azaibah', slug: 'Azaibah' }
 ]
 
 const BRAND_GRADIENT = 'linear-gradient(135deg, #D61CA8, #8B2EF5)'
@@ -20,21 +20,33 @@ export default function BookingAddressPage() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
 
-  const [selectedArea, setSelectedArea] = useState('qurum')
+  // Passed through from previous steps
+  const professionalId = searchParams.get('professional_id') || ''
+  const serviceTypeId = searchParams.get('service_type_id') || ''
+  const date = searchParams.get('date') || '' // "Wed,9 Jul 2026"
+  const time = searchParams.get('time') || '' // "10:00 AM"
+
+  const [userName, setUserName] = useState('Mohammed Al-Balushi')
+  const [userEmail, setUserEmail] = useState('mohammed@email.com')
+  const [userMobile, setUserMobile] = useState('92345678')
+
+  const [selectedArea, setSelectedArea] = useState('Qurum')
   const [villaApartment, setVillaApartment] = useState('Villa 12')
   const [streetName, setStreetName] = useState('Al Noor Street')
   const [buildingFloor, setBuildingFloor] = useState('Ground Floor')
   const [landmark, setLandmark] = useState('Near Al Qurum Park')
+  const [coords, setCoords] = useState({ latitude: 23.5810, longitude: 58.3850 })
 
   const handleUseSavedAddress = (type) => {
     if (type === 'home') {
-      setSelectedArea('qurum')
+      setSelectedArea('Qurum')
       setVillaApartment('Villa 12')
       setStreetName('Al Noor Street')
       setBuildingFloor('Ground Floor')
       setLandmark('Near Al Qurum Park')
+      setCoords({ latitude: 23.5810, longitude: 58.3850 })
     } else if (type === 'work') {
-      setSelectedArea('al-khuwair')
+      setSelectedArea('Al Khuwair')
       setVillaApartment('Office 4B')
       setStreetName('Business Bay')
       setBuildingFloor('4th Floor')
@@ -42,8 +54,38 @@ export default function BookingAddressPage() {
     }
   }
 
+  const handleUseCurrentLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => setCoords({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
+        () => handleUseSavedAddress('home')
+      )
+    } else {
+      handleUseSavedAddress('home')
+    }
+  }
+
+  const isValid = userName && userEmail && userMobile && villaApartment && streetName
+
   const handleNextStepNavigation = () => {
-    navigate(`/BookingPaymentPage`)
+    if (!isValid) return
+    const params = new URLSearchParams({
+      professional_id: professionalId,
+      service_type_id: serviceTypeId,
+      date,
+      time,
+      user_name: userName,
+      user_email: userEmail,
+      user_mobile: userMobile,
+      area: selectedArea,
+      villa_apartment_no: villaApartment,
+      street_name: streetName,
+      building_floor: buildingFloor,
+      nearest_landmark: landmark,
+      latitude: String(coords.latitude),
+      longitude: String(coords.longitude)
+    })
+    navigate(`/BookingPaymentPage?${params.toString()}`)
   }
 
   return (
@@ -72,6 +114,12 @@ export default function BookingAddressPage() {
           grid-template-columns: 1fr 1fr;
           gap: 12px;
           margin-bottom: 16px;
+        }
+        .contact-inputs-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr 1fr;
+          gap: 12px;
+          margin-bottom: 20px;
         }
 
         /* Tablet Breakpoint Adjustments */
@@ -103,6 +151,10 @@ export default function BookingAddressPage() {
             display: none;
           }
           .address-inputs-grid {
+            grid-template-columns: 1fr;
+            gap: 12px;
+          }
+          .contact-inputs-grid {
             grid-template-columns: 1fr;
             gap: 12px;
           }
@@ -149,16 +201,46 @@ export default function BookingAddressPage() {
               </div>
             </div>
 
+            <div style={{ font: '700 14px/1 "DM Sans", sans-serif', color: '#0A0A0F', marginBottom: '12px' }}>Your Details</div>
+
+            {/* Contact info inputs */}
+            <div className="contact-inputs-grid">
+              <div>
+                <label style={{ font: '600 11px/1 "DM Sans", sans-serif', color: '#9090A0', display: 'block', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '.6px' }}>Full Name *</label>
+                <input 
+                  value={userName} 
+                  onChange={(e) => setUserName(e.target.value)}
+                  style={{ width: '100%', boxSizing: 'border-box', background: '#F4F5F8', border: '1.5px solid #EBEBEF', borderRadius: '11px', padding: '11px 14px', font: '400 13px/1 "DM Sans", sans-serif', color: '#0A0A0F', outline: 'none' }} 
+                />
+              </div>
+              <div>
+                <label style={{ font: '600 11px/1 "DM Sans", sans-serif', color: '#9090A0', display: 'block', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '.6px' }}>Email *</label>
+                <input 
+                  value={userEmail} 
+                  onChange={(e) => setUserEmail(e.target.value)}
+                  style={{ width: '100%', boxSizing: 'border-box', background: '#F4F5F8', border: '1.5px solid #EBEBEF', borderRadius: '11px', padding: '11px 14px', font: '400 13px/1 "DM Sans", sans-serif', color: '#0A0A0F', outline: 'none' }} 
+                />
+              </div>
+              <div>
+                <label style={{ font: '600 11px/1 "DM Sans", sans-serif', color: '#9090A0', display: 'block', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '.6px' }}>Mobile *</label>
+                <input 
+                  value={userMobile} 
+                  onChange={(e) => setUserMobile(e.target.value)}
+                  style={{ width: '100%', boxSizing: 'border-box', background: '#F4F5F8', border: '1.5px solid #EBEBEF', borderRadius: '11px', padding: '11px 14px', font: '400 13px/1 "DM Sans", sans-serif', color: '#0A0A0F', outline: 'none' }} 
+                />
+              </div>
+            </div>
+
             {/* Simulated Interactive Map Display Sandbox Wrapper Block */}
             <div style={{ height: '160px', background: '#E8EDF2', borderRadius: '14px', marginBottom: '20px', position: 'relative', overflow: 'hidden' }}>
               <div style={{ position: 'absolute', left: 0, right: 0, top: '80px', height: '14px', background: '#F0F2F4' }}></div>
               <div style={{ position: 'absolute', top: 0, bottom: 0, left: '140px', width: '14px', background: '#F0F2F4' }}></div>
               <div style={{ position: 'absolute', top: '55px', left: '126px', width: '20px', height: '20px', background: '#D61CA8', borderRadius: '50%', border: '3px solid white', boxShadow: '0 2px 10px rgba(214,28,168,.5)' }}></div>
               <div style={{ position: 'absolute', top: '8px', left: '8px', background: 'rgba(0,0,0,.55)', borderRadius: '7px', padding: '5px 10px', font: '500 10px/1 "DM Sans", sans-serif', color: 'white' }}>
-                {STATIC_AREAS.find(a => a.slug === selectedArea)?.name || 'Select Area'}, Muscat
+                {selectedArea}, Muscat
               </div>
               <div 
-                onClick={() => handleUseSavedAddress('home')}
+                onClick={handleUseCurrentLocation}
                 style={{ position: 'absolute', bottom: '8px', right: '8px', background: 'white', borderRadius: '8px', padding: '6px 11px', font: '600 11px/1 "DM Sans", sans-serif', color: '#4B6EF5', cursor: 'pointer', boxShadow: '0 2px 6px rgba(0,0,0,.1)' }}
               >
                 📍 Use Current Location
@@ -262,12 +344,12 @@ export default function BookingAddressPage() {
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', gap: '8px' }}>
                 <span style={{ font: '400 11px/1 "DM Sans", sans-serif', color: 'rgba(255,255,255,.45)', whiteSpace: 'nowrap' }}>Date</span>
-                <span style={{ font: '600 11px/1 "DM Sans", sans-serif', color: 'white', textAlign: 'right' }}>Wed 9 Jul · 10:00 AM</span>
+                <span style={{ font: '600 11px/1 "DM Sans", sans-serif', color: 'white', textAlign: 'right' }}>{date || 'Wed 9 Jul'} · {time || '10:00 AM'}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', gap: '8px' }}>
                 <span style={{ font: '400 11px/1 "DM Sans", sans-serif', color: 'rgba(255,255,255,.45)', whiteSpace: 'nowrap' }}>Area</span>
-                <span style={{ font: '600 11px/1 "DM Sans", sans-serif', color: 'white', textTransform: 'capitalize', textAlign: 'right' }}>
-                  {selectedArea} (selected)
+                <span style={{ font: '600 11px/1 "DM Sans", sans-serif', color: 'white', textAlign: 'right' }}>
+                  {selectedArea}
                 </span>
               </div>
 
@@ -280,7 +362,8 @@ export default function BookingAddressPage() {
 
               <button 
                 onClick={handleNextStepNavigation}
-                style={{ width: '100%', border: 'none', outline: 'none', padding: '13px', background: BRAND_GRADIENT, borderRadius: '12px', textAlign: 'center', font: '700 14px/1 "DM Sans", sans-serif', color: 'white', cursor: 'pointer', boxShadow: '0 4px 14px rgba(214,28,168,.35)' }}
+                disabled={!isValid}
+                style={{ width: '100%', border: 'none', outline: 'none', padding: '13px', background: isValid ? BRAND_GRADIENT : '#D0D0D4', borderRadius: '12px', textAlign: 'center', font: '700 14px/1 "DM Sans", sans-serif', color: 'white', cursor: isValid ? 'pointer' : 'not-allowed', boxShadow: isValid ? '0 4px 14px rgba(214,28,168,.35)' : 'none' }}
               >
                 Continue to Payment →
               </button>
