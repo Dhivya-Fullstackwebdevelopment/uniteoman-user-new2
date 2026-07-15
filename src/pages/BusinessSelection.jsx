@@ -1,30 +1,270 @@
-import { useState } from 'react'
-import { useSearchParams, useNavigate } from 'react-router-dom'
-
-const SEARCH_RESULTS = [
-  { id: 1, initial: 'M', name: 'Mohammed Al-Balushi', type: 'AC Deep Cleaning', distance: '0.8 km away', rating: '4.9', jobs: '847 jobs', nextAvailable: 'Today 2pm', price: 'OMR 15', badge: 'Best Match', badgeBg: '#D1FAE5', badgeColor: '#059669' },
-  { id: 2, initial: 'K', name: 'Khalid Al-Farsi', type: 'AC Deep Cleaning', distance: '1.2 km away', rating: '4.8', jobs: '524 jobs', nextAvailable: 'Today 4pm', price: 'OMR 15', badge: null },
-  { id: 3, initial: 'A', name: 'Ahmed Al-Rashdi', type: 'AC Deep Cleaning', distance: '1.5 km away', rating: '4.9', jobs: '312 jobs', nextAvailable: 'Tomorrow 10am', price: 'OMR 14', badge: 'Best Price', badgeBg: '#FEF3C7', badgeColor: '#D97706' },
-  { id: 4, initial: 'S', name: 'Salim Al-Habsi', type: 'AC Deep Cleaning', distance: '2.1 km away', rating: '4.7', jobs: '215 jobs', nextAvailable: 'Tomorrow 2pm', price: 'OMR 15', badge: null }
-]
+import { useState, useEffect } from 'react'
+import { useSearchParams, useNavigate, Link } from 'react-router-dom'
+import axios from 'axios'
+import { API_ENDPOINTS } from '../config/api'
 
 const BRAND_GRADIENT = 'linear-gradient(135deg, #D61CA8, #8B2EF5)'
 
 export default function BusinessSelection() {
-  const [searchParams, setSearchParams] = useSearchParams()
+  const [searchParams] = useSearchParams()
   const navigate = useNavigate()
+  
+  // Get URL parameters
+  const professionalId = searchParams.get('professional_id') || ''
+  const serviceTypeId = searchParams.get('service_type_id') || ''
+  const proName = searchParams.get('pro') || ''
+  
+  // States
+  const [professionals, setProfessionals] = useState([])
+  const [loading, setLoading] = useState(true)
   const [activeFilterTab, setActiveFilterTab] = useState('All')
   const [minRating, setMinRating] = useState('4')
+  const [selectedPriceRange, setSelectedPriceRange] = useState('')
+  const [selectedServices, setSelectedServices] = useState([])
+  const [availableServices, setAvailableServices] = useState([])
+  const [aiContext, setAiContext] = useState('')
+  const [aiSummaryNote, setAiSummaryNote] = useState('')
+  const [aiTopPicks, setAiTopPicks] = useState([])
+  const [counts, setCounts] = useState({ all: 0, available_today: 0, top_rated: 0, nearest: 0 })
+  const [filters, setFilters] = useState({
+    service_type_id: serviceTypeId || '',
+    min_rating: '',
+    price_min: '',
+    price_max: '',
+    sort: '',
+    search: ''
+  })
 
-  const handleProfileNavigation = (name) => {
-    navigate(`/business/${encodeURIComponent(name.toLowerCase().replace(/\s+/g, '-'))}`)
+  // Fetch professionals with filters
+  useEffect(() => {
+    const fetchProfessionals = async () => {
+      setLoading(true)
+      try {
+        // Build query params
+        const params = new URLSearchParams()
+        params.append('location_id', '1')
+        params.append('service_id', '1')
+        
+        if (filters.service_type_id) {
+          params.append('service_type_id', filters.service_type_id)
+        }
+        if (filters.min_rating) {
+          params.append('min_rating', filters.min_rating)
+        }
+        if (filters.price_min) {
+          params.append('price_min', filters.price_min)
+        }
+        if (filters.price_max) {
+          params.append('price_max', filters.price_max)
+        }
+        if (filters.sort) {
+          params.append('sort', filters.sort)
+        }
+        if (filters.search) {
+          params.append('search', filters.search)
+        }
+
+        const response = await axios.get(
+          `${API_ENDPOINTS.PROFESSIONALS_BY_LOCATION_AND_SERVICE(1, 1)}?${params.toString()}`
+        )
+        
+        if (response.data && response.data.status === 'success') {
+          setProfessionals(response.data.data || [])
+          setAiTopPicks(response.data.ai_top_picks || [])
+          setAiSummaryNote(response.data.ai_summary_note || '')
+          setCounts(response.data.counts || { all: 0, available_today: 0, top_rated: 0, nearest: 0 })
+          
+          // Set AI context
+          if (response.data.search_label) {
+            setAiContext(response.data.search_label)
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching professionals:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchProfessionals()
+  }, [filters])
+
+  // Fetch available services (service types) for filter
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        const response = await axios.get(`${API_ENDPOINTS.SERVICES}?service_id=1`)
+        if (response.data && response.data.status === 'success' && response.data.data.length > 0) {
+          const service = response.data.data[0]
+          if (service.service_types) {
+            setAvailableServices(service.service_types)
+            // Auto-select the service type from URL if present
+            if (serviceTypeId) {
+              setSelectedServices([parseInt(serviceTypeId)])
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching services:", error)
+      }
+    }
+    fetchServices()
+  }, [serviceTypeId])
+
+  const handleProfileNavigation = (id, name) => {
+    navigate(`/business/${id}/${encodeURIComponent(name.toLowerCase().replace(/\s+/g, '-'))}`)
   }
+
+  const handleBook = (id, name) => {
+    navigate(`/BookingPage?professional_id=${id}&name=${encodeURIComponent(name)}`)
+  }
+
+  const handleFilterTab = (tab) => {
+    setActiveFilterTab(tab)
+    let sort = ''
+    switch(tab) {
+      case 'Available Today':
+        sort = 'available_today'
+        break
+      case 'Top Rated':
+        sort = 'top_rated'
+        break
+      case 'Nearest':
+        sort = 'nearest'
+        break
+      case 'Lowest Price':
+        sort = 'lowest_price'
+        break
+      default:
+        sort = ''
+    }
+    setFilters(prev => ({ ...prev, sort }))
+  }
+
+  const handleServiceToggle = (serviceId) => {
+    setSelectedServices(prev => {
+      if (prev.includes(serviceId)) {
+        return prev.filter(id => id !== serviceId)
+      } else {
+        return [...prev, serviceId]
+      }
+    })
+    // Update filter
+    setFilters(prev => ({
+      ...prev,
+      service_type_id: selectedServices.length > 0 ? selectedServices.join(',') : ''
+    }))
+  }
+
+  const handlePriceRange = (range) => {
+    setSelectedPriceRange(range)
+    let priceMin = '', priceMax = ''
+    switch(range) {
+      case '0-15':
+        priceMin = '0'
+        priceMax = '15'
+        break
+      case '15-30':
+        priceMin = '15'
+        priceMax = '30'
+        break
+      case '30+':
+        priceMin = '30'
+        priceMax = ''
+        break
+      default:
+        priceMin = ''
+        priceMax = ''
+    }
+    setFilters(prev => ({
+      ...prev,
+      price_min: priceMin,
+      price_max: priceMax
+    }))
+  }
+
+  const handleRatingFilter = (rating) => {
+    setMinRating(rating)
+    setFilters(prev => ({ ...prev, min_rating: rating }))
+  }
+
+  // Filter professionals based on selected filters
+  const getFilteredProfessionals = () => {
+    let filtered = [...professionals]
+    
+    // Filter by selected services
+    if (selectedServices.length > 0) {
+      filtered = filtered.filter(p => selectedServices.includes(p.service_type_id))
+    }
+    
+    return filtered
+  }
+
+  const filteredProfessionals = getFilteredProfessionals()
+
+  // Get tab counts
+  const getTabCount = (tab) => {
+    switch(tab) {
+      case 'All': return counts.all || filteredProfessionals.length
+      case 'Available Today': return counts.available_today || 0
+      case 'Top Rated': return counts.top_rated || 0
+      case 'Nearest': return counts.nearest || 0
+      default: return 0
+    }
+  }
+
+  // Loading shimmer
+  const renderShimmer = () => (
+    <>
+      {Array.from({ length: 4 }).map((_, idx) => (
+        <div key={`shimmer-${idx}`} style={{ 
+          background: 'white', 
+          borderRadius: '14px', 
+          padding: '16px',
+          border: '1.5px solid #EBEBEF'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div style={{ 
+              width: '52px', 
+              height: '52px', 
+              borderRadius: '50%', 
+              background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)',
+              backgroundSize: '200% 100%',
+              animation: 'shimmer 1.5s infinite',
+              flexShrink: 0
+            }} />
+            <div style={{ flex: 1 }}>
+              <div style={{ 
+                height: '18px', 
+                width: '60%', 
+                background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)',
+                backgroundSize: '200% 100%',
+                animation: 'shimmer 1.5s infinite',
+                borderRadius: '4px',
+                marginBottom: '8px'
+              }} />
+              <div style={{ 
+                height: '14px', 
+                width: '40%', 
+                background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)',
+                backgroundSize: '200% 100%',
+                animation: 'shimmer 1.5s infinite',
+                borderRadius: '4px'
+              }} />
+            </div>
+          </div>
+        </div>
+      ))}
+    </>
+  )
 
   return (
     <div className="workspace-container" style={{ background: 'white', minHeight: '100vh', fontFamily: '"DM Sans", sans-serif' }}>
-
-      {/* Injected responsive rules targeting layout structural breakpoints */}
       <style>{`
+        @keyframes shimmer {
+          0% { background-position: -200% 0; }
+          100% { background-position: 200% 0; }
+        }
         .workspace-container {
           padding: 20px 56px;
         }
@@ -45,26 +285,26 @@ export default function BusinessSelection() {
           gap: 16px;
           box-shadow: 0 2px 8px rgba(0,0,0,.06);
           border: 1.5px solid #EBEBEF;
+          transition: all 0.2s ease;
+        }
+        .business-card:hover {
+          box-shadow: 0 4px 16px rgba(0,0,0,.1);
+          border-color: rgba(214,28,168,.2);
         }
         .ai-context-text {
           font: 400 13px/1.5 "DM Sans", sans-serif;
           color: #9090A0;
         }
 
-        /* Tablet Breakpoint */
         @media (max-width: 1024px) {
           .workspace-container {
             padding: 20px 24px;
           }
         }
 
-        /* Mobile Breakpoint */
         @media (max-width: 768px) {
           .workspace-container {
-            padding: 16px 16px;
-          }
-          .ai-context-text {
-            margin-top: 0px; /* Isolated target margin exclusively executing on mobile viewports */
+            padding: 16px;
           }
           .main-split-pane {
             flex-direction: column;
@@ -83,7 +323,6 @@ export default function BusinessSelection() {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            text-align: left !important;
             border-top: 1.5px solid #F4F5F8;
             padding-top: 12px;
             margin-top: 4px;
@@ -92,14 +331,16 @@ export default function BusinessSelection() {
             margin-bottom: 0 !important;
           }
         }
-        @media (max-width: 375px) {
-          .ai-context-text {
-            margin-top: 18px; /* Isolated target margin exclusively executing on mobile viewports */
-          }
-      }
       `}</style>
 
       <div style={{ maxWidth: '1240px', margin: '0 auto' }}>
+        {/* Breadcrumb */}
+        <div style={{ padding: '8px 0 16px 0', font: '400 12px/1 "DM Sans", sans-serif', color: '#9090A0' }}>
+          <Link to="/" style={{ color: '#9090A0', textDecoration: 'none' }}>Home</Link> ›{' '}
+          <Link to="/categories" style={{ color: '#9090A0', textDecoration: 'none' }}>Services</Link> ›{' '}
+          <Link to="/business-list" style={{ color: '#9090A0', textDecoration: 'none' }}>AC Services</Link> ›{' '}
+          <strong style={{ color: '#0A0A0F' }}>Professionals</strong>
+        </div>
 
         {/* Search Context / AI Alert Prompt Text */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
@@ -107,30 +348,32 @@ export default function BusinessSelection() {
             ✨ <span style={{ color: '#D61CA8', fontWeight: 700 }}>AI:</span>
           </div>
           <div className="ai-context-text">
-            Searching for <strong style={{ color: '#0A0A0F' }}>"AC cleaning Qurum today"</strong> — 14 results
+            {aiContext || `Searching for "${proName || 'AC services'}" — ${filteredProfessionals.length} results`}
           </div>
         </div>
 
         {/* Action Layout Filter Quick Tabs */}
         <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', flexWrap: 'wrap' }}>
-          {['All (14)', 'Available Today (9)', 'Top Rated (5)', 'Nearest (6)', 'Lowest Price'].map((tab) => {
-            const isAll = tab.startsWith(activeFilterTab)
+          {['All', 'Available Today', 'Top Rated', 'Nearest', 'Lowest Price'].map((tab) => {
+            const isActive = activeFilterTab === tab
+            const count = getTabCount(tab)
             return (
               <div
                 key={tab}
-                onClick={() => setActiveFilterTab(tab.split(' ')[0])}
+                onClick={() => handleFilterTab(tab)}
                 style={{
                   padding: '6px 14px',
-                  background: isAll ? BRAND_GRADIENT : 'white',
-                  border: isAll ? '1.5px solid transparent' : '1.5px solid #EBEBEF',
+                  background: isActive ? BRAND_GRADIENT : 'white',
+                  border: isActive ? '1.5px solid transparent' : '1.5px solid #EBEBEF',
                   borderRadius: '20px',
-                  font: isAll ? '700 11px/1 "DM Sans", sans-serif' : '500 11px/1 "DM Sans", sans-serif',
-                  color: isAll ? 'white' : '#9090A0',
+                  font: isActive ? '700 11px/1 "DM Sans", sans-serif' : '500 11px/1 "DM Sans", sans-serif',
+                  color: isActive ? 'white' : '#9090A0',
                   cursor: 'pointer',
-                  whiteSpace: 'nowrap'
+                  whiteSpace: 'nowrap',
+                  transition: 'all 0.2s ease'
                 }}
               >
-                {tab}
+                {tab} {count > 0 && `(${count})`}
               </div>
             )
           })}
@@ -149,18 +392,42 @@ export default function BusinessSelection() {
                 <div style={{ font: '600 11px/1 "DM Sans", sans-serif', color: '#9090A0', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '.6px' }}>
                   Service
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '6px', cursor: 'pointer' }}>
-                  <div style={{ width: '14px', height: '14px', borderRadius: '3px', background: '#D61CA8', border: '2px solid #D61CA8', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <span style={{ fontSize: '9px', color: 'white' }}>✓</span>
-                  </div>
-                  <span style={{ font: '600 12px/1 "DM Sans", sans-serif', color: '#0A0A0F' }}>AC Deep Cleaning</span>
-                </div>
-                {['AC Repair', 'AC Installation', 'AC Gas Refill'].map((serv) => (
-                  <div key={serv} style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '6px', cursor: 'pointer' }}>
-                    <div style={{ width: '14px', height: '14px', borderRadius: '3px', background: 'transparent', border: '2px solid #EBEBEF', flexShrink: 0 }} />
-                    <span style={{ font: '400 12px/1 "DM Sans", sans-serif', color: '#9090A0' }}>{serv}</span>
-                  </div>
-                ))}
+                {availableServices.map((service) => {
+                  const isChecked = selectedServices.includes(service.id)
+                  return (
+                    <div 
+                      key={service.id} 
+                      onClick={() => handleServiceToggle(service.id)}
+                      style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '7px', 
+                        marginBottom: '6px', 
+                        cursor: 'pointer' 
+                      }}
+                    >
+                      <div style={{ 
+                        width: '14px', 
+                        height: '14px', 
+                        borderRadius: '3px', 
+                        background: isChecked ? '#D61CA8' : 'transparent',
+                        border: isChecked ? '2px solid #D61CA8' : '2px solid #EBEBEF',
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center', 
+                        flexShrink: 0 
+                      }}>
+                        {isChecked && <span style={{ fontSize: '9px', color: 'white' }}>✓</span>}
+                      </div>
+                      <span style={{ 
+                        font: isChecked ? '600 12px/1 "DM Sans", sans-serif' : '400 12px/1 "DM Sans", sans-serif',
+                        color: isChecked ? '#0A0A0F' : '#9090A0'
+                      }}>
+                        {service.type_name}
+                      </span>
+                    </div>
+                  )
+                })}
               </div>
 
               {/* Price Range Filter Segment */}
@@ -169,9 +436,26 @@ export default function BusinessSelection() {
                   Price Range
                 </div>
                 <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                  <div style={{ padding: '4px 9px', background: 'rgba(214,28,168,.08)', border: '1.5px solid rgba(214,28,168,.3)', borderRadius: '8px', font: '700 10px/1 "DM Sans", sans-serif', color: '#D61CA8', cursor: 'pointer' }}>OMR 0–15</div>
-                  <div style={{ padding: '4px 9px', background: 'white', border: '1.5px solid #EBEBEF', borderRadius: '8px', font: '500 10px/1 "DM Sans", sans-serif', color: '#9090A0', cursor: 'pointer' }}>OMR 15–30</div>
-                  <div style={{ padding: '4px 9px', background: 'white', border: '1.5px solid #EBEBEF', borderRadius: '8px', font: '500 10px/1 "DM Sans", sans-serif', color: '#9090A0', cursor: 'pointer' }}>OMR 30+</div>
+                  {['0-15', '15-30', '30+'].map((range) => {
+                    const isSelected = selectedPriceRange === range
+                    return (
+                      <div 
+                        key={range}
+                        onClick={() => handlePriceRange(range)}
+                        style={{
+                          padding: '4px 9px',
+                          background: isSelected ? 'rgba(214,28,168,.08)' : 'white',
+                          border: isSelected ? '1.5px solid rgba(214,28,168,.3)' : '1.5px solid #EBEBEF',
+                          borderRadius: '8px',
+                          font: isSelected ? '700 10px/1 "DM Sans", sans-serif' : '500 10px/1 "DM Sans", sans-serif',
+                          color: isSelected ? '#D61CA8' : '#9090A0',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        OMR {range.replace('-', '–')}
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
 
@@ -181,90 +465,197 @@ export default function BusinessSelection() {
                   Min Rating
                 </div>
                 <div style={{ display: 'flex', gap: '4px' }}>
-                  {['4★', '4.5★', '5★'].map((rate) => {
-                    const isSelected = minRating === rate.replace('★', '')
+                  {['4', '4.5', '5'].map((rate) => {
+                    const isSelected = minRating === rate
                     return (
                       <div
                         key={rate}
-                        onClick={() => setMinRating(rate.replace('★', ''))}
+                        onClick={() => handleRatingFilter(rate)}
                         style={{
                           padding: '4px 8px',
                           background: isSelected ? BRAND_GRADIENT : 'white',
                           borderRadius: '8px',
-                          font: '700 10px/1 "DM Sans", sans-serif',
+                          font: isSelected ? '700 10px/1 "DM Sans", sans-serif' : '500 10px/1 "DM Sans", sans-serif',
                           color: isSelected ? 'white' : '#9090A0',
                           border: isSelected ? '1.5px solid transparent' : '1.5px solid #EBEBEF',
                           cursor: 'pointer'
                         }}
                       >
-                        {rate}
+                        {rate}★
                       </div>
                     )
                   })}
                 </div>
               </div>
 
+              {/* Clear Filters */}
+              <div style={{ marginTop: '14px', textAlign: 'center' }}>
+                <button
+                  onClick={() => {
+                    setFilters({ service_type_id: '', min_rating: '', price_min: '', price_max: '', sort: '', search: '' })
+                    setSelectedServices([])
+                    setSelectedPriceRange('')
+                    setMinRating('4')
+                    setActiveFilterTab('All')
+                  }}
+                  style={{
+                    padding: '6px 16px',
+                    background: 'transparent',
+                    border: '1px solid #EBEBEF',
+                    borderRadius: '8px',
+                    font: '500 11px/1 "DM Sans", sans-serif',
+                    color: '#9090A0',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Clear Filters
+                </button>
+              </div>
             </div>
           </div>
 
           {/* RESULTS CONTENT FEED PANEL */}
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {SEARCH_RESULTS.map((pro) => (
-              <div key={pro.id} className="business-card">
-                {/* Initial Avatar circle */}
-                <div style={{ width: '52px', height: '52px', borderRadius: '50%', background: BRAND_GRADIENT, display: 'flex', alignItems: 'center', justifyContent: 'center', font: '700 20px "DM Sans", sans-serif', color: 'white', flexShrink: 0 }}>
-                  {pro.initial}
-                </div>
-
-                {/* Listing central details layout */}
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
-                    <div style={{ font: '700 14px/1 "DM Sans", sans-serif', color: '#0A0A0F' }}>
-                      {pro.name}
+            {loading ? (
+              renderShimmer()
+            ) : filteredProfessionals.length > 0 ? (
+              filteredProfessionals.map((pro) => {
+                // Check if this pro is in AI top picks
+                const isAIPick = aiTopPicks.some(p => p.id === pro.id)
+                const aiMatch = aiTopPicks.find(p => p.id === pro.id)
+                
+                return (
+                  <div key={pro.id} className="business-card">
+                    {/* Initial Avatar circle */}
+                    <div style={{ 
+                      width: '52px', 
+                      height: '52px', 
+                      borderRadius: '50%', 
+                      background: BRAND_GRADIENT, 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      font: '700 20px "DM Sans", sans-serif', 
+                      color: 'white', 
+                      flexShrink: 0 
+                    }}>
+                      {pro.initial || pro.name?.charAt(0) || 'P'}
                     </div>
-                    {pro.badge && (
-                      <div style={{ padding: '2px 8px', background: pro.badgeBg, borderRadius: '5px', font: '700 8px/1 "DM Sans", sans-serif', color: pro.badgeColor }}>
-                        {pro.badge}
+
+                    {/* Listing central details layout */}
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
+                        <div style={{ font: '700 14px/1 "DM Sans", sans-serif', color: '#0A0A0F' }}>
+                          {pro.name}
+                        </div>
+                        {isAIPick && (
+                          <div style={{ padding: '2px 8px', background: '#D1FAE5', borderRadius: '5px', font: '700 8px/1 "DM Sans", sans-serif', color: '#059669' }}>
+                            ✨ AI Pick
+                          </div>
+                        )}
+                        {aiMatch?.is_best && (
+                          <div style={{ padding: '2px 8px', background: '#FEF3C7', borderRadius: '5px', font: '700 8px/1 "DM Sans", sans-serif', color: '#D97706' }}>
+                            Best Match
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                  <div style={{ font: '400 12px/1 "DM Sans", sans-serif', color: '#9090A0', marginBottom: '8px' }}>
-                    {pro.type} · {pro.distance}
-                  </div>
-                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                    <div style={{ padding: '3px 9px', background: '#F4F5F8', borderRadius: '6px', font: '500 11px/1 "DM Sans", sans-serif', color: '#9090A0' }}>★ {pro.rating}</div>
-                    <div style={{ padding: '3px 9px', background: '#F4F5F8', borderRadius: '6px', font: '500 11px/1 "DM Sans", sans-serif', color: '#9090A0' }}>{pro.jobs}</div>
-                    <div style={{ padding: '3px 9px', background: '#F4F5F8', borderRadius: '6px', font: '500 11px/1 "DM Sans", sans-serif', color: '#9090A0' }}>Next: {pro.nextAvailable}</div>
-                  </div>
-                </div>
+                      <div style={{ font: '400 12px/1 "DM Sans", sans-serif', color: '#9090A0', marginBottom: '8px' }}>
+                        {pro.specialty || 'Professional'} · {pro.distance_km ? `${pro.distance_km} km away` : pro.area || 'Near you'}
+                      </div>
+                      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                        <div style={{ padding: '3px 9px', background: '#F4F5F8', borderRadius: '6px', font: '500 11px/1 "DM Sans", sans-serif', color: '#9090A0' }}>
+                          ★ {pro.rating || '4.0'}
+                        </div>
+                        <div style={{ padding: '3px 9px', background: '#F4F5F8', borderRadius: '6px', font: '500 11px/1 "DM Sans", sans-serif', color: '#9090A0' }}>
+                          {pro.jobs_done || 0} jobs
+                        </div>
+                        <div style={{ padding: '3px 9px', background: '#F4F5F8', borderRadius: '6px', font: '500 11px/1 "DM Sans", sans-serif', color: '#9090A0' }}>
+                          Next: {pro.next_available || 'Today'}
+                        </div>
+                        {pro.ai_match_score && (
+                          <div style={{ padding: '3px 9px', background: '#F4F5F8', borderRadius: '6px', font: '500 11px/1 "DM Sans", sans-serif', color: '#9090A0' }}>
+                            Match {pro.ai_match_score}%
+                          </div>
+                        )}
+                      </div>
+                      {aiMatch?.ai_match_note && (
+                        <div style={{ font: '400 10px/1.4 "DM Sans", sans-serif', color: '#6B7280', marginTop: '4px' }}>
+                          💡 {aiMatch.ai_match_note}
+                        </div>
+                      )}
+                    </div>
 
-                {/* Right side pricing metric and actions layout panel */}
-                <div className="pricing-actions-panel" style={{ textAlign: 'right', flexShrink: 0 }}>
-                  <div className="price-meta" style={{ marginBottom: '10px' }}>
-                    <div style={{ font: '600 18px/1 "DM Sans", sans-serif', color: '#0A0A0F', marginBottom: '4px' }}>
-                      {pro.price}
-                    </div>
-                    <div style={{ font: '400 10px/1 "DM Sans", sans-serif', color: '#9090A0' }}>
-                      per visit
+                    {/* Right side pricing metric and actions layout panel */}
+                    <div className="pricing-actions-panel" style={{ textAlign: 'right', flexShrink: 0 }}>
+                      <div className="price-meta" style={{ marginBottom: '10px' }}>
+                        <div style={{ font: '600 18px/1 "DM Sans", sans-serif', color: '#0A0A0F', marginBottom: '4px' }}>
+                          OMR {pro.price || '0'}
+                        </div>
+                        <div style={{ font: '400 10px/1 "DM Sans", sans-serif', color: '#9090A0' }}>
+                          per visit
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: '7px' }}>
+                        <div
+                          onClick={() => handleProfileNavigation(pro.id, pro.name)}
+                          style={{ 
+                            padding: '7px 12px', 
+                            background: '#F4F5F8', 
+                            border: '1.5px solid #EBEBEF', 
+                            borderRadius: '8px', 
+                            font: '600 12px/1 "DM Sans", sans-serif', 
+                            color: '#9090A0', 
+                            cursor: 'pointer', 
+                            whiteSpace: 'nowrap',
+                            transition: 'all 0.2s ease'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.target.style.background = '#EBEBEF'
+                          }}
+                          onMouseLeave={(e) => {
+                            e.target.style.background = '#F4F5F8'
+                          }}
+                        >
+                          Profile
+                        </div>
+                        <div
+                          onClick={() => handleBook(pro.id, pro.name)}
+                          style={{ 
+                            padding: '7px 16px', 
+                            background: BRAND_GRADIENT, 
+                            borderRadius: '8px', 
+                            font: '700 12px/1 "DM Sans", sans-serif', 
+                            color: 'white', 
+                            cursor: 'pointer', 
+                            boxShadow: '0 3px 10px rgba(214,28,168,.25)',
+                            whiteSpace: 'nowrap',
+                            transition: 'all 0.2s ease'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.target.style.transform = 'scale(1.02)'
+                          }}
+                          onMouseLeave={(e) => {
+                            e.target.style.transform = 'scale(1)'
+                          }}
+                        >
+                          Book →
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', gap: '7px' }}>
-                    <div
-                      onClick={() => handleProfileNavigation(pro.name)}
-                      style={{ padding: '7px 12px', background: '#F4F5F8', border: '1.5px solid #EBEBEF', borderRadius: '8px', font: '600 12px/1 "DM Sans", sans-serif', color: '#9090A0', cursor: 'pointer', whiteSpace: 'nowrap' }}
-                    >
-                      Profile
-                    </div>
-                    <div
-                      onClick={() => navigate(`/BookingPage`)}
-                      style={{ padding: '7px 16px', background: BRAND_GRADIENT, borderRadius: '8px', font: '700 12px/1 "DM Sans", sans-serif', color: 'white', cursor: 'pointer', boxShadow: '0 3px 10px rgba(214,28,168,.25)', whiteSpace: 'nowrap' }}
-                    >
-                      Book →
-                    </div>
-                  </div>
-                </div>
+                )
+              })
+            ) : (
+              <div style={{ 
+                textAlign: 'center', 
+                padding: '60px 20px',
+                color: '#9090A0',
+                font: '400 14px/1.5 "DM Sans", sans-serif'
+              }}>
+                <div style={{ fontSize: '48px', marginBottom: '12px' }}>🔍</div>
+                No professionals found matching your filters. Try adjusting your search criteria.
               </div>
-            ))}
+            )}
           </div>
 
         </div>
