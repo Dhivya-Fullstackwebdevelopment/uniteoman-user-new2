@@ -25,13 +25,15 @@ export default function CategoriesPage() {
   
   // URL parameters passed from Hero section
   const urlQuery = searchParams.get('q') || ''
-  const urlLocation = searchParams.get('location') || '1' // Defaults to 1 as requested
+  const urlServiceId = searchParams.get('service_id') || ''
+  const urlLocation = searchParams.get('location_id') || '1' // Defaults to 1 if not provided
 
   // States
   const [servicesData, setServicesData] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState(urlQuery)
   const [sortBy, setSortBy] = useState('popular')
+  const [selectedServiceName, setSelectedServiceName] = useState('')
 
   // Fetch Services Data from API
   useEffect(() => {
@@ -40,14 +42,23 @@ export default function CategoriesPage() {
       try {
         let apiUrl = `http://127.0.0.1:8000/api/services/?location_id=${urlLocation}`
         
-        // If a search phrase text query exists, append it (e.g., q=AC+Service)
-        if (urlQuery) {
+        // If we have a service_id, use it directly
+        if (urlServiceId) {
+          apiUrl += `&service_id=${urlServiceId}`
+        }
+        // Otherwise if we have a search query, use it
+        else if (urlQuery) {
           apiUrl += `&q=${encodeURIComponent(urlQuery)}`
         }
 
         const response = await axios.get(apiUrl)
         if (response.data && response.data.status === 'success') {
           setServicesData(response.data.data)
+          
+          // If we have a service_id, get the service name for the header
+          if (urlServiceId && response.data.data.length > 0) {
+            setSelectedServiceName(response.data.data[0].name)
+          }
         }
       } catch (error) {
         console.error("Error fetching filtered services from API:", error)
@@ -57,9 +68,9 @@ export default function CategoriesPage() {
     }
 
     fetchServices()
-  }, [urlQuery, urlLocation])
+  }, [urlQuery, urlServiceId, urlLocation])
 
-  // Handle front-end sorting and mapping of data source
+  // Handle front-end sorting
   const processedCats = [...servicesData].sort((a, b) => {
     if (sortBy === 'alpha') {
       return a.name.localeCompare(b.name)
@@ -70,11 +81,21 @@ export default function CategoriesPage() {
   const handleSearchSubmit = (e) => {
     e.preventDefault()
     if (searchQuery.trim()) {
-      // Directs to the search list layout using existing routes or setups
-      navigate(`/categories?location=${urlLocation}&q=${encodeURIComponent(searchQuery)}`)
+      navigate(`/categories?location_id=${urlLocation}&q=${encodeURIComponent(searchQuery)}`)
     } else {
-      navigate(`/categories?location=${urlLocation}`)
+      navigate(`/categories?location_id=${urlLocation}`)
     }
+  }
+
+  // Get header title based on what was searched
+  const getHeaderTitle = () => {
+    if (urlServiceId && selectedServiceName) {
+      return selectedServiceName
+    }
+    if (urlQuery) {
+      return `Search Results for "${urlQuery}"`
+    }
+    return 'Household Services'
   }
 
   return (
@@ -149,10 +170,15 @@ export default function CategoriesPage() {
         <div className="header-container">
           <div>
             <div style={{ font: '600 28px/1 "DM Sans", sans-serif', color: '#0A0A0F', letterSpacing: '-1px' }}>
-              {urlQuery ? `Search Results for "${urlQuery}"` : 'Household Services'}
+              {getHeaderTitle()}
             </div>
             <div style={{ font: '400 13px/1 "DM Sans", sans-serif', color: '#9090A0', marginTop: '5px' }}>
-              {loading ? '...' : processedCats.length} categories · Location ID: {urlLocation}
+              {loading ? '...' : processedCats.length} {processedCats.length === 1 ? 'category' : 'categories'} · Location ID: {urlLocation}
+              {urlServiceId && selectedServiceName && (
+                <span style={{ marginLeft: '8px', color: '#D61CA8' }}>
+                  · Service ID: {urlServiceId}
+                </span>
+              )}
             </div>
           </div>
 
@@ -198,15 +224,15 @@ export default function CategoriesPage() {
               return (
                 <Link
                   key={cat.id}
-                  to={`/businesses?category=${currentSlug}&location=${urlLocation}`}
+                  to={`/businesses?category=${currentSlug}&location_id=${urlLocation}`}
                   style={{ textDecoration: 'none', background: '#F4F5F8', borderRadius: '16px', padding: '16px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '13px', border: '1.5px solid #EBEBEF' }}
                 >
-                  {/* Box Icon Container - Tries rendering image URL icon from database first */}
+                  {/* Box Icon Container */}
                   <div style={{ width: '46px', height: '46px', background: getBgColor(currentSlug), borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
                     {cat.icon && (cat.icon.startsWith('http') || cat.icon.startsWith('/')) ? (
                       <img src={cat.icon} alt={cat.name} style={{ width: '24px', height: '24px', objectFit: 'contain' }} />
                     ) : (
-                      <span style={{ fontSize: '22px' }}>{cat.icon || '🛠️'}</span>
+                      <span style={{ fontSize: '22px' }}>🛠️</span>
                     )}
                   </div>
 
