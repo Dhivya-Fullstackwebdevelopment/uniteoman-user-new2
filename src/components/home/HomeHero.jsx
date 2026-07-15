@@ -10,26 +10,8 @@ import {
   Briefcase, Stethoscope, Pill, Key, Store,
   Smartphone, MapPin, Clock, CheckCircle2, Phone
 } from 'lucide-react'
+import API_BASE_URL, { API_ENDPOINTS } from '../../config/api'
 
-// Category Icons Mapping
-const CATEGORY_ICONS = {
-  restaurants: Utensils,
-  cleaning: Brush,
-  repairing: Wrench,
-  health: HeartPulse,
-  beauty: Sparkles,
-  technical: Monitor,
-  moving: Package,
-  events: PartyPopper,
-  education: GraduationCap,
-  clinic: Stethoscope,
-  pharmacy: Pill,
-  'car-rental': Key,
-  'car-repair': Wrench,
-  supermarket: Store,
-  electronic: Smartphone,
-  'it-company': Briefcase
-}
 
 export default function HomeHero() {
   const navigate = useNavigate()
@@ -41,6 +23,7 @@ export default function HomeHero() {
   const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, width: 0 })
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1100)
+  const [locationError, setLocationError] = useState('')
 
   // API State
   const [locations, setLocations] = useState([])
@@ -68,8 +51,8 @@ export default function HomeHero() {
     const fetchInitialData = async () => {
       try {
         const [locationsRes, servicesRes] = await Promise.all([
-          axios.get('http://127.0.0.1:8000/api/locations/'),
-          axios.get('http://127.0.0.1:8000/api/services/')
+          axios.get(API_ENDPOINTS.LOCATIONS),
+          axios.get(API_ENDPOINTS.SERVICES)
         ])
 
         if (locationsRes.data && locationsRes.data.status === 'success') {
@@ -155,7 +138,7 @@ export default function HomeHero() {
     const timer = setTimeout(async () => {
       setIsSearching(true)
       try {
-        const response = await axios.get(`http://127.0.0.1:8000/api/services/?search=${quickQuery}`)
+        const response = await axios.get(API_ENDPOINTS.SEARCH_SERVICES(quickQuery))
         if (response.data && response.data.status === 'success') {
           const mappedResults = response.data.data.map(item => ({
             id: item.id,
@@ -180,15 +163,40 @@ export default function HomeHero() {
     return () => clearTimeout(timer)
   }, [quickQuery, showDropdown, featuredBusinesses])
 
+  // Updated handleQuickSearch - now both service and location are required
   const handleQuickSearch = (e) => {
     e?.preventDefault()
-    if (!quickQuery.trim() && !quickLocation) return
+    
+    // Clear previous errors
+    setLocationError('')
+    
+    // Validate both fields are filled
+    if (!quickQuery.trim()) {
+      // Focus on service input if empty
+      searchInputRef.current?.focus()
+      return
+    }
+    
+    if (!quickLocation) {
+      setLocationError('Please select a location before searching')
+      // Highlight location select
+      const locationSelect = document.querySelector('select')
+      if (locationSelect) {
+        locationSelect.style.border = '2px solid #EF4444'
+        locationSelect.style.borderRadius = '4px'
+        setTimeout(() => {
+          locationSelect.style.border = 'none'
+        }, 3000)
+      }
+      return
+    }
 
+    // Both fields are filled, proceed with search
     const params = new URLSearchParams()
     if (quickQuery.trim()) params.set('q', quickQuery)
     if (quickLocation) params.set('location', quickLocation)
 
-    navigate(`/businesses?${params.toString()}`)
+    navigate(`/categories?${params.toString()}`)
     setShowDropdown(false)
   }
 
@@ -205,6 +213,20 @@ export default function HomeHero() {
   }
 
   const handleSuggestionClick = (s) => {
+    // Check if location is selected before navigating from suggestion
+    if (!quickLocation) {
+      setLocationError('Please select a location first')
+      const locationSelect = document.querySelector('select')
+      if (locationSelect) {
+        locationSelect.style.border = '2px solid #EF4444'
+        locationSelect.style.borderRadius = '4px'
+        setTimeout(() => {
+          locationSelect.style.border = 'none'
+        }, 3000)
+      }
+      return
+    }
+    
     const params = new URLSearchParams()
     params.set('q', s.name)
     if (quickLocation) params.set('location', quickLocation)
@@ -212,6 +234,11 @@ export default function HomeHero() {
     setShowDropdown(false)
     setQuickQuery('')
     setSuggestions([])
+  }
+
+  const handleLocationChange = (e) => {
+    setQuickLocation(e.target.value)
+    setLocationError('') // Clear error when location is selected
   }
 
   return (
@@ -257,6 +284,22 @@ export default function HomeHero() {
         .search-cta { transition: transform 0.2s ease, box-shadow 0.2s ease; }
         .search-cta:hover { transform: translateY(-2px); box-shadow: 0 10px 22px rgba(214,28,168,.35); }
         .search-cta:active { transform: translateY(0); }
+        
+        /* Custom scrollbar for dropdown */
+        .dropdown-scroll::-webkit-scrollbar {
+          width: 6px;
+        }
+        .dropdown-scroll::-webkit-scrollbar-track {
+          background: #f1f1f1;
+          border-radius: 10px;
+        }
+        .dropdown-scroll::-webkit-scrollbar-thumb {
+          background: #D61CA8;
+          border-radius: 10px;
+        }
+        .dropdown-scroll::-webkit-scrollbar-thumb:hover {
+          background: #8B2EF5;
+        }
       `}</style>
 
       <div style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -406,7 +449,7 @@ export default function HomeHero() {
                     padding: isMobile ? '10px 0' : '0',
                     background: 'transparent'
                   }}
-                  placeholder="What service do you need?"
+                  placeholder="What service do you need? *"
                   value={quickQuery}
                   onChange={handleInputChange}
                   onFocus={handleInputFocus}
@@ -423,11 +466,13 @@ export default function HomeHero() {
                   width: isMobile ? '100%' : 'auto',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'space-between'
+                  justifyContent: 'space-between',
+                  flexDirection: 'column',
+                  gap: '4px'
                 }}>
                   <select
                     value={quickLocation}
-                    onChange={(e) => setQuickLocation(e.target.value)}
+                    onChange={handleLocationChange}
                     style={{
                       background: 'transparent',
                       border: 'none',
@@ -439,11 +484,21 @@ export default function HomeHero() {
                       width: '100%'
                     }}
                   >
-                    <option value="">Select Region ▾</option>
+                    <option value="">Select Region *</option>
                     {locations.map(g => (
                       <option key={g.id} value={g.id}>{g.name}</option>
                     ))}
                   </select>
+                  {locationError && (
+                    <span style={{
+                      color: '#EF4444',
+                      fontSize: '10px',
+                      font: '500 10px "DM Sans",sans-serif',
+                      textAlign: 'center'
+                    }}>
+                      {locationError}
+                    </span>
+                  )}
                 </div>
 
                 <div
@@ -633,7 +688,7 @@ export default function HomeHero() {
         </section>
       </div>
 
-      {/* Dropdown Portal */}
+      {/* Dropdown Portal with scrollable content */}
       {showDropdown && dropdownPos.width > 0 && createPortal(
         <div
           ref={portalRef}
@@ -648,7 +703,9 @@ export default function HomeHero() {
             borderRadius: isMobile ? '12px' : '16px',
             border: '1px solid rgba(0,0,0,.06)',
             overflow: 'hidden',
-            maxHeight: isMobile ? '60vh' : 'auto'
+            maxHeight: isMobile ? '60vh' : '500px',
+            display: 'flex',
+            flexDirection: 'column'
           }}
         >
           <div style={{
@@ -657,7 +714,8 @@ export default function HomeHero() {
             justifyContent: 'space-between',
             padding: isMobile ? '10px 16px' : '12px 20px',
             borderBottom: '1px solid rgba(0,0,0,.06)',
-            background: '#F8F9FA'
+            background: '#F8F9FA',
+            flexShrink: 0
           }}>
             <span style={{ font: isMobile ? '600 10px "DM Sans"' : '700 11px "DM Sans"', color: '#9090A0', textTransform: 'uppercase', letterSpacing: '1px' }}>
               {quickQuery.trim()
@@ -679,7 +737,17 @@ export default function HomeHero() {
             </div>
           </div>
 
-          <div style={{ maxHeight: isMobile ? '40vh' : '400px', overflowY: 'auto', padding: isMobile ? '4px 0' : '8px 0' }}>
+          {/* Scrollable content area */}
+          <div 
+            className="dropdown-scroll"
+            style={{ 
+              flex: 1,
+              overflowY: 'auto',
+              padding: isMobile ? '4px 0' : '8px 0',
+              minHeight: '100px',
+              maxHeight: isMobile ? '40vh' : '380px'
+            }}
+          >
             {isSearching && suggestions.length === 0 && (
               <div style={{ padding: '16px', display: 'grid', gridTemplateColumns: '1fr', gap: '12px' }}>
                 {[1, 2, 3].map(i => (
@@ -710,7 +778,16 @@ export default function HomeHero() {
                         borderRadius: '12px',
                         border: '1px solid #EBEBEF',
                         cursor: 'pointer',
-                        background: '#FFF'
+                        background: '#FFF',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.borderColor = '#D61CA8'
+                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(214,28,168,0.1)'
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.borderColor = '#EBEBEF'
+                        e.currentTarget.style.boxShadow = 'none'
                       }}
                     >
                       <div style={{ width: '44px', height: '44px', borderRadius: '10px', background: '#F8F9FA', border: '1px solid #EBEBEF', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
@@ -746,8 +823,12 @@ export default function HomeHero() {
               background: '#F8F9FA',
               cursor: 'pointer',
               font: '700 12px "DM Sans"',
-              color: '#D61CA8'
+              color: '#D61CA8',
+              flexShrink: 0,
+              transition: 'background 0.2s ease'
             }}
+            onMouseEnter={(e) => e.currentTarget.style.background = '#F0EFF4'}
+            onMouseLeave={(e) => e.currentTarget.style.background = '#F8F9FA'}
           >
             {quickQuery.trim() ? `Search for "${quickQuery}"` : 'Browse Services Index'}
             <ChevronRight size={14} />
