@@ -15,6 +15,18 @@ const getBgColor = (slug) => {
     'pest-control': '#EDE9FE',
     'painting': '#FFE4E6',
     'car-detailing': '#E0F2FE',
+    'pool-service': '#ECFDF5',
+    'home-renovation': '#FEF3C7',
+    'landscaping': '#D1FAE5',
+    'moving-packing': '#CFFAFE',
+    'water-tank-clean': '#DBEAFE',
+    'cctv-smart-home': '#EDE9FE',
+    'fitness-wellness': '#FCE7F3',
+    'laundry-ironing': '#E0F2FE',
+    'pet-care': '#FFE4E6',
+    'glazing-windows': '#CFFAFE',
+    'appliance-repair': '#FEF3C7',
+    'babysitting': '#FCE7F3',
     'pool-service': '#ECFDF5'
   }
   return bgs[slug] || '#F1F5F9'
@@ -38,6 +50,7 @@ export default function CategoriesPage() {
   const [locationName, setLocationName] = useState('')
   const [locations, setLocations] = useState([])
   const [isSearching, setIsSearching] = useState(false)
+  const [serviceNameFromId, setServiceNameFromId] = useState('')
   
   // Refs for debounce
   const searchTimeoutRef = useRef(null)
@@ -49,6 +62,9 @@ export default function CategoriesPage() {
         const response = await axios.get(API_ENDPOINTS.LOCATIONS)
         if (response.data && response.data.status === 'success') {
           setLocations(response.data.data)
+          // Set location name immediately after fetching locations
+          const locName = getLocationNameFromList(response.data.data, urlLocation)
+          setLocationName(locName)
         }
       } catch (error) {
         console.error("Error fetching locations:", error)
@@ -57,10 +73,30 @@ export default function CategoriesPage() {
     fetchLocations()
   }, [])
 
-  // Get location name from ID
+  // Get location name from list (no dependency on locations state)
+  const getLocationNameFromList = (locationList, id) => {
+    const location = locationList.find(loc => loc.id === parseInt(id))
+    return location ? location.name : `Location ${id}`
+  }
+
+  // Get location name from state
   const getLocationName = (id) => {
     const location = locations.find(loc => loc.id === parseInt(id))
     return location ? location.name : `Location ${id}`
+  }
+
+  // Fetch a single service by ID (to get the name even if not available in the location)
+  const fetchServiceById = async (serviceId) => {
+    try {
+      const response = await axios.get(`${API_ENDPOINTS.SERVICES}?service_id=${serviceId}`)
+      if (response.data && response.data.status === 'success' && response.data.data.length > 0) {
+        setServiceNameFromId(response.data.data[0].name)
+        return response.data.data[0].name
+      }
+    } catch (error) {
+      console.error("Error fetching service by ID:", error)
+    }
+    return null
   }
 
   // Fetch Services Data from API
@@ -83,33 +119,65 @@ export default function CategoriesPage() {
       if (response.data && response.data.status === 'success') {
         setServicesData(response.data.data)
         
-        // If we have data, set the service name and location name
-        if (response.data.data.length > 0) {
-          // Get service name
-          if (serviceId) {
-            setSelectedServiceName(response.data.data[0].name)
-          }
-          
-          // Get location name from the API response
-          if (response.data.data[0].location) {
-            const locationData = response.data.data[0].location
-            if (Array.isArray(locationData) && locationData.length > 0) {
-              setLocationName(locationData[0].name)
-            } else if (locationData.name) {
-              setLocationName(locationData.name)
-            } else {
-              setLocationName(getLocationName(locationId))
-            }
+        // Update location name from API response or from locations list
+        if (response.data.data.length > 0 && response.data.data[0].location) {
+          const locationData = response.data.data[0].location
+          if (Array.isArray(locationData) && locationData.length > 0) {
+            const locName = locationData[0].name
+            setLocationName(locName)
+          } else if (locationData.name) {
+            setLocationName(locationData.name)
           } else {
-            setLocationName(getLocationName(locationId))
+            // Fallback to locations list
+            const locName = getLocationName(locationId)
+            setLocationName(locName)
           }
         } else {
-          setLocationName(getLocationName(locationId))
+          // Fallback to locations list
+          const locName = getLocationName(locationId)
+          setLocationName(locName)
         }
+        
+        // Set service name if service_id is present
+        if (serviceId) {
+          if (response.data.data.length > 0) {
+            setSelectedServiceName(response.data.data[0].name)
+            setServiceNameFromId(response.data.data[0].name)
+          } else {
+            // If service not found in this location, fetch it by ID
+            const serviceName = await fetchServiceById(serviceId)
+            if (serviceName) {
+              setSelectedServiceName(serviceName)
+              setServiceNameFromId(serviceName)
+            }
+          }
+        }
+      } else {
+        // If API returns no data but we have a service_id, fetch the service by ID
+        if (serviceId) {
+          const serviceName = await fetchServiceById(serviceId)
+          if (serviceName) {
+            setSelectedServiceName(serviceName)
+            setServiceNameFromId(serviceName)
+          }
+        }
+        // Fallback to locations list
+        const locName = getLocationName(locationId)
+        setLocationName(locName)
       }
     } catch (error) {
       console.error("Error fetching filtered services from API:", error)
-      setLocationName(getLocationName(locationId))
+      const locName = getLocationName(locationId)
+      setLocationName(locName)
+      
+      // If error but we have a service_id, try to fetch it separately
+      if (serviceId) {
+        const serviceName = await fetchServiceById(serviceId)
+        if (serviceName) {
+          setSelectedServiceName(serviceName)
+          setServiceNameFromId(serviceName)
+        }
+      }
     } finally {
       setLoading(false)
       setIsSearching(false)
@@ -118,8 +186,10 @@ export default function CategoriesPage() {
 
   // Initial fetch on URL param changes
   useEffect(() => {
-    fetchServices(urlLocation, urlQuery, urlServiceId)
-  }, [urlQuery, urlServiceId, urlLocation])
+    if (locations.length > 0) {
+      fetchServices(urlLocation, urlQuery, urlServiceId)
+    }
+  }, [urlQuery, urlServiceId, urlLocation, locations])
 
   // Handle search input change with debounce
   const handleSearchChange = (e) => {
@@ -134,7 +204,7 @@ export default function CategoriesPage() {
     // Set new timeout for debounce (500ms delay)
     searchTimeoutRef.current = setTimeout(() => {
       if (value.trim()) {
-        // Navigate with search query
+        // Navigate with search query using 'q' parameter
         navigate(`/categories?location_id=${urlLocation}&q=${encodeURIComponent(value.trim())}`)
       } else {
         // If empty, go to categories without search
@@ -159,6 +229,10 @@ export default function CategoriesPage() {
   // Handle location change
   const handleLocationChange = (e) => {
     const newLocation = e.target.value
+    // Update location name immediately when location changes
+    const newLocationName = getLocationName(newLocation)
+    setLocationName(newLocationName)
+    
     if (urlQuery) {
       navigate(`/categories?location_id=${newLocation}&q=${encodeURIComponent(urlQuery)}`)
     } else if (urlServiceId) {
@@ -181,8 +255,9 @@ export default function CategoriesPage() {
 
   // Get header title based on what was searched
   const getHeaderTitle = () => {
-    if (urlServiceId && selectedServiceName) {
-      return selectedServiceName
+    // Priority: service name from URL service_id
+    if (urlServiceId && (selectedServiceName || serviceNameFromId)) {
+      return selectedServiceName || serviceNameFromId
     }
     if (urlQuery) {
       return `Search Results for "${urlQuery}"`
@@ -201,12 +276,13 @@ export default function CategoriesPage() {
     if (locationName) {
       subtitle += ` · ${locationName}`
     } else if (urlLocation) {
-      subtitle += ` · Location ID: ${urlLocation}`
+      const fallbackName = getLocationName(urlLocation)
+      subtitle += ` · ${fallbackName}`
     }
     
     // Show service name if available
-    if (urlServiceId && selectedServiceName) {
-      subtitle += ` · ${selectedServiceName}`
+    if (urlServiceId && (selectedServiceName || serviceNameFromId)) {
+      subtitle += ` · ${selectedServiceName || serviceNameFromId}`
     }
     
     // Show searching indicator
