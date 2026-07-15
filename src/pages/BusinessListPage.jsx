@@ -1,9 +1,50 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSearchParams, useNavigate, Link } from 'react-router-dom'
 import axios from 'axios'
 import { API_ENDPOINTS } from '../config/api'
 
 const BRAND_GRADIENT = 'linear-gradient(135deg, #D61CA8, #8B2EF5)'
+
+const ShimmerCard = ({ height = '80px', width = '100%', borderRadius = '16px' }) => (
+  <div style={{
+    height,
+    width,
+    borderRadius,
+    background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)',
+    backgroundSize: '200% 100%',
+    animation: 'shimmer 1.5s infinite',
+    marginBottom: '10px'
+  }} />
+)
+
+const shimmerStyles = `
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  .service-scroll {
+    max-height: 560px;
+    overflow-y: auto;
+    padding-right: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(128, 128, 128, 0.3) transparent;
+  }
+  .service-scroll::-webkit-scrollbar {
+    width: 5px;
+  }
+  .service-scroll::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 10px;
+  }
+  .service-scroll::-webkit-scrollbar-thumb {
+    background: rgba(128, 128, 128, 0.3);
+    border-radius: 10px;
+    transition: background 0.3s ease;
+  }
+  .service-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(128, 128, 128, 0.5);
+  }
+`
 
 export default function BusinessListPage() {
   const [searchParams] = useSearchParams()
@@ -14,7 +55,6 @@ export default function BusinessListPage() {
   const urlLocation = searchParams.get('location_id') || '1'
   const urlCategory = searchParams.get('category') || ''
 
-  // States
   const [serviceData, setServiceData] = useState(null)
   const [serviceTypes, setServiceTypes] = useState([])
   const [professionals, setProfessionals] = useState([])
@@ -25,8 +65,9 @@ export default function BusinessListPage() {
   const [serviceName, setServiceName] = useState('')
   const [serviceIcon, setServiceIcon] = useState('')
   const [locationName, setLocationName] = useState('')
+  const [displayCount, setDisplayCount] = useState(10) // Changed to 10
+  const serviceScrollRef = useRef(null)
 
-  // Fetch Service Details and Professionals
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true)
@@ -78,6 +119,10 @@ export default function BusinessListPage() {
     fetchData()
   }, [urlServiceId, urlLocation])
 
+  useEffect(() => {
+    setDisplayCount(10) // Changed to 10
+  }, [serviceTypes])
+
   const handleBookProfessional = (name, id) => {
     navigate(`/BusinessSelection?pro=${encodeURIComponent(name)}&professional_id=${id}`)
   }
@@ -86,7 +131,10 @@ export default function BusinessListPage() {
     setSelectedServiceTypeId(typeId)
   }
 
-  // Get icon based on service name
+  const loadMoreServices = () => {
+    setDisplayCount(prev => Math.min(prev + 10, serviceTypes.length)) // Changed to 10
+  }
+
   const getServiceIcon = (name) => {
     if (!name) return '🛠️'
     const iconMap = {
@@ -121,7 +169,6 @@ export default function BusinessListPage() {
     return '🛠️'
   }
 
-  // Get background color for service icon
   const getIconBg = (name) => {
     if (!name) return '#F1F5F9'
     const bgMap = {
@@ -156,7 +203,6 @@ export default function BusinessListPage() {
     return '#F1F5F9'
   }
 
-  // Render service icon function
   const renderServiceIcon = (icon, name, size = '30px') => {
     if (icon && icon.startsWith('http')) {
       return <img src={icon} alt={name} style={{ width: size, height: size, objectFit: 'contain' }} />
@@ -164,9 +210,43 @@ export default function BusinessListPage() {
     return <span style={{ fontSize: size }}>{getServiceIcon(name)}</span>
   }
 
+  const displayedServices = serviceTypes.slice(0, displayCount)
+  const hasMoreServices = displayCount < serviceTypes.length
+
+  const renderShimmerServices = () => (
+    <>
+      {Array.from({ length: 8 }).map((_, idx) => (
+        <ShimmerCard key={`shimmer-${idx}`} height="80px" borderRadius="13px" />
+      ))}
+    </>
+  )
+
+  const renderShimmerAIPicks = () => (
+    <>
+      {Array.from({ length: 3 }).map((_, idx) => (
+        <div key={`ai-shimmer-${idx}`} style={{ background: 'white', borderRadius: '12px', padding: '12px', marginBottom: '9px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '9px', marginBottom: '7px' }}>
+            <ShimmerCard height="36px" width="36px" borderRadius="50%" />
+            <div style={{ flex: 1 }}>
+              <ShimmerCard height="16px" width="80%" borderRadius="4px" />
+              <ShimmerCard height="12px" width="60%" borderRadius="4px" />
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: '6px', marginBottom: '8px' }}>
+            <ShimmerCard height="20px" width="50px" borderRadius="6px" />
+            <ShimmerCard height="20px" width="50px" borderRadius="6px" />
+            <ShimmerCard height="20px" width="50px" borderRadius="6px" />
+          </div>
+          <ShimmerCard height="32px" width="100%" borderRadius="8px" />
+        </div>
+      ))}
+    </>
+  )
+
   return (
     <div style={{ background: 'white', minHeight: '100vh', fontFamily: '"DM Sans", sans-serif' }}>
       <style>{`
+        ${shimmerStyles}
         @media (max-width: 900px) {
           .bl-grid { grid-template-columns: 1fr !important; }
           .bl-left { border-right: none !important; border-bottom: 1px solid #EBEBEF !important; padding: 20px 20px !important; }
@@ -177,20 +257,8 @@ export default function BusinessListPage() {
           .bl-service-row { flex-wrap: wrap !important; }
           .bl-service-price { width: 100% !important; display: flex !important; align-items: center !important; justify-content: space-between !important; margin-top: 8px !important; text-align: left !important; }
         }
-        @keyframes pulse {
-          0% { opacity: 0.6; }
-          50% { opacity: 1; }
-          100% { opacity: 0.6; }
-        }
-        .skel-card {
-          background: #F4F5F8;
-          height: 80px;
-          border-radius: 16px;
-          animation: pulse 1.5s infinite ease-in-out;
-        }
       `}</style>
 
-      {/* Breadcrumbs Navigation Strip */}
       <div style={{ padding: '12px 56px', borderBottom: '1px solid #EBEBEF', font: '400 12px/1 "DM Sans", sans-serif', color: '#9090A0' }} className="bl-breadcrumbs">
         <div style={{ maxWidth: '1240px', margin: '0 auto' }}>
           <Link to="/" style={{ color: '#9090A0', textDecoration: 'none' }}>Home</Link> ›{' '}
@@ -199,129 +267,173 @@ export default function BusinessListPage() {
         </div>
       </div>
 
-      {/* Grid Canvas Frame Workspace Container */}
       <div style={{ maxWidth: '1240px', margin: '0 auto' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 360px' }} className="bl-grid">
 
-          {/* LEFT SECTION CONTAINER */}
           <div style={{ padding: '26px 40px 26px 56px', borderRight: '1px solid #EBEBEF' }} className="bl-left">
 
-            {/* Category Brand Heading Details */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '22px' }}>
-              <div style={{
-                width: '62px',
-                height: '62px',
-                background: getIconBg(serviceName),
-                borderRadius: '18px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '30px',
-                flexShrink: 0
-              }}>
-                {renderServiceIcon(serviceIcon, serviceName, '30px')}
-              </div>
-              <div>
-                <h1 style={{ font: '600 26px/1 "DM Sans", sans-serif', color: '#0A0A0F', letterSpacing: '-.8px', margin: 0 }}>
-                  {loading ? 'Loading...' : serviceName || 'Service'}
-                </h1>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '9px', marginTop: '5px', flexWrap: 'wrap' }}>
-                  <span style={{ font: '700 12px/1 "DM Sans", sans-serif', color: '#F59E0B' }}>★ {professionals.length > 0 ? professionals[0]?.rating || '4.8' : '4.8'}</span>
-                  <span style={{ font: '400 12px/1 "DM Sans", sans-serif', color: '#9090A0' }}>
-                    ({professionals.reduce((acc, p) => acc + (p.jobs_done || 0), 0) || 0} jobs)
-                  </span>
-                  <span style={{ font: '600 12px/1 "DM Sans", sans-serif', color: '#10B981' }}>
-                    {professionals.filter(p => p.is_available_today).length || 0} pros available today
-                  </span>
-                  {locationName && (
-                    <span style={{ font: '400 12px/1 "DM Sans", sans-serif', color: '#9090A0' }}>
-                      · {locationName}
-                    </span>
-                  )}
+              {loading ? (
+                <ShimmerCard height="62px" width="62px" borderRadius="18px" />
+              ) : (
+                <div style={{
+                  width: '62px',
+                  height: '62px',
+                  background: getIconBg(serviceName),
+                  borderRadius: '18px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '30px',
+                  flexShrink: 0
+                }}>
+                  {renderServiceIcon(serviceIcon, serviceName, '30px')}
                 </div>
+              )}
+              <div>
+                {loading ? (
+                  <>
+                    <ShimmerCard height="28px" width="180px" borderRadius="4px" />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '9px', marginTop: '5px' }}>
+                      <ShimmerCard height="14px" width="60px" borderRadius="4px" />
+                      <ShimmerCard height="14px" width="80px" borderRadius="4px" />
+                      <ShimmerCard height="14px" width="120px" borderRadius="4px" />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <h1 style={{ font: '600 26px/1 "DM Sans", sans-serif', color: '#0A0A0F', letterSpacing: '-.8px', margin: 0 }}>
+                      {serviceName || 'Service'}
+                    </h1>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '9px', marginTop: '5px', flexWrap: 'wrap' }}>
+                      <span style={{ font: '700 12px/1 "DM Sans", sans-serif', color: '#F59E0B' }}>★ {professionals.length > 0 ? professionals[0]?.rating || '4.8' : '4.8'}</span>
+                      <span style={{ font: '400 12px/1 "DM Sans", sans-serif', color: '#9090A0' }}>
+                        ({professionals.reduce((acc, p) => acc + (p.jobs_done || 0), 0) || 0} jobs)
+                      </span>
+                      <span style={{ font: '600 12px/1 "DM Sans", sans-serif', color: '#10B981' }}>
+                        {professionals.filter(p => p.is_available_today).length || 0} pros available today
+                      </span>
+                      {locationName && (
+                        <span style={{ font: '400 12px/1 "DM Sans", sans-serif', color: '#9090A0' }}>
+                          · {locationName}
+                        </span>
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
             <div style={{ font: '700 14px/1 "DM Sans", sans-serif', color: '#0A0A0F', marginBottom: '12px' }}>
-              Choose a Service
+              Choose a Service {serviceTypes.length > 0 && <span style={{ fontWeight: '400', color: '#9090A0', fontSize: '12px' }}>({serviceTypes.length} available)</span>}
             </div>
 
-            {/* Loop Interactive Local Item Data Rows */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '9px' }}>
+            <div className="service-scroll" ref={serviceScrollRef}>
               {loading ? (
-                Array.from({ length: 5 }).map((_, idx) => (
-                  <div key={`skel-${idx}`} className="skel-card" />
-                ))
+                renderShimmerServices()
               ) : serviceTypes.length > 0 ? (
-                serviceTypes.map((service) => {
-                  const isSelected = selectedServiceTypeId === service.id
-                  return (
-                    <div
-                      key={service.id}
-                      onClick={() => handleServiceTypeSelect(service.id)}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '13px',
-                        padding: '13px',
-                        borderRadius: '13px',
-                        cursor: 'pointer',
-                        border: isSelected ? '1.5px solid rgba(214,28,168,.3)' : '1.5px solid #EBEBEF',
-                        background: isSelected ? 'rgba(214,28,168,.03)' : '#F4F5F8',
-                        transition: 'all 0.2s ease'
-                      }}
-                      className="bl-service-row"
-                    >
-                      <div style={{
-                        width: '42px',
-                        height: '42px',
-                        background: '#DBEAFE',
-                        borderRadius: '10px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '20px',
-                        flexShrink: 0
-                      }}>
-                        {renderServiceIcon(service.icon, service.type_name, '24px')}
-                      </div>
+                <>
+                  {displayedServices.map((service) => {
+                    const isSelected = selectedServiceTypeId === service.id
+                    return (
+                      <div
+                        key={service.id}
+                        onClick={() => handleServiceTypeSelect(service.id)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '13px',
+                          padding: '13px',
+                          borderRadius: '13px',
+                          cursor: 'pointer',
+                          border: isSelected ? '1.5px solid rgba(214,28,168,.3)' : '1.5px solid #EBEBEF',
+                          background: isSelected ? 'rgba(214,28,168,.03)' : '#F4F5F8',
+                          transition: 'all 0.2s ease',
+                          marginBottom: '9px'
+                        }}
+                        className="bl-service-row"
+                      >
+                        <div style={{
+                          width: '42px',
+                          height: '42px',
+                          background: '#DBEAFE',
+                          borderRadius: '10px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '20px',
+                          flexShrink: 0
+                        }}>
+                          {renderServiceIcon(service.icon, service.type_name, '24px')}
+                        </div>
 
-                      <div style={{ flex: 1, minWidth: '150px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '7px', flexWrap: 'wrap' }}>
-                          <div style={{ font: '700 13px/1 "DM Sans", sans-serif', color: '#0A0A0F' }}>
-                            {service.type_name}
-                          </div>
-                          {service.id === serviceTypes[0]?.id && (
-                            <div style={{ padding: '2px 7px', background: 'rgba(214,28,168,.1)', borderRadius: '4px', font: '700 8px/1 "DM Sans", sans-serif', color: '#D61CA8' }}>
-                              POPULAR
+                        <div style={{ flex: 1, minWidth: '150px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '7px', flexWrap: 'wrap' }}>
+                            <div style={{ font: '700 13px/1 "DM Sans", sans-serif', color: '#0A0A0F' }}>
+                              {service.type_name}
                             </div>
-                          )}
+                            {service.id === serviceTypes[0]?.id && (
+                              <div style={{ padding: '2px 7px', background: 'rgba(214,28,168,.1)', borderRadius: '4px', font: '700 8px/1 "DM Sans", sans-serif', color: '#D61CA8' }}>
+                                POPULAR
+                              </div>
+                            )}
+                          </div>
+                          <div style={{ font: '400 11px/1.4 "DM Sans", sans-serif', color: '#9090A0', marginTop: '3px' }}>
+                            {service.description || 'Professional service'}
+                          </div>
+                          <div style={{ font: '400 11px/1 "DM Sans", sans-serif', color: '#9090A0', marginTop: '4px' }}>
+                            ⏱ {service.duration || '1 Hour'}
+                          </div>
                         </div>
-                        <div style={{ font: '400 11px/1.4 "DM Sans", sans-serif', color: '#9090A0', marginTop: '3px' }}>
-                          {service.description || 'Professional service'}
-                        </div>
-                        <div style={{ font: '400 11px/1 "DM Sans", sans-serif', color: '#9090A0', marginTop: '4px' }}>
-                          ⏱ {service.duration || '1 Hour'}
+
+                        <div style={{ textAlign: 'right', flexShrink: 0 }} className="bl-service-price">
+                          <div style={{ font: '600 15px/1 "DM Sans", sans-serif', color: '#0A0A0F', marginBottom: '6px' }}>
+                            OMR {service.price || serviceData?.starting_price || '0'}
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              navigate(`/BusinessSelection?pro=${encodeURIComponent(service.type_name)}&service_type_id=${service.id}`)
+                            }}
+                            style={{ padding: '6px 13px', background: BRAND_GRADIENT, borderRadius: '8px', font: '700 11px/1 "DM Sans", sans-serif', color: 'white', cursor: 'pointer', border: 'none', outline: 'none' }}
+                          >
+                            Book →
+                          </button>
                         </div>
                       </div>
-
-                      <div style={{ textAlign: 'right', flexShrink: 0 }} className="bl-service-price">
-                        <div style={{ font: '600 15px/1 "DM Sans", sans-serif', color: '#0A0A0F', marginBottom: '6px' }}>
-                          OMR {service.price || serviceData?.starting_price || '0'}
-                        </div>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            navigate(`/BusinessSelection?pro=${encodeURIComponent(service.type_name)}&service_type_id=${service.id}`)
-                          }}
-                          style={{ padding: '6px 13px', background: BRAND_GRADIENT, borderRadius: '8px', font: '700 11px/1 "DM Sans", sans-serif', color: 'white', cursor: 'pointer', border: 'none', outline: 'none' }}
-                        >
-                          Book →
-                        </button>
+                    )
+                  })}
+                  
+                  {hasMoreServices && (
+                    <div style={{ textAlign: 'center', padding: '8px 0 4px 0' }}>
+                      <button
+                        onClick={loadMoreServices}
+                        style={{
+                          padding: '10px 30px',
+                          background: 'transparent',
+                          border: '1.5px solid #D61CA8',
+                          borderRadius: '10px',
+                          font: '600 13px/1 "DM Sans", sans-serif',
+                          color: '#D61CA8',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          outline: 'none'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.background = 'rgba(214,28,168,.05)'
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.background = 'transparent'
+                        }}
+                      >
+                        Show {Math.min(10, serviceTypes.length - displayCount)} More Services ↓
+                      </button>
+                      <div style={{ font: '400 10px/1 "DM Sans", sans-serif', color: '#9090A0', marginTop: '6px' }}>
+                        Showing {displayCount} of {serviceTypes.length} services
                       </div>
                     </div>
-                  )
-                })
+                  )}
+                </>
               ) : (
                 <div style={{ textAlign: 'center', padding: '40px 20px', color: '#9090A0' }}>
                   No service types available
@@ -330,7 +442,6 @@ export default function BusinessListPage() {
             </div>
           </div>
 
-          {/* RIGHT SIDEBAR PANEL CONTAINER */}
           <div style={{ padding: '24px', background: '#F4F5F8' }} className="bl-right">
             <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '12px' }}>
               <span style={{ fontSize: '13px' }}>✨</span>
@@ -339,13 +450,8 @@ export default function BusinessListPage() {
               </div>
             </div>
 
-            {/* AI Top Pick Cards iteration */}
             {loading ? (
-              Array.from({ length: 3 }).map((_, idx) => (
-                <div key={`ai-skel-${idx}`} style={{ background: 'white', borderRadius: '12px', padding: '12px', marginBottom: '9px' }}>
-                  <div className="skel-card" style={{ height: '60px' }} />
-                </div>
-              ))
+              renderShimmerAIPicks()
             ) : aiTopPicks.length > 0 ? (
               aiTopPicks.map((pro) => (
                 <div
@@ -408,8 +514,7 @@ export default function BusinessListPage() {
               </div>
             )}
 
-            {/* AI Prompt Insight Label */}
-            <div style={{ background: 'rgba(214,28,168,.04)', border: '1px solid rgba(214,28,168,.15)', borderRadius: '12px', padding: '11px', display: 'flex', gap: '7px' }}>
+            <div style={{ background: 'rgba(214,28,168,.04)', border: '1px solid rgba(214,28,168,.15)', borderRadius: '12px', padding: '11px', display: 'flex', gap: '7px', marginTop: '9px' }}>
               <span style={{ fontSize: '12px' }}>🤖</span>
               <div style={{ font: '400 10px/1.5 "DM Sans", sans-serif', color: '#6B7280' }}>
                 <strong style={{ color: '#D61CA8' }}>AI:</strong> {aiSummaryNote || 'Top professionals matched to your needs based on location and service requirements.'}
