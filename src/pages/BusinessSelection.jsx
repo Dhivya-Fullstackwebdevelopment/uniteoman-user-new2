@@ -5,6 +5,31 @@ import { API_ENDPOINTS } from '../config/api'
 
 const BRAND_GRADIENT = 'linear-gradient(135deg, #D61CA8, #8B2EF5)'
 
+const scrollStyles = `
+  .professionals-scroll {
+    max-height: 620px;
+    overflow-y: auto;
+    padding-right: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(128, 128, 128, 0.3) transparent;
+  }
+  .professionals-scroll::-webkit-scrollbar {
+    width: 5px;
+  }
+  .professionals-scroll::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 10px;
+  }
+  .professionals-scroll::-webkit-scrollbar-thumb {
+    background: rgba(128, 128, 128, 0.3);
+    border-radius: 10px;
+    transition: background 0.3s ease;
+  }
+  .professionals-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(128, 128, 128, 0.5);
+  }
+`
+
 export default function BusinessSelection() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
@@ -12,8 +37,8 @@ export default function BusinessSelection() {
   const professionalId = searchParams.get('professional_id') || ''
   const serviceTypeId = searchParams.get('service_type_id') || ''
   const proName = searchParams.get('pro') || ''
-  const locationId = searchParams.get('location_id') || '1'  // ← ADD THIS
-  const serviceId = searchParams.get('service_id') || '1'    // ← ADD THIS
+  const locationId = searchParams.get('location_id') || '1'
+  const serviceId = searchParams.get('service_id') || '1'
 
   const [professionals, setProfessionals] = useState([])
   const [loading, setLoading] = useState(true)
@@ -26,6 +51,7 @@ export default function BusinessSelection() {
   const [aiSummaryNote, setAiSummaryNote] = useState('')
   const [aiTopPicks, setAiTopPicks] = useState([])
   const [counts, setCounts] = useState({ all: 0, available_today: 0, top_rated: 0, nearest: 0 })
+  const [displayCount, setDisplayCount] = useState(5)
   const [filters, setFilters] = useState({
     service_type_id: serviceTypeId || '',
     min_rating: '',
@@ -35,7 +61,6 @@ export default function BusinessSelection() {
     search: ''
   })
 
-
   // Fetch professionals conditionally based on query presence
   useEffect(() => {
     const fetchProfessionals = async () => {
@@ -43,7 +68,6 @@ export default function BusinessSelection() {
       try {
         const params = new URLSearchParams()
 
-        // Append optional layout filters
         if (filters.service_type_id) params.append('service_type_id', filters.service_type_id)
         if (filters.min_rating) params.append('min_rating', filters.min_rating)
         if (filters.price_min) params.append('price_min', filters.price_min)
@@ -51,13 +75,11 @@ export default function BusinessSelection() {
         if (filters.sort) params.append('sort', filters.sort)
         if (filters.search) params.append('search', filters.search)
 
-        // Always provide fallback location and service identifiers context
         params.append('location_id', locationId)
         params.append('service_id', serviceId)
 
         let url = ''
 
-        // Context Check: Are we requesting a targeted individual review payload?
         if (professionalId) {
           const baseUrl = API_ENDPOINTS.PROFESSIONAL_DETAIL(professionalId)
           url = `${baseUrl}?${params.toString()}`
@@ -72,8 +94,6 @@ export default function BusinessSelection() {
           const fetchedData = response.data.data;
 
           if (professionalId) {
-            // Case A: Response contains a single object model data wrap
-            // Format array to show targeted professional profile followed by related top recommendations
             const individualPro = {
               id: fetchedData.id,
               name: fetchedData.name,
@@ -91,7 +111,6 @@ export default function BusinessSelection() {
             setAiTopPicks(response.data.data.ai_top_picks || [])
             setAiSummaryNote(response.data.data.ai_summary_note || '')
           } else {
-            // Case B: Broad directory fallback array allocation
             setProfessionals(fetchedData || [])
             setAiTopPicks(response.data.ai_top_picks || [])
             setAiSummaryNote(response.data.ai_summary_note || '')
@@ -112,16 +131,20 @@ export default function BusinessSelection() {
     fetchProfessionals()
   }, [filters, locationId, serviceId, professionalId])
 
+  // Reset display count when filters change
+  useEffect(() => {
+    setDisplayCount(5)
+  }, [filters, professionals])
+
   // Fetch available services (service types) for filter
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        const response = await axios.get(`${API_ENDPOINTS.SERVICES}?service_id=${serviceId}`)  // ← USE serviceId
+        const response = await axios.get(`${API_ENDPOINTS.SERVICES}?service_id=${serviceId}`)
         if (response.data && response.data.status === 'success' && response.data.data.length > 0) {
           const service = response.data.data[0]
           if (service.service_types) {
             setAvailableServices(service.service_types)
-            // Auto-select the service type from URL if present
             if (serviceTypeId) {
               setSelectedServices([parseInt(serviceTypeId)])
             }
@@ -132,14 +155,14 @@ export default function BusinessSelection() {
       }
     }
     fetchServices()
-  }, [serviceTypeId, serviceId])  // ← ADD dependency
+  }, [serviceTypeId, serviceId])
 
   const handleProfileNavigation = (id, name) => {
     navigate(`/business/${id}/${encodeURIComponent(name.toLowerCase().replace(/\s+/g, '-'))}`)
   }
 
   const handleBook = (id, name) => {
-    navigate(`/BookingPage?professional_id=${id}&name=${encodeURIComponent(name)}&service_id=${serviceId}&location_id=${locationId}`)  // ← ADD service_id & location_id
+    navigate(`/BookingPage?professional_id=${id}&name=${encodeURIComponent(name)}&service_id=${serviceId}&location_id=${locationId}`)
   }
 
   const handleFilterTab = (tab) => {
@@ -172,7 +195,6 @@ export default function BusinessSelection() {
         return [...prev, serviceId]
       }
     })
-    // Update filter
     setFilters(prev => ({
       ...prev,
       service_type_id: selectedServices.length > 0 ? selectedServices.join(',') : ''
@@ -211,24 +233,38 @@ export default function BusinessSelection() {
     setFilters(prev => ({ ...prev, min_rating: rating }))
   }
 
-  // Filter professionals based on selected filters
-  const getFilteredProfessionals = () => {
-    let filtered = [...professionals]
+  // Load more professionals (show 5 more)
+  const loadMoreProfessionals = () => {
+    setDisplayCount(prev => Math.min(prev + 5, allProfessionals.length))
+  }
 
-    // Filter by selected services
+  // Get all professionals (combine filtered + AI picks)
+  const getAllProfessionals = () => {
+    let filtered = [...professionals]
+    
     if (selectedServices.length > 0) {
       filtered = filtered.filter(p => selectedServices.includes(p.service_type_id))
     }
-
-    return filtered
+    
+    // Combine with AI picks (avoid duplicates)
+    const combined = [...filtered]
+    aiTopPicks.forEach(pick => {
+      if (!combined.some(p => p.id === pick.id)) {
+        combined.push(pick)
+      }
+    })
+    
+    return combined
   }
 
-  const filteredProfessionals = getFilteredProfessionals()
+  const allProfessionals = getAllProfessionals()
+  const displayedProfessionals = allProfessionals.slice(0, displayCount)
+  const hasMoreProfessionals = displayCount < allProfessionals.length
 
   // Get tab counts
   const getTabCount = (tab) => {
     switch (tab) {
-      case 'All': return counts.all || filteredProfessionals.length
+      case 'All': return counts.all || allProfessionals.length
       case 'Available Today': return counts.available_today || 0
       case 'Top Rated': return counts.top_rated || 0
       case 'Nearest': return counts.nearest || 0
@@ -288,6 +324,7 @@ export default function BusinessSelection() {
           0% { background-position: -200% 0; }
           100% { background-position: 200% 0; }
         }
+        ${scrollStyles}
         .workspace-container {
           padding: 20px 56px;
         }
@@ -309,10 +346,14 @@ export default function BusinessSelection() {
           box-shadow: 0 2px 8px rgba(0,0,0,.06);
           border: 1.5px solid #EBEBEF;
           transition: all 0.2s ease;
+          margin-bottom: 12px;
         }
         .business-card:hover {
           box-shadow: 0 4px 16px rgba(0,0,0,.1);
           border-color: rgba(214,28,168,.2);
+        }
+        .business-card:last-child {
+          margin-bottom: 0;
         }
         .ai-context-text {
           font: 400 13px/1.5 "DM Sans", sans-serif;
@@ -371,7 +412,7 @@ export default function BusinessSelection() {
             ✨ <span style={{ color: '#D61CA8', fontWeight: 700 }}>AI:</span>
           </div>
           <div className="ai-context-text">
-            {aiContext || `Searching for "${proName || 'AC services'}" — ${filteredProfessionals.length} results`}
+            {aiContext || `Searching for "${proName || 'AC services'}" — ${allProfessionals.length} results`}
           </div>
         </div>
 
@@ -520,6 +561,7 @@ export default function BusinessSelection() {
                     setSelectedPriceRange('')
                     setMinRating('4')
                     setActiveFilterTab('All')
+                    setDisplayCount(5)
                   }}
                   style={{
                     padding: '6px 16px',
@@ -537,136 +579,171 @@ export default function BusinessSelection() {
             </div>
           </div>
 
-          {/* RESULTS CONTENT FEED PANEL */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {/* RESULTS CONTENT FEED PANEL - SCROLLABLE */}
+          <div style={{ flex: 1 }}>
             {loading ? (
               renderShimmer()
-            ) : (filteredProfessionals.length > 0 || aiTopPicks.length > 0) ? (
-              [...filteredProfessionals, ...aiTopPicks.filter(pick => !filteredProfessionals.some(p => p.id === pick.id))].map((pro) => {
-                const isAIPick = aiTopPicks.some(p => p.id === pro.id)
-                const aiMatch = aiTopPicks.find(p => p.id === pro.id) || pro // Fallback reference for profile mapping descriptions
+            ) : displayedProfessionals.length > 0 ? (
+              <>
+                <div className="professionals-scroll">
+                  {displayedProfessionals.map((pro) => {
+                    const isAIPick = aiTopPicks.some(p => p.id === pro.id)
+                    const aiMatch = aiTopPicks.find(p => p.id === pro.id) || pro
 
-                return (
-                  <div key={pro.id} className="business-card">
-                    {/* Initial Avatar circle */}
-                    <div style={{
-                      width: '52px',
-                      height: '52px',
-                      borderRadius: '50%',
-                      background: BRAND_GRADIENT,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      font: '700 20px "DM Sans", sans-serif',
-                      color: 'white',
-                      flexShrink: 0
-                    }}>
-                      {pro.initial || pro.name?.charAt(0) || 'P'}
-                    </div>
+                    return (
+                      <div key={pro.id} className="business-card">
+                        {/* Initial Avatar circle */}
+                        <div style={{
+                          width: '52px',
+                          height: '52px',
+                          borderRadius: '50%',
+                          background: BRAND_GRADIENT,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          font: '700 20px "DM Sans", sans-serif',
+                          color: 'white',
+                          flexShrink: 0
+                        }}>
+                          {pro.initial || pro.name?.charAt(0) || 'P'}
+                        </div>
 
-                    {/* Listing central details layout */}
-                    <div style={{ flex: 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
-                        <div style={{ font: '700 14px/1 "DM Sans", sans-serif', color: '#0A0A0F' }}>
-                          {pro.name}
-                        </div>
-                        {isAIPick && (
-                          <div style={{ padding: '2px 8px', background: '#D1FAE5', borderRadius: '5px', font: '700 8px/1 "DM Sans", sans-serif', color: '#059669' }}>
-                            ✨ AI Pick
+                        {/* Listing central details layout */}
+                        <div style={{ flex: 1 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
+                            <div style={{ font: '700 14px/1 "DM Sans", sans-serif', color: '#0A0A0F' }}>
+                              {pro.name}
+                            </div>
+                            {isAIPick && (
+                              <div style={{ padding: '2px 8px', background: '#D1FAE5', borderRadius: '5px', font: '700 8px/1 "DM Sans", sans-serif', color: '#059669' }}>
+                                ✨ AI Pick
+                              </div>
+                            )}
+                            {aiMatch?.is_best && (
+                              <div style={{ padding: '2px 8px', background: '#FEF3C7', borderRadius: '5px', font: '700 8px/1 "DM Sans", sans-serif', color: '#D97706' }}>
+                                Best Match
+                              </div>
+                            )}
                           </div>
-                        )}
-                        {aiMatch?.is_best && (
-                          <div style={{ padding: '2px 8px', background: '#FEF3C7', borderRadius: '5px', font: '700 8px/1 "DM Sans", sans-serif', color: '#D97706' }}>
-                            Best Match
+                          <div style={{ font: '400 12px/1 "DM Sans", sans-serif', color: '#9090A0', marginBottom: '8px' }}>
+                            {pro.specialty || 'Professional'} · {pro.distance_km ? `${pro.distance_km} km away` : pro.area || 'Near you'}
                           </div>
-                        )}
-                      </div>
-                      <div style={{ font: '400 12px/1 "DM Sans", sans-serif', color: '#9090A0', marginBottom: '8px' }}>
-                        {pro.specialty || 'Professional'} · {pro.distance_km ? `${pro.distance_km} km away` : pro.area || 'Near you'}
-                      </div>
-                      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                        <div style={{ padding: '3px 9px', background: '#F4F5F8', borderRadius: '6px', font: '500 11px/1 "DM Sans", sans-serif', color: '#9090A0' }}>
-                          ★ {pro.rating || '4.0'}
-                        </div>
-                        <div style={{ padding: '3px 9px', background: '#F4F5F8', borderRadius: '6px', font: '500 11px/1 "DM Sans", sans-serif', color: '#9090A0' }}>
-                          {pro.jobs_done || 0} jobs
-                        </div>
-                        <div style={{ padding: '3px 9px', background: '#F4F5F8', borderRadius: '6px', font: '500 11px/1 "DM Sans", sans-serif', color: '#9090A0' }}>
-                          Next: {pro.next_available || 'Today'}
-                        </div>
-                        {pro.ai_match_score && (
-                          <div style={{ padding: '3px 9px', background: '#F4F5F8', borderRadius: '6px', font: '500 11px/1 "DM Sans", sans-serif', color: '#9090A0' }}>
-                            Match {pro.ai_match_score}%
+                          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                            <div style={{ padding: '3px 9px', background: '#F4F5F8', borderRadius: '6px', font: '500 11px/1 "DM Sans", sans-serif', color: '#9090A0' }}>
+                              ★ {pro.rating || '4.0'}
+                            </div>
+                            <div style={{ padding: '3px 9px', background: '#F4F5F8', borderRadius: '6px', font: '500 11px/1 "DM Sans", sans-serif', color: '#9090A0' }}>
+                              {pro.jobs_done || 0} jobs
+                            </div>
+                            <div style={{ padding: '3px 9px', background: '#F4F5F8', borderRadius: '6px', font: '500 11px/1 "DM Sans", sans-serif', color: '#9090A0' }}>
+                              Next: {pro.next_available || 'Today'}
+                            </div>
+                            {pro.ai_match_score && (
+                              <div style={{ padding: '3px 9px', background: '#F4F5F8', borderRadius: '6px', font: '500 11px/1 "DM Sans", sans-serif', color: '#9090A0' }}>
+                                Match {pro.ai_match_score}%
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
-                      {aiMatch?.ai_match_note && (
-                        <div style={{ font: '400 10px/1.4 "DM Sans", sans-serif', color: '#6B7280', marginTop: '4px' }}>
-                          💡 {aiMatch.ai_match_note}
+                          {aiMatch?.ai_match_note && (
+                            <div style={{ font: '400 10px/1.4 "DM Sans", sans-serif', color: '#6B7280', marginTop: '4px' }}>
+                              💡 {aiMatch.ai_match_note}
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
 
-                    {/* Right side pricing metric and actions layout panel */}
-                    <div className="pricing-actions-panel" style={{ textAlign: 'right', flexShrink: 0 }}>
-                      <div className="price-meta" style={{ marginBottom: '10px' }}>
-                        <div style={{ font: '600 18px/1 "DM Sans", sans-serif', color: '#0A0A0F', marginBottom: '4px' }}>
-                          OMR {pro.price || '0'}
-                        </div>
-                        <div style={{ font: '400 10px/1 "DM Sans", sans-serif', color: '#9090A0' }}>
-                          per visit
+                        {/* Right side pricing metric and actions layout panel */}
+                        <div className="pricing-actions-panel" style={{ textAlign: 'right', flexShrink: 0 }}>
+                          <div className="price-meta" style={{ marginBottom: '10px' }}>
+                            <div style={{ font: '600 18px/1 "DM Sans", sans-serif', color: '#0A0A0F', marginBottom: '4px' }}>
+                              OMR {pro.price || '0'}
+                            </div>
+                            <div style={{ font: '400 10px/1 "DM Sans", sans-serif', color: '#9090A0' }}>
+                              per visit
+                            </div>
+                          </div>
+                          <div style={{ display: 'flex', gap: '7px' }}>
+                            <div
+                              onClick={() => handleProfileNavigation(pro.id, pro.name)}
+                              style={{
+                                padding: '7px 12px',
+                                background: '#F4F5F8',
+                                border: '1.5px solid #EBEBEF',
+                                borderRadius: '8px',
+                                font: '600 12px/1 "DM Sans", sans-serif',
+                                color: '#9090A0',
+                                cursor: 'pointer',
+                                whiteSpace: 'nowrap',
+                                transition: 'all 0.2s ease'
+                              }}
+                              onMouseEnter={(e) => {
+                                e.target.style.background = '#EBEBEF'
+                              }}
+                              onMouseLeave={(e) => {
+                                e.target.style.background = '#F4F5F8'
+                              }}
+                            >
+                              Profile
+                            </div>
+                            <div
+                              onClick={() => handleBook(pro.id, pro.name)}
+                              style={{
+                                padding: '7px 16px',
+                                background: BRAND_GRADIENT,
+                                borderRadius: '8px',
+                                font: '700 12px/1 "DM Sans", sans-serif',
+                                color: 'white',
+                                cursor: 'pointer',
+                                boxShadow: '0 3px 10px rgba(214,28,168,.25)',
+                                whiteSpace: 'nowrap',
+                                transition: 'all 0.2s ease'
+                              }}
+                              onMouseEnter={(e) => {
+                                e.target.style.transform = 'scale(1.02)'
+                              }}
+                              onMouseLeave={(e) => {
+                                e.target.style.transform = 'scale(1)'
+                              }}
+                            >
+                              Book →
+                            </div>
+                          </div>
                         </div>
                       </div>
-                      <div style={{ display: 'flex', gap: '7px' }}>
-                        <div
-                          onClick={() => handleProfileNavigation(pro.id, pro.name)}
-                          style={{
-                            padding: '7px 12px',
-                            background: '#F4F5F8',
-                            border: '1.5px solid #EBEBEF',
-                            borderRadius: '8px',
-                            font: '600 12px/1 "DM Sans", sans-serif',
-                            color: '#9090A0',
-                            cursor: 'pointer',
-                            whiteSpace: 'nowrap',
-                            transition: 'all 0.2s ease'
-                          }}
-                          onMouseEnter={(e) => {
-                            e.target.style.background = '#EBEBEF'
-                          }}
-                          onMouseLeave={(e) => {
-                            e.target.style.background = '#F4F5F8'
-                          }}
-                        >
-                          Profile
-                        </div>
-                        <div
-                          onClick={() => handleBook(pro.id, pro.name)}
-                          style={{
-                            padding: '7px 16px',
-                            background: BRAND_GRADIENT,
-                            borderRadius: '8px',
-                            font: '700 12px/1 "DM Sans", sans-serif',
-                            color: 'white',
-                            cursor: 'pointer',
-                            boxShadow: '0 3px 10px rgba(214,28,168,.25)',
-                            whiteSpace: 'nowrap',
-                            transition: 'all 0.2s ease'
-                          }}
-                          onMouseEnter={(e) => {
-                            e.target.style.transform = 'scale(1.02)'
-                          }}
-                          onMouseLeave={(e) => {
-                            e.target.style.transform = 'scale(1)'
-                          }}
-                        >
-                          Book →
-                        </div>
-                      </div>
+                    )
+                  })}
+                </div>
+
+                {/* Load More Button - Outside scroll container */}
+                {hasMoreProfessionals && (
+                  <div style={{ textAlign: 'center', padding: '12px 0 4px 0' }}>
+                    <button
+                      onClick={loadMoreProfessionals}
+                      style={{
+                        padding: '10px 30px',
+                        background: 'transparent',
+                        border: '1.5px solid #D61CA8',
+                        borderRadius: '10px',
+                        font: '600 13px/1 "DM Sans", sans-serif',
+                        color: '#D61CA8',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        outline: 'none'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.target.style.background = 'rgba(214,28,168,.05)'
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.background = 'transparent'
+                      }}
+                    >
+                      Show {Math.min(5, allProfessionals.length - displayCount)} More Professionals ↓
+                    </button>
+                    <div style={{ font: '400 10px/1 "DM Sans", sans-serif', color: '#9090A0', marginTop: '6px' }}>
+                      Showing {displayCount} of {allProfessionals.length} professionals
                     </div>
                   </div>
-                )
-              })
+                )}
+              </>
             ) : (
               <div style={{
                 textAlign: 'center',
