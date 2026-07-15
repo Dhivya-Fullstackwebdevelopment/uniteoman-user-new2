@@ -2,6 +2,13 @@ import { useState, useEffect, useRef } from 'react'
 import { useSearchParams, useNavigate, Link } from 'react-router-dom'
 import axios from 'axios'
 import { API_ENDPOINTS } from '../config/api'
+import { useSelector, useDispatch } from 'react-redux'
+import {
+  setSelectedServiceType,
+  selectSelectedServiceType,
+  setSelectedService,
+  setSelectedLocation
+} from '../store/slices/searchSlice'
 
 const BRAND_GRADIENT = 'linear-gradient(135deg, #D61CA8, #8B2EF5)'
 
@@ -49,6 +56,7 @@ const shimmerStyles = `
 export default function BusinessListPage() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
+  const dispatch = useDispatch()
 
   // Get URL parameters
   const urlServiceId = searchParams.get('service_id') || '1'
@@ -60,19 +68,21 @@ export default function BusinessListPage() {
   const [professionals, setProfessionals] = useState([])
   const [aiTopPicks, setAiTopPicks] = useState([])
   const [aiSummaryNote, setAiSummaryNote] = useState('')
-  const [selectedServiceTypeId, setSelectedServiceTypeId] = useState(null)
+  // const [selectedServiceTypeId, setSelectedServiceTypeId] = useState(null)
   const [loading, setLoading] = useState(true)
   const [serviceName, setServiceName] = useState('')
   const [serviceIcon, setServiceIcon] = useState('')
   const [locationName, setLocationName] = useState('')
-  const [displayCount, setDisplayCount] = useState(10) // Changed to 10
+  const [displayCount, setDisplayCount] = useState(10) 
   const serviceScrollRef = useRef(null)
+  const selectedServiceType = useSelector(selectSelectedServiceType)
+  const selectedServiceTypeId = selectedServiceType.id
+  console.log("selectedServiceType","selectedServiceTypeId",selectedServiceType, selectedServiceTypeId, )
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true)
       try {
-        // Fetch service details
         const serviceResponse = await axios.get(`${API_ENDPOINTS.SERVICES}?service_id=${urlServiceId}`)
         if (serviceResponse.data && serviceResponse.data.status === 'success' && serviceResponse.data.data.length > 0) {
           const service = serviceResponse.data.data[0]
@@ -80,34 +90,37 @@ export default function BusinessListPage() {
           setServiceName(service.name)
           setServiceIcon(service.icon || '❄️')
 
-          // Set service types
-          if (service.service_types && service.service_types.length > 0) {
-            setServiceTypes(service.service_types)
-            setSelectedServiceTypeId(service.service_types[0].id)
-          }
+          // Store selected service (top-level) in Redux
+          dispatch(setSelectedService({ id: service.id, name: service.name }))
 
-          // Set location name
           if (service.location) {
             setLocationName(service.location.name || '')
+            dispatch(setSelectedLocation({ id: urlLocation, name: service.location.name || '' }))
+          }
+
+          if (service.service_types && service.service_types.length > 0) {
+            setServiceTypes(service.service_types)
+
+            // Only auto-select first type if nothing already chosen for this service
+            if (!selectedServiceType.id || selectedServiceType.id !== service.service_types[0].id) {
+              const first = service.service_types[0]
+              dispatch(setSelectedServiceType({
+                id: first.id,
+                name: first.type_name,
+                price: first.price,
+                duration: first.duration
+              }))
+            }
           }
         }
 
-        // Fetch professionals
         const proResponse = await axios.get(
           API_ENDPOINTS.PROFESSIONALS_BY_LOCATION_AND_SERVICE(urlLocation, urlServiceId)
         )
         if (proResponse.data && proResponse.data.status === 'success') {
           setProfessionals(proResponse.data.data || [])
-
-          // Set AI top picks
-          if (proResponse.data.ai_top_picks) {
-            setAiTopPicks(proResponse.data.ai_top_picks)
-          }
-
-          // Set AI summary note
-          if (proResponse.data.ai_summary_note) {
-            setAiSummaryNote(proResponse.data.ai_summary_note)
-          }
+          if (proResponse.data.ai_top_picks) setAiTopPicks(proResponse.data.ai_top_picks)
+          if (proResponse.data.ai_summary_note) setAiSummaryNote(proResponse.data.ai_summary_note)
         }
       } catch (error) {
         console.error("Error fetching data:", error)
@@ -117,18 +130,25 @@ export default function BusinessListPage() {
     }
 
     fetchData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [urlServiceId, urlLocation])
 
   useEffect(() => {
     setDisplayCount(10) // Changed to 10
   }, [serviceTypes])
 
-  const handleBookProfessional = (professionalId, serviceTypeId) => {
-    const finalServiceTypeId = serviceTypeId || selectedServiceTypeId
+  const handleBookProfessional = (professionalId) => {
+    const finalServiceTypeId = selectedServiceTypeId || serviceTypes[0]?.id
     navigate(`/BusinessSelection?professional_id=${professionalId}&service_type_id=${finalServiceTypeId}&service_id=${urlServiceId}&location_id=${urlLocation}`)
   }
-  const handleServiceTypeSelect = (typeId) => {
-    setSelectedServiceTypeId(typeId)
+
+  const handleServiceTypeSelect = (service) => {
+    dispatch(setSelectedServiceType({
+      id: service.id,
+      name: service.type_name,
+      price: service.price,
+      duration: service.duration
+    }))
   }
 
   const loadMoreServices = () => {
@@ -338,7 +358,7 @@ export default function BusinessListPage() {
                     return (
                       <div
                         key={service.id}
-                        onClick={() => handleServiceTypeSelect(service.id)}
+                        onClick={() => handleServiceTypeSelect(service)}
                         style={{
                           display: 'flex',
                           alignItems: 'center',
@@ -500,8 +520,16 @@ export default function BusinessListPage() {
                     </div>
                   </div>
                   <button
-                    onClick={() => handleBookProfessional(pro.id, selectedServiceTypeId)}
-                    style={{ width: '100%', padding: '7px', background: BRAND_GRADIENT, borderRadius: '8px', textAlign: 'center', font: '700 11px/1 "DM Sans", sans-serif', color: 'white', cursor: 'pointer', border: 'none', outline: 'none' }}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      dispatch(setSelectedServiceType({
+                        id: service.id,
+                        name: service.type_name,
+                        price: service.price,
+                        duration: service.duration
+                      }))
+                      navigate(`/BusinessSelection?service_type_id=${service.id}&service_id=${urlServiceId}&location_id=${urlLocation}`)
+                    }} style={{ width: '100%', padding: '7px', background: BRAND_GRADIENT, borderRadius: '8px', textAlign: 'center', font: '700 11px/1 "DM Sans", sans-serif', color: 'white', cursor: 'pointer', border: 'none', outline: 'none' }}
                   >
                     Book {pro.name?.split(' ')[0] || 'Pro'}
                   </button>

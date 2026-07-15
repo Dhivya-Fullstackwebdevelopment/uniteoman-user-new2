@@ -3,6 +3,7 @@ import { createSlice } from '@reduxjs/toolkit'
 const initialState = {
   selectedLocation: { id: '', name: '' },
   selectedService: { id: '', name: '' },
+  selectedServiceType: { id: '', name: '', price: '', duration: '' },
 }
 
 const searchSlice = createSlice({
@@ -15,11 +16,17 @@ const searchSlice = createSlice({
     setSelectedService: (state, action) => {
       state.selectedService = action.payload
     },
+    setSelectedServiceType: (state, action) => {
+      state.selectedServiceType = action.payload
+    },
     clearSelectedLocation: (state) => {
       state.selectedLocation = initialState.selectedLocation
     },
     clearSelectedService: (state) => {
       state.selectedService = initialState.selectedService
+    },
+    clearSelectedServiceType: (state) => {
+      state.selectedServiceType = initialState.selectedServiceType
     },
     resetSearch: () => initialState,
   },
@@ -28,12 +35,15 @@ const searchSlice = createSlice({
 export const {
   setSelectedLocation,
   setSelectedService,
+  setSelectedServiceType,
   clearSelectedLocation,
   clearSelectedService,
+  clearSelectedServiceType,
   resetSearch,
 } = searchSlice.actions
 
 export const selectSelectedLocation = (state) => state.search.selectedLocation
 export const selectSelectedService = (state) => state.search.selectedService
+export const selectSelectedServiceType = (state) => state.search.selectedServiceType
 
 export default searchSlice.reducer
