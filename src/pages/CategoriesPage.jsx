@@ -1,39 +1,68 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useSearchParams, Link, useNavigate } from 'react-router-dom'
+import axios from 'axios'
 
-const STATIC_CATEGORIES = [
-  { id: 1, slug: 'ac-service', name_en: 'AC Service', starting_price: 'OMR 15', icon: '❄️', bg: '#DBEAFE' },
-  { id: 2, slug: 'home-cleaning', name_en: 'Home Cleaning', starting_price: 'OMR 25', icon: '🧹', bg: '#D1FAE5' },
-  { id: 3, slug: 'plumbing', name_en: 'Plumbing', starting_price: 'OMR 12', icon: '🔧', bg: '#CFFAFE' },
-  { id: 4, slug: 'electrical', name_en: 'Electrical', starting_price: 'OMR 8', icon: '⚡', bg: '#FEF3C7' },
-  { id: 5, slug: 'beauty', name_en: 'Beauty at Home', starting_price: 'OMR 12', icon: '💅', bg: '#FCE7F3' },
-  { id: 6, slug: 'carpentry', name_en: 'Carpentry', starting_price: 'OMR 15', icon: '🪛', bg: '#EFEBE9' },
-  { id: 7, slug: 'pest-control', name_en: 'Pest Control', starting_price: 'OMR 18', icon: '🪲', bg: '#EDE9FE' },
-  { id: 8, slug: 'painting', name_en: 'Painting', starting_price: 'OMR 25', icon: '🎨', bg: '#FFE4E6' },
-  { id: 9, slug: 'car-detailing', name_en: 'Car Detailing', starting_price: 'OMR 5', icon: '🚗', bg: '#E0F2FE' },
-  { id: 10, slug: 'pool-service', name_en: 'Pool Service', starting_price: 'OMR 25', icon: '🏊', bg: '#ECFDF5' },
-  { id: 11, slug: 'appliance-repair', name_en: 'Appliance Repair', starting_price: 'OMR 12', icon: '📺', bg: '#F1F5F9' },
-  { id: 12, slug: 'landscaping', name_en: 'Landscaping', starting_price: 'OMR 15', icon: '🌿', bg: '#ECFDF5' },
-  { id: 13, slug: 'moving', name_en: 'Moving & Packing', starting_price: 'OMR 25', icon: '📦', bg: '#FEF3C7' },
-  { id: 14, slug: 'water-tank', name_en: 'Water Tank Clean', starting_price: 'OMR 35', icon: '💧', bg: '#DBEAFE' },
-  { id: 15, slug: 'cctv-smart', name_en: 'CCTV & Smart Home', starting_price: 'OMR 30', icon: '📹', bg: '#EDE9FE' },
-  { id: 16, slug: 'glazing-windows', name_en: 'Glazing & Windows', starting_price: 'OMR 18', icon: '🪟', bg: '#F1F5F9' },
-  { id: 17, slug: 'fitness-wellness', name_en: 'Fitness & Wellness', starting_price: 'OMR 20', icon: '🏃', bg: '#D1FAE5' },
-  { id: 18, slug: 'babysitting', name_en: 'Babysitting', starting_price: 'OMR 5/hr', icon: '👶', bg: '#FCE7F3' },
-  { id: 19, slug: 'pet-care', name_en: 'Pet Care', starting_price: 'OMR 8', icon: '🐕', bg: '#FEF3C7' },
-  { id: 20, slug: 'laundry-ironing', name_en: 'Laundry & Ironing', starting_price: 'OMR 5', icon: '👔', bg: '#F0F0F4' },
-  { id: 21, slug: 'home-renovation', name_en: 'Home Renovation', starting_price: 'OMR 40', icon: '🏗️', bg: '#EFEBE9' }
-]
+// Helper function to match fallback backgrounds if API items don't have them
+const getBgColor = (slug) => {
+  const bgs = {
+    'ac-service': '#DBEAFE',
+    'home-cleaning': '#D1FAE5',
+    'plumbing': '#CFFAFE',
+    'electrical': '#FEF3C7',
+    'beauty': '#FCE7F3',
+    'carpentry': '#EFEBE9',
+    'pest-control': '#EDE9FE',
+    'painting': '#FFE4E6',
+    'car-detailing': '#E0F2FE',
+    'pool-service': '#ECFDF5'
+  }
+  return bgs[slug] || '#F1F5F9'
+}
 
 export default function CategoriesPage() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
-  const [searchQuery, setSearchQuery] = useState('')
+  
+  // URL parameters passed from Hero section
+  const urlQuery = searchParams.get('q') || ''
+  const urlLocation = searchParams.get('location') || '1' // Defaults to 1 as requested
+
+  // States
+  const [servicesData, setServicesData] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState(urlQuery)
   const [sortBy, setSortBy] = useState('popular')
 
-  const processedCats = [...STATIC_CATEGORIES].sort((a, b) => {
+  // Fetch Services Data from API
+  useEffect(() => {
+    const fetchServices = async () => {
+      setLoading(true)
+      try {
+        let apiUrl = `http://127.0.0.1:8000/api/services/?location_id=${urlLocation}`
+        
+        // If a search phrase text query exists, append it (e.g., q=AC+Service)
+        if (urlQuery) {
+          apiUrl += `&q=${encodeURIComponent(urlQuery)}`
+        }
+
+        const response = await axios.get(apiUrl)
+        if (response.data && response.data.status === 'success') {
+          setServicesData(response.data.data)
+        }
+      } catch (error) {
+        console.error("Error fetching filtered services from API:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchServices()
+  }, [urlQuery, urlLocation])
+
+  // Handle front-end sorting and mapping of data source
+  const processedCats = [...servicesData].sort((a, b) => {
     if (sortBy === 'alpha') {
-      return a.name_en.localeCompare(b.name_en)
+      return a.name.localeCompare(b.name)
     }
     return 0
   })
@@ -41,13 +70,15 @@ export default function CategoriesPage() {
   const handleSearchSubmit = (e) => {
     e.preventDefault()
     if (searchQuery.trim()) {
-      navigate(`/businesses?search=${encodeURIComponent(searchQuery)}`)
+      // Directs to the search list layout using existing routes or setups
+      navigate(`/categories?location=${urlLocation}&q=${encodeURIComponent(searchQuery)}`)
+    } else {
+      navigate(`/categories?location=${urlLocation}`)
     }
   }
 
   return (
     <div className="page-wrapper" style={{ background: 'white', minHeight: '100vh' }}>
-      {/* Dynamic styles to handle responsive media queries seamlessly alongside your inline styles */}
       <style>{`
         .page-wrapper {
           padding: 28px 56px;
@@ -67,6 +98,17 @@ export default function CategoriesPage() {
           display: grid;
           grid-template-columns: repeat(4, 1fr);
           gap: 12px;
+        }
+        .skel-card {
+          background: #F4F5F8;
+          height: 80px;
+          border-radius: 16px;
+          animation: pulse 1.5s infinite ease-in-out;
+        }
+        @keyframes pulse {
+          0% { opacity: 0.6; }
+          50% { opacity: 1; }
+          100% { opacity: 0.6; }
         }
         
         /* Tablet Breakpoint */
@@ -107,10 +149,10 @@ export default function CategoriesPage() {
         <div className="header-container">
           <div>
             <div style={{ font: '600 28px/1 "DM Sans", sans-serif', color: '#0A0A0F', letterSpacing: '-1px' }}>
-              Household Services
+              {urlQuery ? `Search Results for "${urlQuery}"` : 'Household Services'}
             </div>
             <div style={{ font: '400 13px/1 "DM Sans", sans-serif', color: '#9090A0', marginTop: '5px' }}>
-              {STATIC_CATEGORIES.length} categories · Muscat, Oman
+              {loading ? '...' : processedCats.length} categories · Location ID: {urlLocation}
             </div>
           </div>
 
@@ -145,33 +187,51 @@ export default function CategoriesPage() {
 
         {/* Grid Content Layout */}
         <div className="categories-grid">
-          {processedCats.map((cat) => (
-            <Link
-              key={cat.id}
-              to={`/businesses?category=${cat.slug}`}
-              style={{ textDecoration: 'none', background: '#F4F5F8', borderRadius: '16px', padding: '16px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '13px', border: '1.5px solid #EBEBEF' }}
-            >
-              {/* Box Icon Container */}
-              <div style={{ width: '46px', height: '46px', background: cat.bg, borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', flexShrink: 0 }}>
-                {cat.icon}
-              </div>
+          {loading ? (
+            // Shimmer skeletons while API loads
+            Array.from({ length: 8 }).map((_, idx) => (
+              <div key={`skel-${idx}`} className="skel-card" />
+            ))
+          ) : processedCats.length > 0 ? (
+            processedCats.map((cat) => {
+              const currentSlug = cat.name.toLowerCase().replace(/\s+/g, '-');
+              return (
+                <Link
+                  key={cat.id}
+                  to={`/businesses?category=${currentSlug}&location=${urlLocation}`}
+                  style={{ textDecoration: 'none', background: '#F4F5F8', borderRadius: '16px', padding: '16px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '13px', border: '1.5px solid #EBEBEF' }}
+                >
+                  {/* Box Icon Container - Tries rendering image URL icon from database first */}
+                  <div style={{ width: '46px', height: '46px', background: getBgColor(currentSlug), borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
+                    {cat.icon && (cat.icon.startsWith('http') || cat.icon.startsWith('/')) ? (
+                      <img src={cat.icon} alt={cat.name} style={{ width: '24px', height: '24px', objectFit: 'contain' }} />
+                    ) : (
+                      <span style={{ fontSize: '22px' }}>{cat.icon || '🛠️'}</span>
+                    )}
+                  </div>
 
-              {/* Labels */}
-              <div>
-                <div style={{ font: '700 13px/1.2 "DM Sans", sans-serif', color: '#0A0A0F' }}>
-                  {cat.name_en}
-                </div>
-                <div style={{ font: '400 11px/1 "DM Sans", sans-serif', color: '#9090A0', marginTop: '4px' }}>
-                  From {cat.starting_price}
-                </div>
-              </div>
+                  {/* Labels */}
+                  <div>
+                    <div style={{ font: '700 13px/1.2 "DM Sans", sans-serif', color: '#0A0A0F' }}>
+                      {cat.name}
+                    </div>
+                    <div style={{ font: '400 11px/1 "DM Sans", sans-serif', color: '#9090A0', marginTop: '4px' }}>
+                      From OMR {cat.starting_price}
+                    </div>
+                  </div>
 
-              {/* Arrow Element */}
-              <div style={{ marginLeft: 'auto', font: '700 16px/1 "DM Sans", sans-serif', color: '#D61CA8' }}>
-                ›
-              </div>
-            </Link>
-          ))}
+                  {/* Arrow Element */}
+                  <div style={{ marginLeft: 'auto', font: '700 16px/1 "DM Sans", sans-serif', color: '#D61CA8' }}>
+                    ›
+                  </div>
+                </Link>
+              );
+            })
+          ) : (
+            <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px', font: '400 14px "DM Sans"', color: '#9090A0' }}>
+              No services found for your criteria.
+            </div>
+          )}
         </div>
 
       </div>

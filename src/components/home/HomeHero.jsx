@@ -12,7 +12,6 @@ import {
 } from 'lucide-react'
 import API_BASE_URL, { API_ENDPOINTS } from '../../config/api'
 
-
 export default function HomeHero() {
   const navigate = useNavigate()
   const [quickQuery, setQuickQuery] = useState('')
@@ -27,29 +26,13 @@ export default function HomeHero() {
 
   // API State
   const [locations, setLocations] = useState([])
-  const [featuredBusinesses, setFeaturedBusinesses] = useState([])
+  const [services, setServices] = useState([])
 
   const formRef = useRef(null)
   const portalRef = useRef(null)
   const searchInputRef = useRef(null)
 
-  // Service categories display - made this list of objects with names matching the image
-  const serviceCategories = [
-    { icon: "❄️", name: "AC Service", bg: "#DBEAFE" },
-    { icon: "🔧", name: "Appliance Repair", bg: "#D1FAE5" },
-    { icon: "👶", name: "Babysitting", bg: "#CFFAFE" },
-    { icon: "💅", name: "Beauty at Home", bg: "#FCE7F3" },
-    { icon: "🏠", name: "CCTV & Smart Home", bg: "#FEF3C7" },
-    { icon: "🚗", name: "Car Detailing", bg: "#E0F2FE" },
-    { icon: "🧹", name: "Home Cleaning", bg: "#D1FAE5" },
-    { icon: "🔌", name: "Electrical", bg: "#FEF3C7" },
-    { icon: "🔧", name: "Plumbing", bg: "#CFFAFE" },
-    { icon: "🪛", name: "Carpentry", bg: "#EFEBE9" },
-    { icon: "🪲", name: "Pest Control", bg: "#EDE9FE" },
-    { icon: "🎨", name: "Painting", bg: "#FFE4E6" },
-  ]
-
-  // Fetch Locations (Governorates) and Services (Featured Listings) on mount
+  // Fetch Locations and Services on mount
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
@@ -62,7 +45,7 @@ export default function HomeHero() {
           setLocations(locationsRes.data.data)
         }
         if (servicesRes.data && servicesRes.data.status === 'success') {
-          setFeaturedBusinesses(servicesRes.data.data)
+          setServices(servicesRes.data.data)
         }
       } catch (error) {
         console.error("Error fetching initial API data via axios:", error)
@@ -112,28 +95,26 @@ export default function HomeHero() {
     }
   }, [showDropdown])
 
-  // Autocomplete functionality utilizing the new endpoint configuration
+  // Autocomplete functionality using API services
   useEffect(() => {
     if (!showDropdown) return
 
-    // If query is empty, show service categories
+    // If query is empty, show all services from API
     if (!quickQuery.trim()) {
       setIsSearching(false)
-      // Map service categories to suggestion format
-      const mapped = serviceCategories.map((cat, index) => ({
-        id: `cat-${index}`,
-        name: cat.name,
-        type: 'category',
-        slug: cat.name.toLowerCase().replace(/\s+/g, '-'),
-        rating: null,
-        category: 'Service Category',
-        governorate: '',
-        is_verified: false,
-        logo_url: null,
-        icon: cat.icon,
-        bg: cat.bg
+      const mappedServices = services.map(service => ({
+        id: service.id,
+        name: service.name,
+        type: 'business',
+        slug: service.name.toLowerCase().replace(/\s+/g, '-'),
+        rating: 4.7,
+        category: service.description || 'Service',
+        governorate: service.location?.[0]?.name || 'Muscat',
+        is_verified: true,
+        logo_url: service.icon,
+        starting_price: service.starting_price
       }))
-      setSuggestions(mapped)
+      setSuggestions(mappedServices)
       return
     }
 
@@ -150,40 +131,53 @@ export default function HomeHero() {
             type: 'business',
             slug: item.name.toLowerCase().replace(/\s+/g, '-'),
             rating: 4.7,
-            category: item.description,
+            category: item.description || 'Service',
             governorate: item.location?.[0]?.name || 'Muscat',
             is_verified: true,
-            logo_url: item.icon
+            logo_url: item.icon,
+            starting_price: item.starting_price
           }))
           setSuggestions(mappedResults)
         }
       } catch (err) {
         console.error('Autocomplete error via axios filtering:', err)
+        // Fallback to local filtering if API fails
+        const filtered = services.filter(s => 
+          s.name.toLowerCase().includes(quickQuery.toLowerCase())
+        )
+        const mappedResults = filtered.map(item => ({
+          id: item.id,
+          name: item.name,
+          type: 'business',
+          slug: item.name.toLowerCase().replace(/\s+/g, '-'),
+          rating: 4.7,
+          category: item.description || 'Service',
+          governorate: item.location?.[0]?.name || 'Muscat',
+          is_verified: true,
+          logo_url: item.icon,
+          starting_price: item.starting_price
+        }))
+        setSuggestions(mappedResults)
       } finally {
         setIsSearching(false)
       }
     }, 350)
 
     return () => clearTimeout(timer)
-  }, [quickQuery, showDropdown, featuredBusinesses])
+  }, [quickQuery, showDropdown, services])
 
-  // Updated handleQuickSearch - now both service and location are required
   const handleQuickSearch = (e) => {
     e?.preventDefault()
-    
-    // Clear previous errors
+
     setLocationError('')
-    
-    // Validate both fields are filled
+
     if (!quickQuery.trim()) {
-      // Focus on service input if empty
       searchInputRef.current?.focus()
       return
     }
-    
+
     if (!quickLocation) {
       setLocationError('Please select a location before searching')
-      // Highlight location select
       const locationSelect = document.querySelector('select')
       if (locationSelect) {
         locationSelect.style.border = '2px solid #EF4444'
@@ -195,31 +189,26 @@ export default function HomeHero() {
       return
     }
 
-    // Both fields are filled, proceed with search
+    // Find matching service by name
+    const matchedService = services.find(
+      (s) => s.name.toLowerCase() === quickQuery.trim().toLowerCase()
+    )
+
     const params = new URLSearchParams()
-    if (quickQuery.trim()) params.set('q', quickQuery)
-    if (quickLocation) params.set('location', quickLocation)
+
+    if (matchedService) {
+      params.set('service_id', matchedService.id)
+    } else {
+      params.set('q', quickQuery.trim())
+    }
+
+    params.set('location_id', quickLocation)
 
     navigate(`/categories?${params.toString()}`)
     setShowDropdown(false)
   }
 
-  const handleInputChange = (e) => {
-    const value = e.target.value
-    setQuickQuery(value)
-    if (value.trim()) {
-      setShowDropdown(true)
-    } else {
-      setShowDropdown(true)
-    }
-  }
-
-  const handleInputFocus = () => {
-    setShowDropdown(true)
-  }
-
   const handleSuggestionClick = (s) => {
-    // Check if location is selected before navigating from suggestion
     if (!quickLocation) {
       setLocationError('Please select a location first')
       const locationSelect = document.querySelector('select')
@@ -232,12 +221,11 @@ export default function HomeHero() {
       }
       return
     }
-    
-    // If it's a category, use the name for search
-    const searchQuery = s.name
+
     const params = new URLSearchParams()
-    params.set('q', searchQuery)
-    if (quickLocation) params.set('location', quickLocation)
+    params.set('service_id', s.id)
+    params.set('location_id', quickLocation)
+
     navigate(`/categories?${params.toString()}`)
     setShowDropdown(false)
     setQuickQuery('')
@@ -246,16 +234,23 @@ export default function HomeHero() {
 
   const handleLocationChange = (e) => {
     setQuickLocation(e.target.value)
-    setLocationError('') // Clear error when location is selected
+    setLocationError('')
   }
 
-  // Filter categories based on search query
-  const getFilteredCategories = () => {
-    if (!quickQuery.trim()) return serviceCategories
-    const query = quickQuery.toLowerCase()
-    return serviceCategories.filter(cat => 
-      cat.name.toLowerCase().includes(query)
-    )
+  const handleInputChange = (e) => {
+    const value = e.target.value
+    setQuickQuery(value)
+    setShowDropdown(true)
+  }
+
+  const handleInputFocus = () => {
+    setShowDropdown(true)
+  }
+
+  // Get random color for service icon background
+  const getRandomColor = () => {
+    const colors = ['#DBEAFE', '#D1FAE5', '#CFFAFE', '#FCE7F3', '#FEF3C7', '#E0F2FE', '#EDE9FE', '#FFE4E6', '#FEFCE8', '#ECFDF5', '#F0FDF4', '#FFF7ED']
+    return colors[Math.floor(Math.random() * colors.length)]
   }
 
   return (
@@ -397,7 +392,7 @@ export default function HomeHero() {
                   font: isMobile ? '600 10px/1 "DM Sans",sans-serif' : '600 12px/1 "DM Sans",sans-serif',
                   color: 'rgba(255,255,255,.75)'
                 }}>
-                  Available in Oman · 21 Service Packages
+                  Available in Oman · {services.length} Service Categories
                 </span>
               </div>
 
@@ -563,7 +558,7 @@ export default function HomeHero() {
             </div>
 
             {/* RIGHT: Live booking visual (Desktop only) */}
-              {isDesktop && (
+            {isDesktop && (
               <div className="rv d3" style={{
                 position: 'relative',
                 width: '420px',
@@ -793,7 +788,7 @@ export default function HomeHero() {
             <span style={{ font: isMobile ? '600 10px "DM Sans"' : '700 11px "DM Sans"', color: '#9090A0', textTransform: 'uppercase', letterSpacing: '1px' }}>
               {quickQuery.trim()
                 ? (isSearching ? 'Searching database…' : `${suggestions.length} choice${suggestions.length !== 1 ? 's' : ''}`)
-                : 'TRENDING HOME SERVICES'}
+                : 'ALL SERVICES'}
             </span>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               {isSearching && (
@@ -811,9 +806,9 @@ export default function HomeHero() {
           </div>
 
           {/* Scrollable content area */}
-          <div 
+          <div
             className="dropdown-scroll"
-            style={{ 
+            style={{
               flex: 1,
               overflowY: 'auto',
               padding: isMobile ? '4px 0' : '8px 0',
@@ -838,7 +833,7 @@ export default function HomeHero() {
             {!isSearching && suggestions.length > 0 && (
               <div style={{ padding: '12px 20px' }}>
                 <p style={{ font: '700 9px "DM Sans"', color: '#9090A0', textTransform: 'uppercase', marginBottom: '8px' }}>
-                  {quickQuery.trim() ? 'AVAILABLE SERVICES' : 'AVAILABLE SERVICES'}
+                  {quickQuery.trim() ? `RESULTS FOR "${quickQuery}"` : 'AVAILABLE SERVICES'}
                 </p>
                 <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '8px' }}>
                   {suggestions.map((s, idx) => (
@@ -865,33 +860,33 @@ export default function HomeHero() {
                         e.currentTarget.style.boxShadow = 'none'
                       }}
                     >
-                      <div style={{ 
-                        width: '44px', 
-                        height: '44px', 
-                        borderRadius: '10px', 
-                        background: s.bg || '#F8F9FA', 
-                        border: '1px solid #EBEBEF', 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center', 
-                        overflow: 'hidden', 
+                      <div style={{
+                        width: '44px',
+                        height: '44px',
+                        borderRadius: '10px',
+                        background: getRandomColor(),
+                        border: '1px solid #EBEBEF',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        overflow: 'hidden',
                         flexShrink: 0,
                         fontSize: '20px'
                       }}>
-                        {s.icon || (s.logo_url ? <img src={s.logo_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <Building2 size={16} className="text-gray-400" />)}
+                        {s.logo_url ? (
+                          <img src={s.logo_url} alt={s.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : (
+                          <Building2 size={16} color="#6B7280" />
+                        )}
                       </div>
                       <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
                         <div style={{ font: '700 13px "DM Sans"', color: '#0A0A0F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</div>
                         <div style={{ font: '400 11px "DM Sans"', color: '#6B7280', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {s.type === 'category' ? 'Service Category' : s.category || 'Available'}
+                       
+                          {s.starting_price && `From OMR ${s.starting_price}`}
                         </div>
                       </div>
-                      {s.rating && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '2px', flexShrink: 0 }}>
-                          <Star size={12} fill="#facc15" stroke="none" />
-                          <span style={{ font: '600 10px "DM Sans"', color: '#0A0A0F' }}>{s.rating}</span>
-                        </div>
-                      )}
+                     
                     </div>
                   ))}
                 </div>
@@ -925,7 +920,7 @@ export default function HomeHero() {
             onMouseEnter={(e) => e.currentTarget.style.background = '#F0EFF4'}
             onMouseLeave={(e) => e.currentTarget.style.background = '#F8F9FA'}
           >
-            {quickQuery.trim() ? `Search for "${quickQuery}"` : 'Browse Services Index >'}
+            {quickQuery.trim() ? `Search for "${quickQuery}"` : 'Browse All Services >'}
             <ChevronRight size={14} />
           </div>
         </div>,
