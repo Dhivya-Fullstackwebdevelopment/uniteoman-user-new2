@@ -123,10 +123,10 @@ export default function BusinessListPage() {
     setDisplayCount(10) // Changed to 10
   }, [serviceTypes])
 
-  const handleBookProfessional = (name, id) => {
-    navigate(`/BusinessSelection?pro=${encodeURIComponent(name)}&professional_id=${id}`)
+  const handleBookProfessional = (professionalId, serviceTypeId) => {
+    const finalServiceTypeId = serviceTypeId || selectedServiceTypeId
+    navigate(`/BusinessSelection?professional_id=${professionalId}&service_type_id=${finalServiceTypeId}&service_id=${urlServiceId}&location_id=${urlLocation}`)
   }
-
   const handleServiceTypeSelect = (typeId) => {
     setSelectedServiceTypeId(typeId)
   }
@@ -393,7 +393,7 @@ export default function BusinessListPage() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation()
-                              navigate(`/BusinessSelection?pro=${encodeURIComponent(service.type_name)}&service_type_id=${service.id}`)
+                              navigate(`/BusinessSelection?service_type_id=${service.id}&service_id=${urlServiceId}&location_id=${urlLocation}`)
                             }}
                             style={{ padding: '6px 13px', background: BRAND_GRADIENT, borderRadius: '8px', font: '700 11px/1 "DM Sans", sans-serif', color: 'white', cursor: 'pointer', border: 'none', outline: 'none' }}
                           >
@@ -403,7 +403,7 @@ export default function BusinessListPage() {
                       </div>
                     )
                   })}
-                  
+
                   {hasMoreServices && (
                     <div style={{ textAlign: 'center', padding: '8px 0 4px 0' }}>
                       <button
@@ -499,9 +499,8 @@ export default function BusinessListPage() {
                       Match {pro.ai_match_score || 0}%
                     </div>
                   </div>
-
                   <button
-                    onClick={() => handleBookProfessional(pro.name, pro.id)}
+                    onClick={() => handleBookProfessional(pro.id, selectedServiceTypeId)}
                     style={{ width: '100%', padding: '7px', background: BRAND_GRADIENT, borderRadius: '8px', textAlign: 'center', font: '700 11px/1 "DM Sans", sans-serif', color: 'white', cursor: 'pointer', border: 'none', outline: 'none' }}
                   >
                     Book {pro.name?.split(' ')[0] || 'Pro'}
