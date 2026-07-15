@@ -1,8 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
-import { businessApi, governorateApi, categoryApi, reviewApi } from '@/lib/api'
+import axios from 'axios'
 import {
   Search, Building2, ChevronRight, X,
   ShieldCheck, Zap, Globe, Star, Sparkles,
@@ -32,7 +31,6 @@ const CATEGORY_ICONS = {
   'it-company': Briefcase
 }
 
-// Main HomeHero Component
 export default function HomeHero() {
   const navigate = useNavigate()
   const [quickQuery, setQuickQuery] = useState('')
@@ -44,23 +42,15 @@ export default function HomeHero() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1100)
 
+  // API State
+  const [locations, setLocations] = useState([])
+  const [featuredBusinesses, setFeaturedBusinesses] = useState([])
+
   const formRef = useRef(null)
   const portalRef = useRef(null)
   const searchInputRef = useRef(null)
 
-  const { data: governorates = [] } = useQuery({
-    queryKey: ['governorates'],
-    queryFn: governorateApi.list,
-    staleTime: 10 * 60 * 1000,
-  })
-
-  const { data: featuredBusinesses } = useQuery({
-    queryKey: ['featured', 6],
-    queryFn: () => businessApi.featured(6),
-    staleTime: 5 * 60 * 1000,
-  })
-
-  // Service categories from the HTML
+  // Service categories display fallback mapping
   const serviceCategories = [
     { icon: "❄️", name: "AC Service", bg: "#DBEAFE" },
     { icon: "🧹", name: "Home Cleaning", bg: "#D1FAE5" },
@@ -72,6 +62,29 @@ export default function HomeHero() {
     { icon: "🎨", name: "Painting", bg: "#FFE4E6" },
     { icon: "🚗", name: "Car Detailing", bg: "#E0F2FE" },
   ]
+
+  // Fetch Locations (Governorates) and Services (Featured Listings) on mount
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      try {
+        const [locationsRes, servicesRes] = await Promise.all([
+          axios.get('http://127.0.0.1:8000/api/locations/'),
+          axios.get('http://127.0.0.1:8000/api/services/')
+        ])
+
+        if (locationsRes.data && locationsRes.data.status === 'success') {
+          setLocations(locationsRes.data.data)
+        }
+        if (servicesRes.data && servicesRes.data.status === 'success') {
+          setFeaturedBusinesses(servicesRes.data.data)
+        }
+      } catch (error) {
+        console.error("Error fetching initial API data via axios:", error)
+      }
+    }
+
+    fetchInitialData()
+  }, [])
 
   useEffect(() => {
     const handleResize = () => {
@@ -113,40 +126,26 @@ export default function HomeHero() {
     }
   }, [showDropdown])
 
+  // Autocomplete functionality utilizing the new endpoint configuration
   useEffect(() => {
     if (!showDropdown) return
 
+    // If query is empty, treat fetched main services payload as target items
     if (!quickQuery.trim()) {
       setIsSearching(false)
-      if (featuredBusinesses) {
-        const mapped = featuredBusinesses.map(b => ({
+      if (featuredBusinesses.length > 0) {
+        const mapped = featuredBusinesses.slice(0, 6).map(b => ({
           id: b.id,
-          name: b.name_en,
+          name: b.name,
           type: 'business',
-          slug: b.slug,
-          rating: b.rating_avg,
-          category: b.category?.name_en,
-          governorate: b.governorate?.name_en,
-          is_verified: b.is_verified,
-          logo_url: b.logo_url
+          slug: b.name.toLowerCase().replace(/\s+/g, '-'),
+          rating: 4.8, 
+          category: b.name,
+          governorate: b.location?.[0]?.name || 'Muscat',
+          is_verified: true,
+          logo_url: b.icon
         }))
         setSuggestions(mapped)
-      } else {
-        setIsSearching(true)
-        businessApi.featured(6).then(res => {
-          const mapped = res.map(b => ({
-            id: b.id,
-            name: b.name_en,
-            type: 'business',
-            slug: b.slug,
-            rating: b.rating_avg,
-            category: b.category?.name_en,
-            governorate: b.governorate?.name_en,
-            is_verified: b.is_verified,
-            logo_url: b.logo_url
-          }))
-          setSuggestions(mapped)
-        }).catch(() => { }).finally(() => setIsSearching(false))
       }
       return
     }
@@ -156,10 +155,23 @@ export default function HomeHero() {
     const timer = setTimeout(async () => {
       setIsSearching(true)
       try {
-        const results = await businessApi.autocomplete(quickQuery)
-        setSuggestions(results)
+        const response = await axios.get(`http://127.0.0.1:8000/api/services/?search=${quickQuery}`)
+        if (response.data && response.data.status === 'success') {
+          const mappedResults = response.data.data.map(item => ({
+            id: item.id,
+            name: item.name,
+            type: 'business',
+            slug: item.name.toLowerCase().replace(/\s+/g, '-'),
+            rating: 4.7,
+            category: item.description,
+            governorate: item.location?.[0]?.name || 'Muscat',
+            is_verified: true,
+            logo_url: item.icon
+          }))
+          setSuggestions(mappedResults)
+        }
       } catch (err) {
-        console.error('Autocomplete error:', err)
+        console.error('Autocomplete error via axios filtering:', err)
       } finally {
         setIsSearching(false)
       }
@@ -170,12 +182,11 @@ export default function HomeHero() {
 
   const handleQuickSearch = (e) => {
     e?.preventDefault()
-
     if (!quickQuery.trim() && !quickLocation) return
 
     const params = new URLSearchParams()
     if (quickQuery.trim()) params.set('q', quickQuery)
-    if (quickLocation) params.set('governorate', quickLocation)
+    if (quickLocation) params.set('location', quickLocation)
 
     navigate(`/businesses?${params.toString()}`)
     setShowDropdown(false)
@@ -193,16 +204,10 @@ export default function HomeHero() {
     setShowDropdown(true)
   }
 
-  const handleCategoryClick = (category) => {
-    const params = new URLSearchParams({ q: category })
-    if (quickLocation) params.set('governorate', quickLocation)
-    navigate(`/businesses?${params.toString()}`)
-  }
-
   const handleSuggestionClick = (s) => {
     const params = new URLSearchParams()
     params.set('q', s.name)
-    if (quickLocation) params.set('governorate', quickLocation)
+    if (quickLocation) params.set('location', quickLocation)
     navigate(`/businesses?${params.toString()}`)
     setShowDropdown(false)
     setQuickQuery('')
@@ -255,7 +260,7 @@ export default function HomeHero() {
       `}</style>
 
       <div style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
-        {/* HERO SECTION - Set to exactly 100vh height */}
+        {/* HERO SECTION */}
         <section style={{
           background: 'linear-gradient(145deg,#0a0050,#200030,#0a0a1a)',
           width: '100%',
@@ -290,7 +295,7 @@ export default function HomeHero() {
             pointerEvents: 'none'
           }}></div>
 
-          {/* Content Container - two columns on desktop: copy left, live visual right */}
+          {/* Content Container */}
           <div style={{
             maxWidth: '1300px',
             width: '100%',
@@ -300,7 +305,7 @@ export default function HomeHero() {
             display: 'flex',
             flexDirection: isDesktop ? 'row' : 'column',
             alignItems: isDesktop ? 'center' : 'flex-start',
-            justifyContent: isDesktop ? 'space-between' : 'center',
+            justify: isDesktop ? 'space-between' : 'center',
             gap: isDesktop ? '40px' : '0px'
           }}>
 
@@ -332,7 +337,7 @@ export default function HomeHero() {
                   font: isMobile ? '600 10px/1 "DM Sans",sans-serif' : '600 12px/1 "DM Sans",sans-serif',
                   color: 'rgba(255,255,255,.75)'
                 }}>
-                  Available in Muscat · 312 Professionals
+                  Available in Oman · 21 Service Packages
                 </span>
               </div>
 
@@ -363,7 +368,7 @@ export default function HomeHero() {
                 textAlign: 'left',
                 maxWidth: '700px'
               }}>
-                Trusted professionals for AC, cleaning, plumbing, electrical and 17 more home services — booked in 60 seconds.
+                Trusted professionals for AC, cleaning, plumbing, electrical and more home services — booked in 60 seconds.
               </p>
 
               {/* Search Container */}
@@ -434,9 +439,9 @@ export default function HomeHero() {
                       width: '100%'
                     }}
                   >
-                    <option value="">Qurum ▾</option>
-                    {governorates.map(g => (
-                      <option key={g.id} value={g.slug}>{g.name_en}</option>
+                    <option value="">Select Region ▾</option>
+                    {locations.map(g => (
+                      <option key={g.id} value={g.id}>{g.name}</option>
                     ))}
                   </select>
                 </div>
@@ -485,7 +490,7 @@ export default function HomeHero() {
               </div>
             </div>
 
-            {/* RIGHT: Live booking visual — desktop only */}
+            {/* RIGHT: Live booking visual (Desktop only) */}
             {isDesktop && (
               <div className="rv d3" style={{
                 position: 'relative',
@@ -493,7 +498,6 @@ export default function HomeHero() {
                 height: '480px',
                 flexShrink: 0
               }}>
-                {/* Ambient glow behind the card stack */}
                 <div style={{
                   position: 'absolute',
                   top: '50%',
@@ -505,7 +509,6 @@ export default function HomeHero() {
                   pointerEvents: 'none'
                 }} />
 
-                {/* Main glass card: live tracking */}
                 <div style={{
                   position: 'absolute',
                   top: '20px',
@@ -520,7 +523,6 @@ export default function HomeHero() {
                   boxShadow: '0 24px 60px rgba(0,0,0,.35)',
                   animation: 'float 6s ease-in-out infinite'
                 }}>
-                  {/* Header row */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <div style={{
@@ -546,7 +548,6 @@ export default function HomeHero() {
                     </div>
                   </div>
 
-                  {/* Mini map */}
                   <div style={{
                     position: 'relative',
                     height: '140px',
@@ -585,11 +586,10 @@ export default function HomeHero() {
                     </div>
                   </div>
 
-                  {/* Bottom row: price + CTA */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justify: 'space-between' }}>
                     <div>
                       <div style={{ font: '400 10px "DM Sans",sans-serif', color: 'rgba(255,255,255,.5)' }}>Total</div>
-                      <div style={{ font: '700 16px "DM Sans",sans-serif', color: '#fff' }}>OMR 17.885</div>
+                      <div style={{ font: '700 16px "DM Sans",sans-serif', color: '#fff' }}>OMR 15.000</div>
                     </div>
                     <div style={{
                       display: 'flex', alignItems: 'center', gap: '6px',
@@ -602,7 +602,6 @@ export default function HomeHero() {
                   </div>
                 </div>
 
-                {/* Floating stat chip: rating */}
                 <div style={{
                   position: 'absolute',
                   top: '-6px',
@@ -619,63 +618,13 @@ export default function HomeHero() {
                   <div style={{
                     width: '30px', height: '30px', borderRadius: '50%',
                     background: 'linear-gradient(135deg,#D61CA8,#8B2EF5)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                    display: 'flex', alignItems: 'center', justify: 'center'
                   }}>
                     <Star size={14} fill="#fff" stroke="none" />
                   </div>
                   <div>
                     <div style={{ font: '700 13px "DM Sans",sans-serif', color: '#0A0A0F' }}>4.8/5</div>
-                    <div style={{ font: '400 9px "DM Sans",sans-serif', color: '#9090A0' }}>2,140 reviews</div>
-                  </div>
-                </div>
-
-                {/* Floating stat chip: booking confirmed */}
-                <div style={{
-                  position: 'absolute',
-                  bottom: '10px',
-                  right: '-18px',
-                  background: 'rgba(255,255,255,0.95)',
-                  borderRadius: '14px',
-                  padding: '12px 16px',
-                  boxShadow: '0 12px 30px rgba(0,0,0,.25)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  animation: 'float 8s ease-in-out infinite',
-                  animationDelay: '.5s'
-                }}>
-                  <div style={{
-                    width: '32px', height: '32px', borderRadius: '50%',
-                    background: 'rgba(74,222,128,.15)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center'
-                  }}>
-                    <CheckCircle2 size={16} color="#22c55e" />
-                  </div>
-                  <div>
-                    <div style={{ font: '700 12px "DM Sans",sans-serif', color: '#0A0A0F' }}>Booking Confirmed</div>
-                    <div style={{ font: '400 9px "DM Sans",sans-serif', color: '#9090A0' }}>#UO-4601 · Just now</div>
-                  </div>
-                </div>
-
-                {/* Floating stat chip: fast booking */}
-                <div style={{
-                  position: 'absolute',
-                  bottom: '90px',
-                  left: '-24px',
-                  background: 'rgba(255,255,255,0.95)',
-                  borderRadius: '14px',
-                  padding: '10px 14px',
-                  boxShadow: '0 12px 30px rgba(0,0,0,.25)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  animation: 'floatSlow 6.5s ease-in-out infinite',
-                  animationDelay: '1s'
-                }}>
-                  <Zap size={16} color="#D61CA8" fill="#D61CA8" />
-                  <div>
-                    <div style={{ font: '700 12px "DM Sans",sans-serif', color: '#0A0A0F' }}>60-sec booking</div>
-                    <div style={{ font: '400 9px "DM Sans",sans-serif', color: '#9090A0' }}>No calls needed</div>
+                    <div style={{ font: '400 9px "DM Sans",sans-serif', color: '#9090A0' }}>Top Rated Providers</div>
                   </div>
                 </div>
               </div>
@@ -684,7 +633,7 @@ export default function HomeHero() {
         </section>
       </div>
 
-      {/* Search Autocomplete Dropdown Portal */}
+      {/* Dropdown Portal */}
       {showDropdown && dropdownPos.width > 0 && createPortal(
         <div
           ref={portalRef}
@@ -713,7 +662,7 @@ export default function HomeHero() {
             <span style={{ font: isMobile ? '600 10px "DM Sans"' : '700 11px "DM Sans"', color: '#9090A0', textTransform: 'uppercase', letterSpacing: '1px' }}>
               {quickQuery.trim()
                 ? (isSearching ? 'Searching database…' : `${suggestions.length} choice${suggestions.length !== 1 ? 's' : ''}`)
-                : 'Trending Business Listings'}
+                : 'Trending Home Services'}
             </span>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               {isSearching && (
@@ -745,11 +694,11 @@ export default function HomeHero() {
               </div>
             )}
 
-            {!isSearching && suggestions.some(s => s.type === 'business') && (
-              <div style={{ padding: isMobile ? '8px 16px' : '12px 20px' }}>
-                <p style={{ font: '700 9px "DM Sans"', color: '#9090A0', textTransform: 'uppercase', marginBottom: '8px' }}>Verified Service Providers</p>
+            {!isSearching && suggestions.length > 0 && (
+              <div style={{ padding: '12px 20px' }}>
+                <p style={{ font: '700 9px "DM Sans"', color: '#9090A0', textTransform: 'uppercase', marginBottom: '8px' }}>Available Services</p>
                 <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '8px' }}>
-                  {suggestions.filter(s => s.type === 'business').map((s, idx) => (
+                  {suggestions.map((s, idx) => (
                     <div
                       key={`biz-${idx}`}
                       onMouseDown={(e) => { e.preventDefault(); handleSuggestionClick(s) }}
@@ -757,25 +706,19 @@ export default function HomeHero() {
                         display: 'flex',
                         alignItems: 'center',
                         gap: '12px',
-                        padding: isMobile ? '8px' : '10px',
+                        padding: '10px',
                         borderRadius: '12px',
-                        border: '1px solid transparent',
+                        border: '1px solid #EBEBEF',
                         cursor: 'pointer',
-                        transition: 'all 0.2s'
+                        background: '#FFF'
                       }}
-                      className="hover:bg-gray-50 hover:border-gray-100"
                     >
-                      <div style={{ width: isMobile ? '36px' : '44px', height: isMobile ? '36px' : '44px', borderRadius: '10px', background: '#F8F9FA', border: '1px solid #EBEBEF', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
-                        {s.logo_url ? <img src={s.logo_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <Building2 size={isMobile ? 14 : 16} className="text-gray-400" />}
+                      <div style={{ width: '44px', height: '44px', borderRadius: '10px', background: '#F8F9FA', border: '1px solid #EBEBEF', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
+                        {s.logo_url ? <img src={s.logo_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <Building2 size={16} className="text-gray-400" />}
                       </div>
                       <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <span style={{ font: isMobile ? '600 12px "DM Sans"' : '700 13px "DM Sans"', color: '#0A0A0F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
-                        </div>
-                        <div style={{ font: isMobile ? '400 10px "DM Sans"' : '400 11px "DM Sans"', color: '#6B7280', display: 'flex', gap: '4px', marginTop: '2px', flexWrap: 'wrap' }}>
-                          {s.category && <span>{s.category}</span>}
-                          {s.governorate && <span>· {s.governorate}</span>}
-                        </div>
+                        <div style={{ font: '700 13px "DM Sans"', color: '#0A0A0F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</div>
+                        <div style={{ font: '400 11px "DM Sans"', color: '#6B7280', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.category}</div>
                       </div>
                     </div>
                   ))}
@@ -787,7 +730,6 @@ export default function HomeHero() {
               <div style={{ padding: '32px 16px', textAlign: 'center' }}>
                 <span style={{ fontSize: '24px' }}>🔍</span>
                 <div style={{ font: '600 13px "DM Sans"', color: '#0A0A0F', marginTop: '8px' }}>No matches found for "{quickQuery}"</div>
-                <div style={{ font: '400 11px "DM Sans"', color: '#9090A0', marginTop: '2px' }}>Check terminology variants or switch filters.</div>
               </div>
             )}
           </div>
@@ -799,16 +741,16 @@ export default function HomeHero() {
               alignItems: 'center',
               justifyContent: 'center',
               gap: '4px',
-              padding: isMobile ? '10px' : '12px',
+              padding: '12px',
               borderTop: '1px solid rgba(0,0,0,.06)',
               background: '#F8F9FA',
               cursor: 'pointer',
-              font: isMobile ? '600 11px "DM Sans"' : '700 12px "DM Sans"',
+              font: '700 12px "DM Sans"',
               color: '#D61CA8'
             }}
           >
-            {quickQuery.trim() ? `Search for "${quickQuery}"` : 'Browse Complete Platform Index'}
-            <ChevronRight size={isMobile ? 12 : 14} />
+            {quickQuery.trim() ? `Search for "${quickQuery}"` : 'Browse Services Index'}
+            <ChevronRight size={14} />
           </div>
         </div>,
         document.body
