@@ -33,17 +33,20 @@ export default function HomeHero() {
   const portalRef = useRef(null)
   const searchInputRef = useRef(null)
 
-  // Service categories display fallback mapping
+  // Service categories display - made this list of objects with names matching the image
   const serviceCategories = [
     { icon: "❄️", name: "AC Service", bg: "#DBEAFE" },
-    { icon: "🧹", name: "Home Cleaning", bg: "#D1FAE5" },
-    { icon: "🔧", name: "Plumbing", bg: "#CFFAFE" },
-    { icon: "⚡", name: "Electrical", bg: "#FEF3C7" },
+    { icon: "🔧", name: "Appliance Repair", bg: "#D1FAE5" },
+    { icon: "👶", name: "Babysitting", bg: "#CFFAFE" },
     { icon: "💅", name: "Beauty at Home", bg: "#FCE7F3" },
+    { icon: "🏠", name: "CCTV & Smart Home", bg: "#FEF3C7" },
+    { icon: "🚗", name: "Car Detailing", bg: "#E0F2FE" },
+    { icon: "🧹", name: "Home Cleaning", bg: "#D1FAE5" },
+    { icon: "🔌", name: "Electrical", bg: "#FEF3C7" },
+    { icon: "🔧", name: "Plumbing", bg: "#CFFAFE" },
     { icon: "🪛", name: "Carpentry", bg: "#EFEBE9" },
     { icon: "🪲", name: "Pest Control", bg: "#EDE9FE" },
     { icon: "🎨", name: "Painting", bg: "#FFE4E6" },
-    { icon: "🚗", name: "Car Detailing", bg: "#E0F2FE" },
   ]
 
   // Fetch Locations (Governorates) and Services (Featured Listings) on mount
@@ -113,23 +116,24 @@ export default function HomeHero() {
   useEffect(() => {
     if (!showDropdown) return
 
-    // If query is empty, treat fetched main services payload as target items
+    // If query is empty, show service categories
     if (!quickQuery.trim()) {
       setIsSearching(false)
-      if (featuredBusinesses.length > 0) {
-        const mapped = featuredBusinesses.slice(0, 6).map(b => ({
-          id: b.id,
-          name: b.name,
-          type: 'business',
-          slug: b.name.toLowerCase().replace(/\s+/g, '-'),
-          rating: 4.8, 
-          category: b.name,
-          governorate: b.location?.[0]?.name || 'Muscat',
-          is_verified: true,
-          logo_url: b.icon
-        }))
-        setSuggestions(mapped)
-      }
+      // Map service categories to suggestion format
+      const mapped = serviceCategories.map((cat, index) => ({
+        id: `cat-${index}`,
+        name: cat.name,
+        type: 'category',
+        slug: cat.name.toLowerCase().replace(/\s+/g, '-'),
+        rating: null,
+        category: 'Service Category',
+        governorate: '',
+        is_verified: false,
+        logo_url: null,
+        icon: cat.icon,
+        bg: cat.bg
+      }))
+      setSuggestions(mapped)
       return
     }
 
@@ -205,6 +209,8 @@ export default function HomeHero() {
     setQuickQuery(value)
     if (value.trim()) {
       setShowDropdown(true)
+    } else {
+      setShowDropdown(true)
     }
   }
 
@@ -227,10 +233,12 @@ export default function HomeHero() {
       return
     }
     
+    // If it's a category, use the name for search
+    const searchQuery = s.name
     const params = new URLSearchParams()
-    params.set('q', s.name)
+    params.set('q', searchQuery)
     if (quickLocation) params.set('location', quickLocation)
-    navigate(`/businesses?${params.toString()}`)
+    navigate(`/categories?${params.toString()}`)
     setShowDropdown(false)
     setQuickQuery('')
     setSuggestions([])
@@ -239,6 +247,15 @@ export default function HomeHero() {
   const handleLocationChange = (e) => {
     setQuickLocation(e.target.value)
     setLocationError('') // Clear error when location is selected
+  }
+
+  // Filter categories based on search query
+  const getFilteredCategories = () => {
+    if (!quickQuery.trim()) return serviceCategories
+    const query = quickQuery.toLowerCase()
+    return serviceCategories.filter(cat => 
+      cat.name.toLowerCase().includes(query)
+    )
   }
 
   return (
@@ -348,7 +365,7 @@ export default function HomeHero() {
             display: 'flex',
             flexDirection: isDesktop ? 'row' : 'column',
             alignItems: isDesktop ? 'center' : 'flex-start',
-            justify: isDesktop ? 'space-between' : 'center',
+            justifyContent: isDesktop ? 'space-between' : 'center',
             gap: isDesktop ? '40px' : '0px'
           }}>
 
@@ -641,7 +658,7 @@ export default function HomeHero() {
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', justify: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div>
                       <div style={{ font: '400 10px "DM Sans",sans-serif', color: 'rgba(255,255,255,.5)' }}>Total</div>
                       <div style={{ font: '700 16px "DM Sans",sans-serif', color: '#fff' }}>OMR 15.000</div>
@@ -673,7 +690,7 @@ export default function HomeHero() {
                   <div style={{
                     width: '30px', height: '30px', borderRadius: '50%',
                     background: 'linear-gradient(135deg,#D61CA8,#8B2EF5)',
-                    display: 'flex', alignItems: 'center', justify: 'center'
+                    display: 'flex', alignItems: 'center', justifyContent: 'center'
                   }}>
                     <Star size={14} fill="#fff" stroke="none" />
                   </div>
@@ -703,7 +720,7 @@ export default function HomeHero() {
             borderRadius: isMobile ? '12px' : '16px',
             border: '1px solid rgba(0,0,0,.06)',
             overflow: 'hidden',
-            maxHeight: isMobile ? '60vh' : '500px',
+            maxHeight: isMobile ? '60vh' : '350px',
             display: 'flex',
             flexDirection: 'column'
           }}
@@ -720,7 +737,7 @@ export default function HomeHero() {
             <span style={{ font: isMobile ? '600 10px "DM Sans"' : '700 11px "DM Sans"', color: '#9090A0', textTransform: 'uppercase', letterSpacing: '1px' }}>
               {quickQuery.trim()
                 ? (isSearching ? 'Searching database…' : `${suggestions.length} choice${suggestions.length !== 1 ? 's' : ''}`)
-                : 'Trending Home Services'}
+                : 'TRENDING HOME SERVICES'}
             </span>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               {isSearching && (
@@ -764,11 +781,13 @@ export default function HomeHero() {
 
             {!isSearching && suggestions.length > 0 && (
               <div style={{ padding: '12px 20px' }}>
-                <p style={{ font: '700 9px "DM Sans"', color: '#9090A0', textTransform: 'uppercase', marginBottom: '8px' }}>Available Services</p>
+                <p style={{ font: '700 9px "DM Sans"', color: '#9090A0', textTransform: 'uppercase', marginBottom: '8px' }}>
+                  {quickQuery.trim() ? 'AVAILABLE SERVICES' : 'AVAILABLE SERVICES'}
+                </p>
                 <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '8px' }}>
                   {suggestions.map((s, idx) => (
                     <div
-                      key={`biz-${idx}`}
+                      key={`sug-${idx}`}
                       onMouseDown={(e) => { e.preventDefault(); handleSuggestionClick(s) }}
                       style={{
                         display: 'flex',
@@ -790,13 +809,33 @@ export default function HomeHero() {
                         e.currentTarget.style.boxShadow = 'none'
                       }}
                     >
-                      <div style={{ width: '44px', height: '44px', borderRadius: '10px', background: '#F8F9FA', border: '1px solid #EBEBEF', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
-                        {s.logo_url ? <img src={s.logo_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <Building2 size={16} className="text-gray-400" />}
+                      <div style={{ 
+                        width: '44px', 
+                        height: '44px', 
+                        borderRadius: '10px', 
+                        background: s.bg || '#F8F9FA', 
+                        border: '1px solid #EBEBEF', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center', 
+                        overflow: 'hidden', 
+                        flexShrink: 0,
+                        fontSize: '20px'
+                      }}>
+                        {s.icon || (s.logo_url ? <img src={s.logo_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <Building2 size={16} className="text-gray-400" />)}
                       </div>
                       <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
                         <div style={{ font: '700 13px "DM Sans"', color: '#0A0A0F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</div>
-                        <div style={{ font: '400 11px "DM Sans"', color: '#6B7280', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.category}</div>
+                        <div style={{ font: '400 11px "DM Sans"', color: '#6B7280', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {s.type === 'category' ? 'Service Category' : s.category || 'Available'}
+                        </div>
                       </div>
+                      {s.rating && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '2px', flexShrink: 0 }}>
+                          <Star size={12} fill="#facc15" stroke="none" />
+                          <span style={{ font: '600 10px "DM Sans"', color: '#0A0A0F' }}>{s.rating}</span>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -830,7 +869,7 @@ export default function HomeHero() {
             onMouseEnter={(e) => e.currentTarget.style.background = '#F0EFF4'}
             onMouseLeave={(e) => e.currentTarget.style.background = '#F8F9FA'}
           >
-            {quickQuery.trim() ? `Search for "${quickQuery}"` : 'Browse Services Index'}
+            {quickQuery.trim() ? `Search for "${quickQuery}"` : 'Browse Services Index >'}
             <ChevronRight size={14} />
           </div>
         </div>,
