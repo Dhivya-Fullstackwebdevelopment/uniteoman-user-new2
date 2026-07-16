@@ -8,7 +8,7 @@ const BRAND_GRADIENT = 'linear-gradient(135deg, #D61CA8, #8B2EF5)'
 export default function BookingPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  
+
   // Get URL parameters
   const professionalId = searchParams.get('professional_id') || ''
   const serviceId = searchParams.get('service_id') || '1'
@@ -80,7 +80,7 @@ export default function BookingPage() {
     const today = new Date()
     const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-    
+
     for (let i = 0; i < 7; i++) {
       const date = new Date(today)
       date.setDate(today.getDate() + i)
@@ -120,10 +120,10 @@ export default function BookingPage() {
     const serviceName = selectedService?.type_name || 'Service'
     const servicePrice = selectedService?.price || '0'
     const proName = professional?.name || 'Professional'
-    
+
     // Send date as "Wed, 15 Jul 2026" format
     const dateStr = `${dateObj.day}, ${dateObj.num} ${dateObj.month} ${dateObj.year}`
-    
+
     navigate(`/BookingDateTimePickerPage?professional_id=${professionalId}&service_id=${serviceId}&location_id=${locationId}&service_type_id=${serviceTypeId}&date=${encodeURIComponent(dateStr)}&time=${encodeURIComponent(selectedTime)}&service_name=${encodeURIComponent(serviceName)}&service_price=${encodeURIComponent(servicePrice)}&pro_name=${encodeURIComponent(proName)}`)
   }
 
@@ -132,9 +132,9 @@ export default function BookingPage() {
     return (
       <div style={{ background: 'white', minHeight: '100vh', fontFamily: '"DM Sans", sans-serif', padding: '20px 56px' }}>
         <div style={{ maxWidth: '1240px', margin: '0 auto' }}>
-          <div style={{ 
-            width: '100%', 
-            height: '120px', 
+          <div style={{
+            width: '100%',
+            height: '120px',
             background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)',
             backgroundSize: '200% 100%',
             animation: 'shimmer 1.5s infinite',
@@ -202,7 +202,7 @@ export default function BookingPage() {
 
   return (
     <div className="page-root" style={{ background: 'white', minHeight: '100vh', fontFamily: '"DM Sans", sans-serif', position: 'relative' }}>
-      
+
       <style>{`
         .hero-inner {
           max-width: 1100px; 
@@ -296,18 +296,18 @@ export default function BookingPage() {
       {/* Hero Profile Banner */}
       <div className="hero-banner" style={{ background: BRAND_GRADIENT, padding: '32px 56px' }}>
         <div className="hero-inner">
-          <div style={{ 
-            width: '84px', 
-            height: '84px', 
-            borderRadius: '50%', 
-            background: 'white', 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center', 
-            font: '800 32px "DM Sans", sans-serif', 
-            color: '#D61CA8', 
-            border: '4px solid rgba(255,255,255,.5)', 
-            flexShrink: 0 
+          <div style={{
+            width: '84px',
+            height: '84px',
+            borderRadius: '50%',
+            background: 'white',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            font: '800 32px "DM Sans", sans-serif',
+            color: '#D61CA8',
+            border: '4px solid rgba(255,255,255,.5)',
+            flexShrink: 0
           }}>
             {initial}
           </div>
@@ -320,29 +320,29 @@ export default function BookingPage() {
             </div>
           </div>
           <div className="hero-actions-container" style={{ marginLeft: 'auto', display: 'flex', gap: '9px' }}>
-            <div style={{ 
-              padding: '9px 18px', 
-              background: 'rgba(255,255,255,.15)', 
-              border: '1.5px solid rgba(255,255,255,.3)', 
-              borderRadius: '10px', 
-              font: '700 13px/1 "DM Sans", sans-serif', 
-              color: 'white', 
-              cursor: 'pointer', 
-              whiteSpace: 'nowrap' 
+            <div style={{
+              padding: '9px 18px',
+              background: 'rgba(255,255,255,.15)',
+              border: '1.5px solid rgba(255,255,255,.3)',
+              borderRadius: '10px',
+              font: '700 13px/1 "DM Sans", sans-serif',
+              color: 'white',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap'
             }}>
               💬 Message
             </div>
-            <div 
-              onClick={handleBookNow} 
-              style={{ 
-                padding: '9px 22px', 
-                background: 'white', 
-                borderRadius: '10px', 
-                font: '700 13px/1 "DM Sans", sans-serif', 
-                color: '#D61CA8', 
-                cursor: 'pointer', 
-                boxShadow: '0 4px 14px rgba(0,0,0,.15)', 
-                whiteSpace: 'nowrap' 
+            <div
+              onClick={handleBookNow}
+              style={{
+                padding: '9px 22px',
+                background: 'white',
+                borderRadius: '10px',
+                font: '700 13px/1 "DM Sans", sans-serif',
+                color: '#D61CA8',
+                cursor: 'pointer',
+                boxShadow: '0 4px 14px rgba(0,0,0,.15)',
+                whiteSpace: 'nowrap'
               }}
             >
               Book Now →
@@ -369,14 +369,14 @@ export default function BookingPage() {
 
           {/* AI Match Score */}
           {professional.ai_match_score && (
-            <div style={{ 
-              background: 'rgba(214,28,168,.05)', 
-              border: '1px solid rgba(214,28,168,.15)', 
-              borderRadius: '12px', 
-              padding: '13px', 
-              marginBottom: '24px', 
-              display: 'flex', 
-              gap: '9px' 
+            <div style={{
+              background: 'rgba(214,28,168,.05)',
+              border: '1px solid rgba(214,28,168,.15)',
+              borderRadius: '12px',
+              padding: '13px',
+              marginBottom: '24px',
+              display: 'flex',
+              gap: '9px'
             }}>
               <span style={{ fontSize: '16px' }}>🤖</span>
               <div>
@@ -397,18 +397,17 @@ export default function BookingPage() {
           {/* Services */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '7px', marginBottom: '22px' }}>
             {professional.services_offered?.map((service, index) => (
-              <div 
-                key={index} 
-                style={{ 
-                  padding: '6px 13px', 
-                  background: selectedService?.service_type_id === service.service_type_id ? 'rgba(214,28,168,.1)' : '#F4F5F8',
-                  borderRadius: '9px', 
-                  font: '500 11px/1 "DM Sans", sans-serif', 
-                  color: selectedService?.service_type_id === service.service_type_id ? '#D61CA8' : '#0A0A0F',
-                  border: selectedService?.service_type_id === service.service_type_id ? '1.5px solid #D61CA8' : '1.5px solid #EBEBEF',
-                  cursor: 'pointer'
+              <div
+                key={index}
+                style={{
+                  padding: '6px 13px',
+                  background: '#F4F5F8',
+                  borderRadius: '9px',
+                  font: '500 11px/1 "DM Sans", sans-serif',
+                  color: '#0A0A0F',
+                  border: '1.5px solid #EBEBEF',
+                  cursor: 'default'
                 }}
-                onClick={() => setSelectedService(service)}
               >
                 {service.type_name} — OMR {service.price}
               </div>
@@ -426,16 +425,16 @@ export default function BookingPage() {
                   <div key={i} style={{ background: '#F4F5F8', borderRadius: '12px', padding: '13px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <div style={{ 
-                          width: '30px', 
-                          height: '30px', 
-                          borderRadius: '50%', 
-                          background: BRAND_GRADIENT, 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          justifyContent: 'center', 
-                          font: '700 12px "DM Sans", sans-serif', 
-                          color: 'white' 
+                        <div style={{
+                          width: '30px',
+                          height: '30px',
+                          borderRadius: '50%',
+                          background: BRAND_GRADIENT,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          font: '700 12px "DM Sans", sans-serif',
+                          color: 'white'
                         }}>
                           {review.user?.charAt(0) || 'U'}
                         </div>
@@ -533,10 +532,10 @@ export default function BookingPage() {
             </div>
 
             {/* Summary of selected date/time */}
-            <div style={{ 
-              background: 'rgba(255,255,255,.06)', 
-              borderRadius: '8px', 
-              padding: '10px', 
+            <div style={{
+              background: 'rgba(255,255,255,.06)',
+              borderRadius: '8px',
+              padding: '10px',
               marginBottom: '12px',
               textAlign: 'center'
             }}>
@@ -551,15 +550,15 @@ export default function BookingPage() {
             {/* Continue to Book */}
             <div
               onClick={handleBookNow}
-              style={{ 
-                padding: '12px', 
-                background: BRAND_GRADIENT, 
-                borderRadius: '12px', 
-                textAlign: 'center', 
-                font: '700 14px/1 "DM Sans", sans-serif', 
-                color: 'white', 
-                cursor: 'pointer', 
-                boxShadow: '0 4px 14px rgba(214,28,168,.35)' 
+              style={{
+                padding: '12px',
+                background: BRAND_GRADIENT,
+                borderRadius: '12px',
+                textAlign: 'center',
+                font: '700 14px/1 "DM Sans", sans-serif',
+                color: 'white',
+                cursor: 'pointer',
+                boxShadow: '0 4px 14px rgba(214,28,168,.35)'
               }}
             >
               Continue to Book →

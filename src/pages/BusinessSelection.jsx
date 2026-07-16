@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate, Link } from 'react-router-dom'
 import axios from 'axios'
 import { API_ENDPOINTS } from '../config/api'
 import { useDispatch, useSelector } from "react-redux";
-import { selectSelectedServiceType, selectSelectedProfessional, setSelectedProfessional, setSelectedServiceType, } from "../store/slices/searchSlice";
+import { selectSelectedServiceType, selectSelectedProfessional, selectSelectedServicePrice, setSelectedProfessional, setSelectedServiceType, setSelectedServicePrice } from "../store/slices/searchSlice";
 
 const BRAND_GRADIENT = 'linear-gradient(135deg, #D61CA8, #8B2EF5)'
 
@@ -65,9 +65,11 @@ export default function BusinessSelection() {
   const dispatch = useDispatch();
   const serviceType = useSelector(selectSelectedServiceType);
   const professional = useSelector(selectSelectedProfessional);
+  const servicePrice = useSelector(selectSelectedServicePrice);
 
-  console.log(serviceType.id);
-  console.log(professional.id);
+  console.log(servicePrice);
+  console.log(serviceType, 'service type ');
+  console.log(professional, 'professional');
 
   // Fetch professionals conditionally based on query presence
   useEffect(() => {
@@ -250,6 +252,8 @@ export default function BusinessSelection() {
           duration: selected.duration,
         })
       );
+
+      dispatch(setSelectedServicePrice(selected.price));
     }
 
     setFilters((prev) => ({
