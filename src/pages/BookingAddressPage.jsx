@@ -11,19 +11,6 @@ import {
   selectSelectedTime,
 } from "../store/slices/searchSlice";
 
-const STATIC_AREAS = [
-  { name: 'Qurum', slug: 'Qurum' },
-  { name: 'Al Khuwair', slug: 'Al Khuwair' },
-  { name: 'Bowsher', slug: 'Bowsher' },
-  { name: 'MSQ Hills', slug: 'MSQ Hills' },
-  { name: 'Al Ghubrah', slug: 'Al Ghubrah' },
-  { name: 'Seeb', slug: 'Seeb' },
-  { name: 'Ruwi', slug: 'Ruwi' },
-  { name: 'Mutrah', slug: 'Mutrah' },
-  { name: 'Al Amerat', slug: 'Al Amerat' },
-  { name: 'Azaibah', slug: 'Azaibah' }
-]
-
 const BRAND_GRADIENT = 'linear-gradient(135deg, #D61CA8, #8B2EF5)'
 
 export default function BookingAddressPage() {
@@ -38,9 +25,10 @@ export default function BookingAddressPage() {
   const urlServiceName = searchParams.get('service_name') || ''
   const urlServicePrice = searchParams.get('service_price') || ''
   const urlProName = searchParams.get('pro_name') || ''
+  const urlLocationId = searchParams.get('location_id') || ''
 
   const [userName, setUserName] = useState('Mohammed Al-Balushi')
-  const [userEmail, setUserEmail] = useState('mohammed@email.com')
+  const [userEmail, setUserEmail] = useState('mohammed@gmail.com')
   const [userMobile, setUserMobile] = useState('92345678')
   const [selectedArea, setSelectedArea] = useState('Qurum')
   const [villaApartment, setVillaApartment] = useState('Villa 12')
@@ -48,13 +36,16 @@ export default function BookingAddressPage() {
   const [buildingFloor, setBuildingFloor] = useState('Ground Floor')
   const [landmark, setLandmark] = useState('Near Al Qurum Park')
   const [coords, setCoords] = useState({ latitude: 23.5810, longitude: 58.3850 })
-  const [areas, setAreas] = useState(STATIC_AREAS);
+  const [areas, setAreas] = useState([]);
 
   const selectedLocation = useSelector(selectSelectedLocation);
   const selectedProfessional = useSelector(selectSelectedProfessional);
   const selectedServiceType = useSelector(selectSelectedServiceType);
   const selectedDate = useSelector(selectSelectedDate);
   const selectedTime = useSelector(selectSelectedTime);
+
+  // Prefer Redux location id, fall back to URL param, then to "1" as a last resort
+  const effectiveLocationId = selectedLocation?.id || urlLocationId || '1'
 
   // Fallbacks: prefer Redux, fall back to URL params so the summary panel
   // isn't blank if this page was reached before Redux was populated.
@@ -66,26 +57,33 @@ export default function BookingAddressPage() {
 
   useEffect(() => {
     const fetchAreas = async () => {
-      if (!selectedLocation?.id) return;
+      if (!effectiveLocationId) {
+        console.log("Location ID missing");
+        return;
+      }
 
       try {
         const response = await axios.get(
-          `${API_ENDPOINTS.AREAS}?location_id=${selectedLocation.id}`
+          `${API_ENDPOINTS.AREAS}?location_id=${effectiveLocationId}`
         );
 
-        if (response.data.status === "success" && Array.isArray(response.data.data) && response.data.data.length > 0) {
+        console.log(response.data);
+
+        if (response.data.status === "success" && Array.isArray(response.data.data)) {
           setAreas(response.data.data);
-        } else {
-          setAreas(STATIC_AREAS);
+
+          // Select first area by default
+          if (response.data.data.length > 0) {
+            setSelectedArea(response.data.data[0]);
+          }
         }
-      } catch (err) {
-        console.error(err);
-        setAreas(STATIC_AREAS);
+      } catch (error) {
+        console.error("Area API Error:", error);
       }
     };
 
     fetchAreas();
-  }, [selectedLocation?.id]);
+  }, [effectiveLocationId]);
 
   const handleUseSavedAddress = (type) => {
     if (type === 'home') {
@@ -301,27 +299,33 @@ export default function BookingAddressPage() {
 
             {/* Interactive Chip Grid Array iteration */}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '7px', marginBottom: '20px' }}>
+              {areas.length === 0 && (
+                <div style={{ font: '400 12px/1 "DM Sans", sans-serif', color: '#9090A0' }}>Loading areas...</div>
+              )}
               {areas.map((area) => {
-                const areaName = typeof area === 'string' ? area : area.name
-                const isSelected = selectedArea === areaName
+                const isSelected = selectedArea === area;
+
                 return (
                   <div
-                    key={areaName}
-                    onClick={() => setSelectedArea(areaName)}
+                    key={area}
+                    onClick={() => setSelectedArea(area)}
                     style={{
                       padding: '8px 14px',
                       borderRadius: '20px',
                       cursor: 'pointer',
-                      font: '600 12px/1 "DM Sans", sans-serif',
-                      background: isSelected ? BRAND_GRADIENT : '#F4F5F8',
-                      color: isSelected ? 'white' : '#9090A0',
-                      border: isSelected ? '1.5px solid transparent' : '1.5px solid #EBEBEF',
-                      transition: 'all 0.15s ease'
+                      background: isSelected
+                        ? BRAND_GRADIENT
+                        : '#F4F5F8',
+                      border: isSelected
+                        ? '1.5px solid transparent'
+                        : '1.5px solid #EBEBEF',
+                      color: isSelected ? '#fff' : '#9090A0',
+                      font: '600 12px/1 "DM Sans", sans-serif'
                     }}
                   >
-                    {areaName}
+                    {area}
                   </div>
-                )
+                );
               })}
             </div>
 
