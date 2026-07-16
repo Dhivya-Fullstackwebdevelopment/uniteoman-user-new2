@@ -45,7 +45,7 @@ export default function BusinessSelection() {
   const [activeFilterTab, setActiveFilterTab] = useState('All')
   const [minRating, setMinRating] = useState('4')
   const [selectedPriceRange, setSelectedPriceRange] = useState('')
-  const [selectedServices, setSelectedServices] = useState([])
+  const [selectedServices, setSelectedServices] = useState('')
   const [availableServices, setAvailableServices] = useState([])
   const [aiContext, setAiContext] = useState('')
   const [aiSummaryNote, setAiSummaryNote] = useState('')
@@ -184,17 +184,26 @@ export default function BusinessSelection() {
     setFilters(prev => ({ ...prev, sort }))
   }
 
+  // const handleServiceToggle = (serviceId) => {
+  //   setSelectedServices(prev => {
+  //     if (prev.includes(serviceId)) {
+  //       return prev.filter(id => id !== serviceId)
+  //     } else {
+  //       return [...prev, serviceId]
+  //     }
+  //   })
+  //   setFilters(prev => ({
+  //     ...prev,
+  //     service_type_id: selectedServices.length > 0 ? selectedServices.join(',') : ''
+  //   }))
+  // }
+
   const handleServiceToggle = (serviceId) => {
-    setSelectedServices(prev => {
-      if (prev.includes(serviceId)) {
-        return prev.filter(id => id !== serviceId)
-      } else {
-        return [...prev, serviceId]
-      }
-    })
-    setFilters(prev => ({
+    setSelectedServices(serviceId)
+
+    setFilters((prev) => ({
       ...prev,
-      service_type_id: selectedServices.length > 0 ? selectedServices.join(',') : ''
+      service_type_id: serviceId
     }))
   }
 
@@ -238,11 +247,11 @@ export default function BusinessSelection() {
   // Get all professionals (combine filtered + AI picks)
   const getAllProfessionals = () => {
     let filtered = [...professionals]
-    
+
     if (selectedServices.length > 0) {
       filtered = filtered.filter(p => selectedServices.includes(p.service_type_id))
     }
-    
+
     // Combine with AI picks (avoid duplicates)
     const combined = [...filtered]
     aiTopPicks.forEach(pick => {
@@ -250,7 +259,7 @@ export default function BusinessSelection() {
         combined.push(pick)
       }
     })
-    
+
     return combined
   }
 
@@ -453,8 +462,10 @@ export default function BusinessSelection() {
                 <div style={{ font: '600 11px/1 "DM Sans", sans-serif', color: '#9090A0', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '.6px' }}>
                   Service
                 </div>
+
                 {availableServices.map((service) => {
-                  const isChecked = selectedServices.includes(service.id)
+                  const isChecked = selectedServices === service.id
+
                   return (
                     <div
                       key={service.id}
@@ -467,23 +478,32 @@ export default function BusinessSelection() {
                         cursor: 'pointer'
                       }}
                     >
-                      <div style={{
-                        width: '14px',
-                        height: '14px',
-                        borderRadius: '3px',
-                        background: isChecked ? '#D61CA8' : 'transparent',
-                        border: isChecked ? '2px solid #D61CA8' : '2px solid #EBEBEF',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0
-                      }}>
-                        {isChecked && <span style={{ fontSize: '9px', color: 'white' }}>✓</span>}
+                      <div
+                        style={{
+                          width: '14px',
+                          height: '14px',
+                          borderRadius: '3px',
+                          background: isChecked ? '#D61CA8' : 'transparent',
+                          border: isChecked ? '2px solid #D61CA8' : '2px solid #EBEBEF',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0
+                        }}
+                      >
+                        {isChecked && (
+                          <span style={{ fontSize: '9px', color: 'white' }}>✓</span>
+                        )}
                       </div>
-                      <span style={{
-                        font: isChecked ? '600 12px/1 "DM Sans", sans-serif' : '400 12px/1 "DM Sans", sans-serif',
-                        color: isChecked ? '#0A0A0F' : '#9090A0'
-                      }}>
+
+                      <span
+                        style={{
+                          font: isChecked
+                            ? '600 12px/1 "DM Sans", sans-serif'
+                            : '400 12px/1 "DM Sans", sans-serif',
+                          color: isChecked ? '#0A0A0F' : '#9090A0'
+                        }}
+                      >
                         {service.type_name}
                       </span>
                     </div>
@@ -554,7 +574,7 @@ export default function BusinessSelection() {
                 <button
                   onClick={() => {
                     setFilters({ service_type_id: '', min_rating: '', price_min: '', price_max: '', sort: '', search: '' })
-                    setSelectedServices([])
+                    setSelectedServices('')
                     setSelectedPriceRange('')
                     setMinRating('4')
                     setActiveFilterTab('All')
