@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import axios from 'axios'
 import { API_ENDPOINTS } from '../config/api'
+import { useSelector } from "react-redux";
+import { selectSelectedServiceType } from "../store/slices/searchSlice";
 
 const BRAND_GRADIENT = 'linear-gradient(135deg, #D61CA8, #8B2EF5)'
 
@@ -23,6 +25,7 @@ export default function BookingPage() {
   const [selectedService, setSelectedService] = useState(null)
   const [availableDates, setAvailableDates] = useState([])
   const [availableTimes, setAvailableTimes] = useState([])
+  const selectedServiceType = useSelector(selectSelectedServiceType);
 
   // Fetch professional data
   useEffect(() => {
@@ -117,8 +120,8 @@ export default function BookingPage() {
 
   const handleBookNow = () => {
     const dateObj = getSelectedDateObj()
-    const serviceName = selectedService?.type_name || 'Service'
-    const servicePrice = selectedService?.price || '0'
+    const serviceName = selectedServiceType.name || 'Service';
+    const servicePrice = selectedServiceType.price || '0';
     const proName = professional?.name || 'Professional'
 
     // Send date as "Wed, 15 Jul 2026" format
@@ -472,7 +475,7 @@ export default function BookingPage() {
               Book {professional.name?.split(' ')[0] || 'Pro'}
             </div>
             <div style={{ font: '400 11px/1 "DM Sans", sans-serif', color: 'rgba(255,255,255,.4)', marginBottom: '16px' }}>
-              {selectedService?.type_name || 'Service'} · OMR {selectedService?.price || '0'}
+              {selectedServiceType.name || 'Service'} · OMR {selectedServiceType.price || '0'}
             </div>
 
             <div style={{ font: '600 10px/1 "DM Sans", sans-serif', color: 'rgba(255,255,255,.5)', textTransform: 'uppercase', letterSpacing: '.6px', marginBottom: '8px' }}>
@@ -543,7 +546,7 @@ export default function BookingPage() {
                 {dateObj.day}, {dateObj.num} {dateObj.month} {dateObj.year} at {selectedTime}
               </div>
               <div style={{ font: '500 11px/1 "DM Sans", sans-serif', color: 'white', marginTop: '3px' }}>
-                {selectedService?.type_name || 'Service'} · OMR {selectedService?.price || '0'}
+                {selectedServiceType.name || 'Service'} · OMR {selectedServiceType.price || '0'}
               </div>
             </div>
 
