@@ -4,6 +4,7 @@ const initialState = {
   selectedLocation: { id: '', name: '' },
   selectedService: { id: '', name: '' },
   selectedServiceType: { id: '', name: '', price: '', duration: '' },
+  selectedProfessional: { id: '', name: '' },
 }
 
 const searchSlice = createSlice({
@@ -19,6 +20,9 @@ const searchSlice = createSlice({
     setSelectedServiceType: (state, action) => {
       state.selectedServiceType = action.payload
     },
+    setSelectedProfessional: (state, action) => {
+      state.selectedProfessional = action.payload
+    },
     clearSelectedLocation: (state) => {
       state.selectedLocation = initialState.selectedLocation
     },
@@ -28,6 +32,9 @@ const searchSlice = createSlice({
     clearSelectedServiceType: (state) => {
       state.selectedServiceType = initialState.selectedServiceType
     },
+    clearSelectedProfessional: (state) => {
+      state.selectedProfessional = initialState.selectedProfessional
+    },
     resetSearch: () => initialState,
   },
 })
@@ -36,14 +43,17 @@ export const {
   setSelectedLocation,
   setSelectedService,
   setSelectedServiceType,
+  setSelectedProfessional,
   clearSelectedLocation,
   clearSelectedService,
   clearSelectedServiceType,
+  clearSelectedProfessional,
   resetSearch,
 } = searchSlice.actions
 
 export const selectSelectedLocation = (state) => state.search.selectedLocation
 export const selectSelectedService = (state) => state.search.selectedService
 export const selectSelectedServiceType = (state) => state.search.selectedServiceType
+export const selectSelectedProfessional = (state) => state.search.selectedProfessional
 
 export default searchSlice.reducer

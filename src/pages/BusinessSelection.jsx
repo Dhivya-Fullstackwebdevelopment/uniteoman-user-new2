@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { useSearchParams, useNavigate, Link } from 'react-router-dom'
 import axios from 'axios'
 import { API_ENDPOINTS } from '../config/api'
+import { useDispatch, useSelector } from "react-redux";
+import { selectSelectedServiceType, selectSelectedProfessional, setSelectedProfessional, setSelectedServiceType, } from "../store/slices/searchSlice";
 
 const BRAND_GRADIENT = 'linear-gradient(135deg, #D61CA8, #8B2EF5)'
 
@@ -60,6 +62,12 @@ export default function BusinessSelection() {
     sort: '',
     search: ''
   })
+  const dispatch = useDispatch();
+  const serviceType = useSelector(selectSelectedServiceType);
+  const professional = useSelector(selectSelectedProfessional);
+
+  console.log(serviceType.id);
+  console.log(professional.id);
 
   // Fetch professionals conditionally based on query presence
   useEffect(() => {
@@ -141,9 +149,25 @@ export default function BusinessSelection() {
         if (response.data && response.data.status === 'success' && response.data.data.length > 0) {
           const service = response.data.data[0]
           if (service.service_types) {
-            setAvailableServices(service.service_types)
+            setAvailableServices(service.service_types);
+
             if (serviceTypeId) {
-              setSelectedServices([parseInt(serviceTypeId)])
+              const selected = service.service_types.find(
+                (item) => item.id === Number(serviceTypeId)
+              );
+
+              if (selected) {
+                setSelectedServices(selected.id);
+
+                dispatch(
+                  setSelectedServiceType({
+                    id: selected.id,
+                    name: selected.type_name,
+                    price: selected.price,
+                    duration: selected.duration,
+                  })
+                );
+              }
             }
           }
         }
@@ -158,9 +182,21 @@ export default function BusinessSelection() {
     navigate(`/business/${id}/${encodeURIComponent(name.toLowerCase().replace(/\s+/g, '-'))}`)
   }
 
-  const handleBook = (id, name) => {
-    navigate(`/BookingPage?professional_id=${id}&name=${encodeURIComponent(name)}&service_id=${serviceId}&location_id=${locationId}`)
-  }
+
+  const handleBook = (pro) => {
+    dispatch(
+      setSelectedProfessional({
+        id: pro.id,
+        name: pro.name,
+      })
+    );
+
+    navigate(
+      `/BookingPage?professional_id=${pro.id}&name=${encodeURIComponent(
+        pro.name
+      )}&service_id=${serviceId}&location_id=${locationId}`
+    );
+  };
 
   const handleFilterTab = (tab) => {
     setActiveFilterTab(tab)
@@ -199,13 +235,28 @@ export default function BusinessSelection() {
   // }
 
   const handleServiceToggle = (serviceId) => {
-    setSelectedServices(serviceId)
+    setSelectedServices(serviceId);
+
+    const selected = availableServices.find(
+      (item) => item.id === serviceId
+    );
+
+    if (selected) {
+      dispatch(
+        setSelectedServiceType({
+          id: selected.id,
+          name: selected.type_name,
+          price: selected.price,
+          duration: selected.duration,
+        })
+      );
+    }
 
     setFilters((prev) => ({
       ...prev,
-      service_type_id: serviceId
-    }))
-  }
+      service_type_id: serviceId,
+    }));
+  };
 
   const handlePriceRange = (range) => {
     setSelectedPriceRange(range)
@@ -702,7 +753,7 @@ export default function BusinessSelection() {
                               Profile
                             </div>
                             <div
-                              onClick={() => handleBook(pro.id, pro.name)}
+                              onClick={() => handleBook(pro)}
                               style={{
                                 padding: '7px 16px',
                                 background: BRAND_GRADIENT,
