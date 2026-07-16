@@ -2,6 +2,15 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import axios from 'axios'
 import { API_ENDPOINTS } from '../config/api'
+import { useSelector , useDispatch } from "react-redux";
+import {
+  setSelectedDate,
+  setSelectedTime,
+  setSelectedDateObj,
+  selectSelectedDate,
+  selectSelectedTime,
+  selectSelectedDateObj,
+} from "../store/slices/searchSlice";
 
 const BRAND_GRADIENT = 'linear-gradient(135deg, #D61CA8, #8B2EF5)'
 
@@ -30,8 +39,16 @@ export default function BookingDateTimePickerPage() {
   const [availableTimes, setAvailableTimes] = useState([])
   const [serviceName, setServiceName] = useState(urlServiceName || '')
   const [servicePrice, setServicePrice] = useState(urlServicePrice || '0')
+  const dispatch = useDispatch();
 
-  // Parse date from URL to get the date number
+  const selectedDate = useSelector(selectSelectedDate);
+  const selectedTime = useSelector(selectSelectedTime);
+  const selectedDateObj = useSelector(selectSelectedDateObj);
+
+  console.log("selectedDate", selectedDate);
+  console.log("selectedTime", selectedTime);
+  console.log("selectedDateObj", selectedDateObj);
+
   const parseDateFromUrl = (dateStr) => {
     if (!dateStr) return null
     // Date format: "Wed, 15 Jul 2026"
@@ -103,7 +120,7 @@ export default function BookingDateTimePickerPage() {
           // Set selected date from URL or default to first
           const dateFromUrl = parseDateFromUrl(urlDate)
           console.log('Date from URL:', dateFromUrl, 'Available dates:', dates.map(d => d.num))
-          
+
           if (dateFromUrl && dates.some(d => d.num === dateFromUrl)) {
             setSelectedDateNum(dateFromUrl)
           } else {
@@ -117,7 +134,7 @@ export default function BookingDateTimePickerPage() {
           // Set selected time from URL or default to first
           const timeFromUrl = parseTimeFromUrl(urlTime)
           console.log('Time from URL:', timeFromUrl, 'Available times:', times)
-          
+
           if (timeFromUrl && times.includes(timeFromUrl)) {
             setSelectedTimeSlot(timeFromUrl)
           } else {
@@ -140,7 +157,7 @@ export default function BookingDateTimePickerPage() {
     const today = new Date()
     const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-    
+
     for (let i = 0; i < 7; i++) {
       const date = new Date(today)
       date.setDate(today.getDate() + i)
@@ -221,16 +238,16 @@ export default function BookingDateTimePickerPage() {
     const now = new Date()
     const currentHour = now.getHours()
     const currentMinute = now.getMinutes()
-    
+
     // Parse time
     const [timeStr, ampm] = time.split(' ')
     const [hourStr, minuteStr] = timeStr.split(':')
     let hour = parseInt(hourStr)
     const minute = parseInt(minuteStr)
-    
+
     if (ampm === 'PM' && hour !== 12) hour += 12
     if (ampm === 'AM' && hour === 12) hour = 0
-    
+
     // Check if time is in the past (for today only)
     const isToday = activeDateObj?.num === new Date().getDate().toString()
     if (isToday) {
@@ -238,13 +255,13 @@ export default function BookingDateTimePickerPage() {
         return 'disabled'
       }
     }
-    
+
     return 'available'
   }
 
   return (
     <div className="page-root-wrapper" style={{ background: '#F8F8FA', minHeight: '100vh', fontFamily: '"DM Sans", sans-serif', padding: '40px 0' }}>
-      
+
       <style>{`
         .outer-layout-box {
           max-width: 1240px;
@@ -326,13 +343,13 @@ export default function BookingDateTimePickerPage() {
           }
         }
       `}</style>
-      
+
       <div className="outer-layout-box">
         <div className="inner-content-card">
-          
+
           {/* LEFT INTERACTIVE DATE-TIME STEPPER SECTION */}
           <div style={{ minWidth: 0 }}>
-            
+
             {/* Horizontal Checkout Step Timeline Indicators */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '0', marginBottom: '28px' }}>
               <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
@@ -342,7 +359,7 @@ export default function BookingDateTimePickerPage() {
                 </div>
                 <div style={{ flex: 1, height: '2px', background: '#E8E8EE', marginBottom: '13px', marginLeft: '8px', marginRight: '8px' }}></div>
               </div>
-              
+
               <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
                   <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#E8E8EE', display: 'flex', alignItems: 'center', justifyContent: 'center', font: '700 11px "DM Sans", sans-serif', color: '#9090A0' }}>2</div>
@@ -350,7 +367,7 @@ export default function BookingDateTimePickerPage() {
                 </div>
                 <div style={{ flex: 1, height: '2px', background: '#E8E8EE', marginBottom: '13px', marginLeft: '8px', marginRight: '8px' }}></div>
               </div>
-              
+
               <div style={{ display: 'flex', alignItems: 'center' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
                   <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#E8E8EE', display: 'flex', alignItems: 'center', justifyContent: 'center', font: '700 11px "DM Sans", sans-serif', color: '#9090A0' }}>3</div>
@@ -360,7 +377,7 @@ export default function BookingDateTimePickerPage() {
             </div>
 
             <div style={{ font: '700 16px/1 "DM Sans", sans-serif', color: '#0A0A0F', marginBottom: '14px' }}>Choose Date</div>
-            
+
             {/* Horizontal Scroll Date Strip */}
             <div className="date-strip-container">
               {availableDates.map((date) => {
@@ -369,7 +386,12 @@ export default function BookingDateTimePickerPage() {
                   <div
                     key={date.num}
                     className="date-strip-card"
-                    onClick={() => setSelectedDateNum(date.num)}
+                    onClick={() => {
+                      setSelectedDateNum(date.num);
+
+                      dispatch(setSelectedDate(date.num));
+                      dispatch(setSelectedDateObj(date));
+                    }}
                     style={{
                       flex: 1, padding: '12px 6px', borderRadius: '13px', textAlign: 'center', cursor: 'pointer', transition: 'all 0.2s ease',
                       background: isSelected ? BRAND_GRADIENT : '#F8F8FA',
@@ -385,7 +407,7 @@ export default function BookingDateTimePickerPage() {
             </div>
 
             <div style={{ font: '700 16px/1 "DM Sans", sans-serif', color: '#0A0A0F', marginBottom: '12px' }}>Available Time Slots</div>
-            
+
             {/* Fluid Time Grid */}
             <div className="time-slots-grid">
               {availableTimes.map((time) => {
@@ -396,7 +418,12 @@ export default function BookingDateTimePickerPage() {
                 return (
                   <div
                     key={time}
-                    onClick={() => !isDisabled && setSelectedTimeSlot(time)}
+                    onClick={() => {
+                      if (isDisabled) return;
+
+                      setSelectedTimeSlot(time);
+                      dispatch(setSelectedTime(time));
+                    }}
                     style={{
                       padding: '11px 4px', borderRadius: '11px', textAlign: 'center', transition: 'all 0.15s ease',
                       background: isDisabled ? '#F0F0F0' : isSelected ? BRAND_GRADIENT : '#F8F8FA',
@@ -428,7 +455,7 @@ export default function BookingDateTimePickerPage() {
               <div style={{ font: '400 11px/1 "DM Sans", sans-serif', color: 'rgba(255,255,255,.4)', marginBottom: '16px' }}>
                 {professional?.name || urlProName || 'Professional'}
               </div>
-              
+
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', gap: '8px' }}>
                 <span style={{ font: '400 11px/1 "DM Sans", sans-serif', color: 'rgba(255,255,255,.45)', whiteSpace: 'nowrap' }}>Service</span>
                 <span style={{ font: '600 11px/1 "DM Sans", sans-serif', color: 'white', textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -455,9 +482,9 @@ export default function BookingDateTimePickerPage() {
                 <span style={{ font: '400 11px/1 "DM Sans", sans-serif', color: 'rgba(255,255,255,.45)', whiteSpace: 'nowrap' }}>Duration</span>
                 <span style={{ font: '600 11px/1 "DM Sans", sans-serif', color: 'white', textAlign: 'right' }}>~45 min</span>
               </div>
-              
+
               <div style={{ height: '1px', background: 'rgba(255,255,255,.08)', margin: '14px 0' }}></div>
-              
+
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '14px' }}>
                 <span style={{ font: '400 11px/1 "DM Sans", sans-serif', color: 'rgba(255,255,255,.4)' }}>Estimated Total</span>
                 <span style={{ font: '800 18px/1 "DM Sans", sans-serif', color: '#D61CA8' }}>
