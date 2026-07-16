@@ -11,7 +11,8 @@ export const API_ENDPOINTS = {
     SERVICE_BY_ID: (serviceId) => `${API_BASE_URL}/services/?service_id=${serviceId}`,
     PROFESSIONAL_DETAIL: (professionalId) => `${API_BASE_URL}/professionals/${professionalId}/`,
     SERVICE_BY_ID: (serviceId) => `${API_BASE_URL}/services/?service_id=${serviceId}`,
-    CREATE_BOOKING: `${API_BASE_URL}/professionals/bookings/create/`
+    CREATE_BOOKING: `${API_BASE_URL}/professionals/bookings/create/`,
+    AREAS: `${API_BASE_URL}/professionals/areas/`,
 };
 
 export default API_BASE_URL;

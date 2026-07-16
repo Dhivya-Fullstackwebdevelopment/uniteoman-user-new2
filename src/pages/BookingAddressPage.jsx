@@ -1,5 +1,15 @@
-import { useState } from 'react'
+import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useSelector } from "react-redux";
+import axios from "axios";
+import { API_ENDPOINTS } from "../config/api";
+import {
+  selectSelectedLocation,
+  selectSelectedProfessional,
+  selectSelectedServiceType,
+  selectSelectedDate,
+  selectSelectedTime,
+} from "../store/slices/searchSlice";
 
 const STATIC_AREAS = [
   { name: 'Qurum', slug: 'Qurum' },
@@ -25,17 +35,57 @@ export default function BookingAddressPage() {
   const serviceTypeId = searchParams.get('service_type_id') || ''
   const date = searchParams.get('date') || '' // "Wed,9 Jul 2026"
   const time = searchParams.get('time') || '' // "10:00 AM"
+  const urlServiceName = searchParams.get('service_name') || ''
+  const urlServicePrice = searchParams.get('service_price') || ''
+  const urlProName = searchParams.get('pro_name') || ''
 
   const [userName, setUserName] = useState('Mohammed Al-Balushi')
   const [userEmail, setUserEmail] = useState('mohammed@email.com')
   const [userMobile, setUserMobile] = useState('92345678')
-
   const [selectedArea, setSelectedArea] = useState('Qurum')
   const [villaApartment, setVillaApartment] = useState('Villa 12')
   const [streetName, setStreetName] = useState('Al Noor Street')
   const [buildingFloor, setBuildingFloor] = useState('Ground Floor')
   const [landmark, setLandmark] = useState('Near Al Qurum Park')
   const [coords, setCoords] = useState({ latitude: 23.5810, longitude: 58.3850 })
+  const [areas, setAreas] = useState(STATIC_AREAS);
+
+  const selectedLocation = useSelector(selectSelectedLocation);
+  const selectedProfessional = useSelector(selectSelectedProfessional);
+  const selectedServiceType = useSelector(selectSelectedServiceType);
+  const selectedDate = useSelector(selectSelectedDate);
+  const selectedTime = useSelector(selectSelectedTime);
+
+  // Fallbacks: prefer Redux, fall back to URL params so the summary panel
+  // isn't blank if this page was reached before Redux was populated.
+  const displayServiceName = selectedServiceType?.name || urlServiceName || 'Service'
+  const displayServicePrice = selectedServiceType?.price || urlServicePrice || '0'
+  const displayProName = selectedProfessional?.name || urlProName || 'Professional'
+  const displayDate = selectedDate || date
+  const displayTime = selectedTime || time
+
+  useEffect(() => {
+    const fetchAreas = async () => {
+      if (!selectedLocation?.id) return;
+
+      try {
+        const response = await axios.get(
+          `${API_ENDPOINTS.AREAS}?location_id=${selectedLocation.id}`
+        );
+
+        if (response.data.status === "success" && Array.isArray(response.data.data) && response.data.data.length > 0) {
+          setAreas(response.data.data);
+        } else {
+          setAreas(STATIC_AREAS);
+        }
+      } catch (err) {
+        console.error(err);
+        setAreas(STATIC_AREAS);
+      }
+    };
+
+    fetchAreas();
+  }, [selectedLocation?.id]);
 
   const handleUseSavedAddress = (type) => {
     if (type === 'home') {
@@ -72,8 +122,8 @@ export default function BookingAddressPage() {
     const params = new URLSearchParams({
       professional_id: professionalId,
       service_type_id: serviceTypeId,
-      date,
-      time,
+      date: displayDate,
+      time: displayTime,
       user_name: userName,
       user_email: userEmail,
       user_mobile: userMobile,
@@ -90,7 +140,7 @@ export default function BookingAddressPage() {
 
   return (
     <div className="page-root-wrapper" style={{ background: '#F8F8FA', minHeight: '100vh', fontFamily: '"DM Sans", sans-serif', padding: '40px 0' }}>
-      
+
       {/* Structural layout rules handling breakpoints seamlessly */}
       <style>{`
         .outer-layout-box {
@@ -168,13 +218,13 @@ export default function BookingAddressPage() {
           }
         }
       `}</style>
-      
+
       <div className="outer-layout-box">
         <div className="inner-content-card">
-          
+
           {/* LEFT CONTAINER VIEW PANEL: ADDRESS BUILDER FORMS */}
           <div style={{ minWidth: 0 }}>
-            
+
             {/* Horizontal Checkout Progress Tracker Timeline Indicators */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '0', marginBottom: '28px' }}>
               <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
@@ -184,7 +234,7 @@ export default function BookingAddressPage() {
                 </div>
                 <div style={{ flex: 1, height: '2px', background: '#10B981', marginBottom: '13px', marginLeft: '8px', marginRight: '8px' }}></div>
               </div>
-              
+
               <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
                   <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: BRAND_GRADIENT, display: 'flex', alignItems: 'center', justifyContent: 'center', font: '700 11px "DM Sans", sans-serif', color: 'white' }}>2</div>
@@ -192,7 +242,7 @@ export default function BookingAddressPage() {
                 </div>
                 <div style={{ flex: 1, height: '2px', background: '#E8E8EE', marginBottom: '13px', marginLeft: '8px', marginRight: '8px' }}></div>
               </div>
-              
+
               <div style={{ display: 'flex', alignItems: 'center' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
                   <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#E8E8EE', display: 'flex', alignItems: 'center', justifyContent: 'center', font: '700 11px "DM Sans", sans-serif', color: '#9090A0' }}>3</div>
@@ -207,26 +257,26 @@ export default function BookingAddressPage() {
             <div className="contact-inputs-grid">
               <div>
                 <label style={{ font: '600 11px/1 "DM Sans", sans-serif', color: '#9090A0', display: 'block', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '.6px' }}>Full Name *</label>
-                <input 
-                  value={userName} 
+                <input
+                  value={userName}
                   onChange={(e) => setUserName(e.target.value)}
-                  style={{ width: '100%', boxSizing: 'border-box', background: '#F4F5F8', border: '1.5px solid #EBEBEF', borderRadius: '11px', padding: '11px 14px', font: '400 13px/1 "DM Sans", sans-serif', color: '#0A0A0F', outline: 'none' }} 
+                  style={{ width: '100%', boxSizing: 'border-box', background: '#F4F5F8', border: '1.5px solid #EBEBEF', borderRadius: '11px', padding: '11px 14px', font: '400 13px/1 "DM Sans", sans-serif', color: '#0A0A0F', outline: 'none' }}
                 />
               </div>
               <div>
                 <label style={{ font: '600 11px/1 "DM Sans", sans-serif', color: '#9090A0', display: 'block', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '.6px' }}>Email *</label>
-                <input 
-                  value={userEmail} 
+                <input
+                  value={userEmail}
                   onChange={(e) => setUserEmail(e.target.value)}
-                  style={{ width: '100%', boxSizing: 'border-box', background: '#F4F5F8', border: '1.5px solid #EBEBEF', borderRadius: '11px', padding: '11px 14px', font: '400 13px/1 "DM Sans", sans-serif', color: '#0A0A0F', outline: 'none' }} 
+                  style={{ width: '100%', boxSizing: 'border-box', background: '#F4F5F8', border: '1.5px solid #EBEBEF', borderRadius: '11px', padding: '11px 14px', font: '400 13px/1 "DM Sans", sans-serif', color: '#0A0A0F', outline: 'none' }}
                 />
               </div>
               <div>
                 <label style={{ font: '600 11px/1 "DM Sans", sans-serif', color: '#9090A0', display: 'block', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '.6px' }}>Mobile *</label>
-                <input 
-                  value={userMobile} 
+                <input
+                  value={userMobile}
                   onChange={(e) => setUserMobile(e.target.value)}
-                  style={{ width: '100%', boxSizing: 'border-box', background: '#F4F5F8', border: '1.5px solid #EBEBEF', borderRadius: '11px', padding: '11px 14px', font: '400 13px/1 "DM Sans", sans-serif', color: '#0A0A0F', outline: 'none' }} 
+                  style={{ width: '100%', boxSizing: 'border-box', background: '#F4F5F8', border: '1.5px solid #EBEBEF', borderRadius: '11px', padding: '11px 14px', font: '400 13px/1 "DM Sans", sans-serif', color: '#0A0A0F', outline: 'none' }}
                 />
               </div>
             </div>
@@ -239,7 +289,7 @@ export default function BookingAddressPage() {
               <div style={{ position: 'absolute', top: '8px', left: '8px', background: 'rgba(0,0,0,.55)', borderRadius: '7px', padding: '5px 10px', font: '500 10px/1 "DM Sans", sans-serif', color: 'white' }}>
                 {selectedArea}, Muscat
               </div>
-              <div 
+              <div
                 onClick={handleUseCurrentLocation}
                 style={{ position: 'absolute', bottom: '8px', right: '8px', background: 'white', borderRadius: '8px', padding: '6px 11px', font: '600 11px/1 "DM Sans", sans-serif', color: '#4B6EF5', cursor: 'pointer', boxShadow: '0 2px 6px rgba(0,0,0,.1)' }}
               >
@@ -248,63 +298,67 @@ export default function BookingAddressPage() {
             </div>
 
             <div style={{ font: '700 14px/1 "DM Sans", sans-serif', color: '#0A0A0F', marginBottom: '12px' }}>Select Area</div>
-            
+
             {/* Interactive Chip Grid Array iteration */}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '7px', marginBottom: '20px' }}>
-              {STATIC_AREAS.map((area) => {
-                const isSelected = selectedArea === area.slug
+              {areas.map((area) => {
+                const areaName = typeof area === 'string' ? area : area.name
+                const isSelected = selectedArea === areaName
                 return (
                   <div
-                    key={area.slug}
-                    onClick={() => setSelectedArea(area.slug)}
+                    key={areaName}
+                    onClick={() => setSelectedArea(areaName)}
                     style={{
-                      padding: '6px 14px', borderRadius: '20px', cursor: 'pointer', transition: 'all 0.15s ease',
-                      background: isSelected ? BRAND_GRADIENT : 'white',
+                      padding: '8px 14px',
+                      borderRadius: '20px',
+                      cursor: 'pointer',
+                      font: '600 12px/1 "DM Sans", sans-serif',
+                      background: isSelected ? BRAND_GRADIENT : '#F4F5F8',
+                      color: isSelected ? 'white' : '#9090A0',
                       border: isSelected ? '1.5px solid transparent' : '1.5px solid #EBEBEF',
-                      font: isSelected ? '700 11px/1 "DM Sans", sans-serif' : '500 11px/1 "DM Sans", sans-serif',
-                      color: isSelected ? 'white' : '#9090A0'
+                      transition: 'all 0.15s ease'
                     }}
                   >
-                    {area.name}
+                    {areaName}
                   </div>
                 )
               })}
             </div>
 
             <div style={{ font: '700 14px/1 "DM Sans", sans-serif', color: '#0A0A0F', marginBottom: '12px' }}>Address Details</div>
-            
+
             {/* Input fields explicit double split grid panel schema */}
             <div className="address-inputs-grid">
               <div>
                 <label style={{ font: '600 11px/1 "DM Sans", sans-serif', color: '#9090A0', display: 'block', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '.6px' }}>Villa / Apartment No. *</label>
-                <input 
-                  value={villaApartment} 
+                <input
+                  value={villaApartment}
                   onChange={(e) => setVillaApartment(e.target.value)}
-                  style={{ width: '100%', boxSizing: 'border-box', background: '#F4F5F8', border: '1.5px solid rgba(214,28,168,.3)', borderRadius: '11px', padding: '11px 14px', font: '400 13px/1 "DM Sans", sans-serif', color: '#0A0A0F', outline: 'none' }} 
+                  style={{ width: '100%', boxSizing: 'border-box', background: '#F4F5F8', border: '1.5px solid rgba(214,28,168,.3)', borderRadius: '11px', padding: '11px 14px', font: '400 13px/1 "DM Sans", sans-serif', color: '#0A0A0F', outline: 'none' }}
                 />
               </div>
               <div>
                 <label style={{ font: '600 11px/1 "DM Sans", sans-serif', color: '#9090A0', display: 'block', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '.6px' }}>Street Name *</label>
-                <input 
-                  value={streetName} 
+                <input
+                  value={streetName}
                   onChange={(e) => setStreetName(e.target.value)}
-                  style={{ width: '100%', boxSizing: 'border-box', background: '#F4F5F8', border: '1.5px solid rgba(214,28,168,.3)', borderRadius: '11px', padding: '11px 14px', font: '400 13px/1 "DM Sans", sans-serif', color: '#0A0A0F', outline: 'none' }} 
+                  style={{ width: '100%', boxSizing: 'border-box', background: '#F4F5F8', border: '1.5px solid rgba(214,28,168,.3)', borderRadius: '11px', padding: '11px 14px', font: '400 13px/1 "DM Sans", sans-serif', color: '#0A0A0F', outline: 'none' }}
                 />
               </div>
               <div>
                 <label style={{ font: '600 11px/1 "DM Sans", sans-serif', color: '#9090A0', display: 'block', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '.6px' }}>Building / Floor</label>
-                <input 
-                  value={buildingFloor} 
+                <input
+                  value={buildingFloor}
                   onChange={(e) => setBuildingFloor(e.target.value)}
-                  style={{ width: '100%', boxSizing: 'border-box', background: '#F4F5F8', border: '1.5px solid #EBEBEF', borderRadius: '11px', padding: '11px 14px', font: '400 13px/1 "DM Sans", sans-serif', color: '#0A0A0F', outline: 'none' }} 
+                  style={{ width: '100%', boxSizing: 'border-box', background: '#F4F5F8', border: '1.5px solid #EBEBEF', borderRadius: '11px', padding: '11px 14px', font: '400 13px/1 "DM Sans", sans-serif', color: '#0A0A0F', outline: 'none' }}
                 />
               </div>
               <div>
                 <label style={{ font: '600 11px/1 "DM Sans", sans-serif', color: '#9090A0', display: 'block', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '.6px' }}>Nearest Landmark</label>
-                <input 
-                  value={landmark} 
+                <input
+                  value={landmark}
                   onChange={(e) => setLandmark(e.target.value)}
-                  style={{ width: '100%', boxSizing: 'border-box', background: '#F4F5F8', border: '1.5px solid #EBEBEF', borderRadius: '11px', padding: '11px 14px', font: '400 13px/1 "DM Sans", sans-serif', color: '#0A0A0F', outline: 'none' }} 
+                  style={{ width: '100%', boxSizing: 'border-box', background: '#F4F5F8', border: '1.5px solid #EBEBEF', borderRadius: '11px', padding: '11px 14px', font: '400 13px/1 "DM Sans", sans-serif', color: '#0A0A0F', outline: 'none' }}
                 />
               </div>
             </div>
@@ -312,14 +366,14 @@ export default function BookingAddressPage() {
             {/* Quick Access Address Selector Profiles */}
             <div style={{ font: '700 13px/1 "DM Sans", sans-serif', color: '#0A0A0F', marginBottom: '10px' }}>Or Use Saved Address</div>
             <div className="saved-addresses-row" style={{ display: 'flex', gap: '10px' }}>
-              <div 
+              <div
                 onClick={() => handleUseSavedAddress('home')}
                 style={{ flex: 1, padding: '11px', background: 'rgba(214,28,168,.04)', border: '1.5px solid rgba(214,28,168,.25)', borderRadius: '12px', cursor: 'pointer' }}
               >
                 <div style={{ font: '700 12px/1 "DM Sans", sans-serif', color: '#0A0A0F', marginBottom: '4px' }}>🏠 Home</div>
                 <div style={{ font: '400 11px/1.4 "DM Sans", sans-serif', color: '#9090A0' }}>Villa 12, Al Noor St, Qurum</div>
               </div>
-              <div 
+              <div
                 onClick={() => handleUseSavedAddress('work')}
                 style={{ flex: 1, padding: '11px', background: '#F4F5F8', border: '1.5px solid #EBEBEF', borderRadius: '12px', cursor: 'pointer' }}
               >
@@ -333,18 +387,18 @@ export default function BookingAddressPage() {
           <div style={{ minWidth: 0 }}>
             <div className="summary-sticky-panel" style={{ background: '#0A0A0F', borderRadius: '18px', padding: '20px', position: 'sticky', top: '20px' }}>
               <div style={{ font: '700 13px/1 "DM Sans", sans-serif', color: 'white', marginBottom: '16px' }}>Order Summary</div>
-              
+
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', gap: '8px' }}>
                 <span style={{ font: '400 11px/1 "DM Sans", sans-serif', color: 'rgba(255,255,255,.45)', whiteSpace: 'nowrap' }}>Service</span>
-                <span style={{ font: '600 11px/1 "DM Sans", sans-serif', color: 'white', textAlign: 'right' }}>AC Deep Cleaning</span>
+                <span style={{ font: '600 11px/1 "DM Sans", sans-serif', color: 'white', textAlign: 'right' }}>{displayServiceName}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', gap: '8px' }}>
                 <span style={{ font: '400 11px/1 "DM Sans", sans-serif', color: 'rgba(255,255,255,.45)', whiteSpace: 'nowrap' }}>Pro</span>
-                <span style={{ font: '600 11px/1 "DM Sans", sans-serif', color: 'white', textAlign: 'right' }}>Mohammed ★4.9</span>
+                <span style={{ font: '600 11px/1 "DM Sans", sans-serif', color: 'white', textAlign: 'right' }}>{displayProName} ★4.9</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', gap: '8px' }}>
                 <span style={{ font: '400 11px/1 "DM Sans", sans-serif', color: 'rgba(255,255,255,.45)', whiteSpace: 'nowrap' }}>Date</span>
-                <span style={{ font: '600 11px/1 "DM Sans", sans-serif', color: 'white', textAlign: 'right' }}>{date || 'Wed 9 Jul'} · {time || '10:00 AM'}</span>
+                <span style={{ font: '600 11px/1 "DM Sans", sans-serif', color: 'white', textAlign: 'right' }}>{displayDate} · {displayTime}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', gap: '8px' }}>
                 <span style={{ font: '400 11px/1 "DM Sans", sans-serif', color: 'rgba(255,255,255,.45)', whiteSpace: 'nowrap' }}>Area</span>
@@ -354,13 +408,13 @@ export default function BookingAddressPage() {
               </div>
 
               <div style={{ height: '1px', background: 'rgba(255,255,255,.08)', margin: '14px 0' }}></div>
-              
+
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '14px' }}>
                 <span style={{ font: '400 11px/1 "DM Sans", sans-serif', color: 'rgba(255,255,255,.4)' }}>Total</span>
-                <span style={{ font: '800 18px/1 "DM Sans", sans-serif', color: '#D61CA8' }}>OMR 17.985</span>
+                <span style={{ font: '800 18px/1 "DM Sans", sans-serif', color: '#D61CA8' }}>OMR {displayServicePrice}</span>
               </div>
 
-              <button 
+              <button
                 onClick={handleNextStepNavigation}
                 disabled={!isValid}
                 style={{ width: '100%', border: 'none', outline: 'none', padding: '13px', background: isValid ? BRAND_GRADIENT : '#D0D0D4', borderRadius: '12px', textAlign: 'center', font: '700 14px/1 "DM Sans", sans-serif', color: 'white', cursor: isValid ? 'pointer' : 'not-allowed', boxShadow: isValid ? '0 4px 14px rgba(214,28,168,.35)' : 'none' }}
