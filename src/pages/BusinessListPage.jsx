@@ -73,11 +73,11 @@ export default function BusinessListPage() {
   const [serviceName, setServiceName] = useState('')
   const [serviceIcon, setServiceIcon] = useState('')
   const [locationName, setLocationName] = useState('')
-  const [displayCount, setDisplayCount] = useState(10) 
+  const [displayCount, setDisplayCount] = useState(10)
   const serviceScrollRef = useRef(null)
   const selectedServiceType = useSelector(selectSelectedServiceType)
   const selectedServiceTypeId = selectedServiceType.id
-  console.log("selectedServiceType","selectedServiceTypeId",selectedServiceType, selectedServiceTypeId, )
+  console.log("selectedServiceType", "selectedServiceTypeId", selectedServiceType, selectedServiceTypeId,)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -139,7 +139,14 @@ export default function BusinessListPage() {
 
   const handleBookProfessional = (professionalId) => {
     const finalServiceTypeId = selectedServiceTypeId || serviceTypes[0]?.id
-    navigate(`/BusinessSelection?professional_id=${professionalId}&service_type_id=${finalServiceTypeId}&service_id=${urlServiceId}&location_id=${urlLocation}`)
+    const targetUrl = `/BusinessSelection?professional_id=${professionalId}&service_type_id=${finalServiceTypeId}&service_id=${urlServiceId}&location_id=${urlLocation}`
+
+    const token = localStorage.getItem('customer_token')
+    if (!token) {
+      navigate(`/customer/login?redirect=${encodeURIComponent(targetUrl)}`)
+      return
+    }
+    navigate(targetUrl)
   }
 
   const handleServiceTypeSelect = (service) => {
@@ -413,7 +420,13 @@ export default function BusinessListPage() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation()
-                              navigate(`/BusinessSelection?service_type_id=${service.id}&service_id=${urlServiceId}&location_id=${urlLocation}`)
+                              const targetUrl = `/BusinessSelection?service_type_id=${service.id}&service_id=${urlServiceId}&location_id=${urlLocation}`
+                              const token = localStorage.getItem('customer_token')
+                              if (!token) {
+                                navigate(`/customer/login?redirect=${encodeURIComponent(targetUrl)}`)
+                                return
+                              }
+                              navigate(targetUrl)
                             }}
                             style={{ padding: '6px 13px', background: BRAND_GRADIENT, borderRadius: '8px', font: '700 11px/1 "DM Sans", sans-serif', color: 'white', cursor: 'pointer', border: 'none', outline: 'none' }}
                           >
@@ -522,14 +535,21 @@ export default function BusinessListPage() {
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
+                      const targetUrl = `/BusinessSelection?professional_id=${pro.id}&service_type_id=${pro.service_type_id || selectedServiceTypeId}&service_id=${urlServiceId}&location_id=${urlLocation}`
+                      const token = localStorage.getItem('customer_token')
+                      if (!token) {
+                        navigate(`/customer/login?redirect=${encodeURIComponent(targetUrl)}`)
+                        return
+                      }
                       dispatch(setSelectedServiceType({
-                        id: service.id,
-                        name: service.type_name,
-                        price: service.price,
-                        duration: service.duration
+                        id: pro.service_type_id,
+                        name: pro.type_name || '',
+                        price: pro.price,
+                        duration: pro.duration
                       }))
-                      navigate(`/BusinessSelection?service_type_id=${service.id}&service_id=${urlServiceId}&location_id=${urlLocation}`)
-                    }} style={{ width: '100%', padding: '7px', background: BRAND_GRADIENT, borderRadius: '8px', textAlign: 'center', font: '700 11px/1 "DM Sans", sans-serif', color: 'white', cursor: 'pointer', border: 'none', outline: 'none' }}
+                      navigate(targetUrl)
+                    }}
+                    style={{ width: '100%', padding: '7px', background: BRAND_GRADIENT, borderRadius: '8px', textAlign: 'center', font: '700 11px/1 "DM Sans", sans-serif', color: 'white', cursor: 'pointer', border: 'none', outline: 'none' }}
                   >
                     Book {pro.name?.split(' ')[0] || 'Pro'}
                   </button>
