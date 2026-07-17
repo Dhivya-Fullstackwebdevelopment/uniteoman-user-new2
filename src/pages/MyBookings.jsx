@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import API_BASE_URL from '@/config/api'
 import CancelBookingModal from '../components/Popups/CancelBookingModal'
+import RescheduleBookingModal from '../components/Popups/RescheduleBookingModal'
+
 
 const BRAND_GRADIENT = 'linear-gradient(135deg, #D61CA8, #8B2EF5)'
 
@@ -20,6 +22,8 @@ export default function MyBookingsPage() {
     })
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [selectedBookingForCancel, setSelectedBookingForCancel] = useState(null)
+    const [isRescheduleModalOpen, setIsRescheduleModalOpen] = useState(false)
+    const [selectedBookingForReschedule, setSelectedBookingForReschedule] = useState(null)
 
     // Get token from localStorage
     const getAuthToken = () => {
@@ -203,9 +207,42 @@ export default function MyBookingsPage() {
         navigate(`/Booking/Rating/?bookingId=${bookingId}`)
     }
 
-    // Navigate to reschedule
-    const handleReschedule = (bookingId) => {
-        navigate(`/booking-reschedule/${bookingId}`)
+    const openRescheduleModal = (booking) => {
+        setSelectedBookingForReschedule(booking)
+        setIsRescheduleModalOpen(true)
+    }
+
+    const handleConfirmReschedule = async (newDate, newTime) => {
+        if (!selectedBookingForReschedule) return
+
+        try {
+            const token = getAuthToken()
+            const response = await fetch(
+                `${API_BASE_URL}/professionals/bookings/${selectedBookingForReschedule.id}/reschedule/`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        booking_date: newDate,   // e.g. "2026-07-25"
+                        booking_time: newTime,   // e.g. "18:00"
+                    }),
+                }
+            )
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}))
+                throw new Error(errorData.message || 'Failed to reschedule booking')
+            }
+
+            toast.success('Booking rescheduled successfully')
+            setIsRescheduleModalOpen(false)
+            fetchBookings(activeTab)
+        } catch (err) {
+            toast.error(err.message || 'Failed to reschedule booking')
+        }
     }
 
     // Handle cancel booking
@@ -466,7 +503,7 @@ export default function MyBookingsPage() {
                                                 {(isUpcoming || isOngoing) && (
                                                     <>
                                                         <div
-                                                            onClick={() => handleReschedule(booking.id)}
+                                                            onClick={() => openRescheduleModal(booking)}
                                                             style={{ padding: '6px 13px', background: '#F4F5F8', border: '1.5px solid #EBEBEF', borderRadius: '8px', font: '600 11px/1 "DM Sans", sans-serif', color: '#0A0A0F', cursor: 'pointer' }}
                                                         >
                                                             Reschedule
@@ -520,6 +557,12 @@ export default function MyBookingsPage() {
                 onClose={() => setIsModalOpen(false)}
                 onConfirm={handleConfirmCancelAPI}
                 bookingNumber={selectedBookingForCancel?.booking_number}
+            />
+            <RescheduleBookingModal
+                isOpen={isRescheduleModalOpen}
+                onClose={() => setIsRescheduleModalOpen(false)}
+                onConfirm={handleConfirmReschedule}
+                booking={selectedBookingForReschedule}
             />
         </div>
     )
