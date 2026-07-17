@@ -1,5 +1,6 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import API_BASE_URL from '@/config/api'
 
 // Static options matching the metadata in your HTML code layout block
 const STATIC_TAGS = [
@@ -17,11 +18,57 @@ const BRAND_GRADIENT = 'linear-gradient(135deg, #D61CA8, #8B2EF5)'
 
 export default function RateProviderPage() {
   const navigate = useNavigate()
+  
+  // Extracts the specific dynamic identifier from your path parameters (e.g. /bookings/:bookingId/rate)
+  const { bookingId } = useParams()
+
+  // Dynamic booking metadata state variables
+  const [bookingDetails, setBookingDetails] = useState(null)
+  const [isLoadingMetadata, setIsLoadingMetadata] = useState(true)
 
   // Interactive local states for tracking review completion configurations
   const [ratingScore, setSelectedRatingScore] = useState(5)
   const [selectedTags, setSelectedTags] = useState(['Punctual', 'Professional', 'Thorough', 'Friendly'])
-  const [reviewText, setReviewText] = useState('Mohammed arrived on time and cleaned the AC unit thoroughly. My room is so much cooler now...')
+  const [reviewText, setReviewText] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
+
+  // 1. Fetch live booking details on mount to populate profile metadata dynamically
+  useEffect(() => {
+    const fetchCurrentBookingMetadata = async () => {
+      const activeBookingId = bookingId || '1'
+      // Hits your endpoint list filtering by the target ID
+      const targetUrl = `${API_BASE_URL}/services/bookings/?id=${activeBookingId}`
+      const authToken = localStorage.getItem('customer_token') || localStorage.getItem('access_token') || localStorage.getItem('access')
+
+      try {
+        const response = await fetch(targetUrl, {
+          method: 'GET',
+          headers: {
+            'Authorization': authToken ? `Bearer ${authToken}` : '',
+            'Content-Type': 'application/json'
+          }
+        })
+        const resData = await response.json()
+
+        if (response.ok && resData.status === 'success') {
+          // Finds the specific item match from your structured array data list
+          const foundItem = resData.data.find(b => String(b.id) === String(activeBookingId)) || resData.data[0]
+          if (foundItem) {
+            setBookingDetails(foundItem)
+            // Seeds optional default comment dynamically based on data values
+            setReviewText(`${foundItem.professional_name || 'The professional'} arrived on time and resolved the ${foundItem.service_name || 'issue'} thoroughly. Great experience!`)
+          }
+        }
+      } catch (err) {
+        console.error('❌ Failed loading booking metadata context:', err)
+      } finally {
+        setIsLoadingMetadata(false)
+      }
+    }
+
+    fetchCurrentBookingMetadata()
+  }, [bookingId])
 
   const toggleFeedbackTagAction = (tag) => {
     setSelectedTags(prev => 
@@ -29,12 +76,44 @@ export default function RateProviderPage() {
     )
   }
 
-  const handleReviewSubmission = () => {
-    // Action trigger route forward on submit complete
-    navigate('/MyBookings')
+  const handleReviewSubmission = async () => {
+    setIsSubmitting(true)
+    setErrorMessage('')
+
+    const activeBookingId = bookingId || '1'
+    const targetUrl = `${API_BASE_URL}/services/bookings/${activeBookingId}/rate/`
+    const authToken = localStorage.getItem('customer_token') || localStorage.getItem('access_token') || localStorage.getItem('access')
+
+    try {
+      const response = await fetch(targetUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': authToken ? `Bearer ${authToken}` : ''
+        },
+        body: JSON.stringify({
+          rating: ratingScore,
+          review_text: reviewText,
+          tags: selectedTags
+        })
+      })
+
+      const responseData = await response.json()
+
+      if (response.ok) {
+        console.log('✅ Review saved:', responseData)
+        navigate('/MyBookings')
+      } else {
+        setErrorMessage(responseData?.message || responseData?.error || 'Failed to submit review.')
+      }
+    } catch (err) {
+      console.error('❌ Network Error:', err)
+      setErrorMessage('Network connection failure. Please try again.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
-  // Text status label tied dynamically to the chosen star metric score
   const getRatingDescriptionLabel = (score) => {
     if (score === 5) return 'Excellent!'
     if (score === 4) return 'Good!'
@@ -42,6 +121,12 @@ export default function RateProviderPage() {
     if (score === 2) return 'Poor'
     return 'Very Bad'
   }
+
+  // Derived fallbacks extracted from your unified API response schema fields 
+  const professionalName = bookingDetails?.professional_name || 'Professional'
+  const serviceName = bookingDetails?.service_name || 'Service'
+  const locationName = bookingDetails?.location || 'Location'
+  const avatarLetter = professionalName.charAt(0).toUpperCase()
 
   return (
     <div style={{ background: '#F4F5F8', minHeight: '100vh', fontFamily: '"DM Sans", sans-serif', padding: '40px 0' }} className="rp-page">
@@ -61,24 +146,33 @@ export default function RateProviderPage() {
         }
       `}</style>
       
-      {/* Outer Content Base alignment frame mapping explicit horizontal side limits */}
       <div style={{ maxWidth: '1240px', margin: '0 auto', padding: '0 56px', boxSizing: 'border-box', display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }} className="rp-outer">
         <div style={{ maxWidth: '600px', width: '100%' }}>
           
-          {/* Professional Provider Profile Short Header Block */}
+          {/* Professional Provider Profile Header Block - Fully Dynamic */}
           <div style={{ background: 'white', borderRadius: '20px', padding: '22px', boxShadow: '0 2px 10px rgba(0,0,0,.07)', marginBottom: '18px', display: 'flex', alignItems: 'center', gap: '16px' }} className="rp-header">
             <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: BRAND_GRADIENT, display: 'flex', alignItems: 'center', justifyContent: 'center', font: '800 24px "DM Sans", sans-serif', color: 'white', flexShrink: 0 }}>
-              M
+              {isLoadingMetadata ? '...' : avatarLetter}
             </div>
             <div>
-              <div style={{ font: '600 18px/1 "DM Sans", sans-serif', color: '#0A0A0F', marginBottom: '5px' }}>Rate Mohammed</div>
-              <div style={{ font: '400 13px/1 "DM Sans", sans-serif', color: '#9090A0' }}>AC Deep Cleaning · Wed 9 Jul · Qurum</div>
+              <div style={{ font: '600 18px/1 "DM Sans", sans-serif', color: '#0A0A0F', marginBottom: '5px' }}>
+                {isLoadingMetadata ? 'Loading info...' : `Rate ${professionalName}`}
+              </div>
+              <div style={{ font: '400 13px/1 "DM Sans", sans-serif', color: '#9090A0' }}>
+                {isLoadingMetadata ? 'Fetching booking details...' : `${serviceName} · ${locationName}`}
+              </div>
             </div>
           </div>
 
           {/* Central Interactive Feedback Core Wrapper */}
           <div style={{ background: 'white', borderRadius: '20px', padding: '28px', boxShadow: '0 2px 10px rgba(0,0,0,.07)', marginBottom: '16px' }} className="rp-card">
             
+            {errorMessage && (
+              <div style={{ background: '#FEE2E2', border: '1px solid #EF4444', color: '#B91C1C', padding: '12px', borderRadius: '10px', marginBottom: '16px', fontSize: '13px', fontWeight: '500' }}>
+                {errorMessage}
+              </div>
+            )}
+
             {/* Interactive Star Scale Module */}
             <div style={{ textAlign: 'center', marginBottom: '22px' }}>
               <div style={{ font: '600 14px/1 "DM Sans", sans-serif', color: '#9090A0', marginBottom: '16px' }}>How was the service?</div>
@@ -141,19 +235,21 @@ export default function RateProviderPage() {
               <div style={{ width: '72px', height: '72px', background: '#F4F5F8', border: '2px dashed #D0D0D8', borderRadius: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center', font: '400 22px "DM Sans", sans-serif', color: '#9090A0', cursor: 'pointer' }}></div>
             </div>
 
-            {/* Form Routing Submission Action Triggers split row */}
+            {/* Form Actions */}
             <div style={{ display: 'flex', gap: '12px' }} className="rp-actions">
               <button 
                 onClick={() => navigate('/MyBookings')}
+                disabled={isSubmitting}
                 style={{ flex: 1, padding: '13px', background: '#F4F5F8', border: '1.5px solid #EBEBEF', borderRadius: '12px', textAlign: 'center', font: '600 14px/1 "DM Sans", sans-serif', color: '#9090A0', cursor: 'pointer', outline: 'none' }}
               >
                 Skip
               </button>
               <button 
                 onClick={handleReviewSubmission}
-                style={{ flex: 2, padding: '13px', background: BRAND_GRADIENT, borderRadius: '12px', textAlign: 'center', font: '700 14px/1 "DM Sans", sans-serif', color: 'white', cursor: 'pointer', border: 'none', outline: 'none', boxShadow: '0 4px 14px rgba(214,28,168,.35)' }}
+                disabled={isSubmitting}
+                style={{ flex: 2, padding: '13px', background: BRAND_GRADIENT, borderRadius: '12px', textAlign: 'center', font: '700 14px/1 "DM Sans", sans-serif', color: 'white', cursor: isSubmitting ? 'not-allowed' : 'pointer', border: 'none', outline: 'none', boxShadow: '0 4px 14px rgba(214,28,168,.35)', opacity: isSubmitting ? 0.7 : 1 }}
               >
-                Submit Review
+                {isSubmitting ? 'Submitting...' : 'Submit Review'}
               </button>
             </div>
 
