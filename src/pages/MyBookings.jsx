@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import API_BASE_URL from '@/config/api'
+import CancelBookingModal from '../components/Popups/CancelBookingModal'
 
 const BRAND_GRADIENT = 'linear-gradient(135deg, #D61CA8, #8B2EF5)'
 
@@ -17,6 +18,8 @@ export default function MyBookingsPage() {
         completed: 0,
         cancelled: 0
     })
+    const [isModalOpen, setIsModalOpen] = useState(false)
+    const [selectedBookingForCancel, setSelectedBookingForCancel] = useState(null)
 
     // Get token from localStorage
     const getAuthToken = () => {
@@ -97,6 +100,36 @@ export default function MyBookingsPage() {
         })
 
         setCounts(counts)
+    }
+
+    const openCancelConfirmation = (booking) => {
+        setSelectedBookingForCancel(booking)
+        setIsModalOpen(true)
+    }
+
+    // Triggered directly when confirm action completes within the pop-up modal sandbox
+    const handleConfirmCancelAPI = async () => {
+        if (!selectedBookingForCancel) return
+
+        try {
+            const token = getAuthToken()
+            const response = await fetch(`${API_BASE_URL}/professionals/bookings/${selectedBookingForCancel.id}/cancel/`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            })
+
+            if (!response.ok) {
+                throw new Error('Failed to cancel booking')
+            }
+
+            toast.success('Booking cancelled successfully')
+            fetchBookings(activeTab)
+        } catch (err) {
+            toast.error(err.message || 'Failed to cancel booking')
+        }
     }
 
     // Handle tab change
@@ -438,10 +471,7 @@ export default function MyBookingsPage() {
                                                         >
                                                             Reschedule
                                                         </div>
-                                                        <div
-                                                            onClick={() => handleCancel(booking.id)}
-                                                            style={{ padding: '6px 13px', background: '#FEE2E2', border: '1.5px solid #FECACA', borderRadius: '8px', font: '600 11px/1 "DM Sans", sans-serif', color: '#EF4444', cursor: 'pointer' }}
-                                                        >
+                                                        <div onClick={() => openCancelConfirmation(booking)} style={{ padding: '6px 13px', background: '#FEE2E2', border: '1.5px solid #FECACA', borderRadius: '8px', font: '600 11px/1 "DM Sans", sans-serif', color: '#EF4444', cursor: 'pointer' }}>
                                                             Cancel
                                                         </div>
                                                     </>
@@ -485,6 +515,12 @@ export default function MyBookingsPage() {
                     </div>
                 </div>
             </div>
+            <CancelBookingModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onConfirm={handleConfirmCancelAPI}
+                bookingNumber={selectedBookingForCancel?.booking_number}
+            />
         </div>
     )
 }

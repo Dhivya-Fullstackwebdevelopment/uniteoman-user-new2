@@ -125,10 +125,10 @@ export default function BookingPaymentPage() {
 
     console.log("Processed Payload date & time:", apiBookingDate, apiBookingTime)
 
-    if (!apiBookingDate || !apiBookingTime) {
-      setError('Invalid date or time structure selected. Please try reselecting.')
-      return
-    }
+    // if (!apiBookingDate || !apiBookingTime) {
+    //   setError('Invalid date or time structure selected. Please try reselecting.')
+    //   return
+    // }
 
     setSubmitting(true)
     try {
