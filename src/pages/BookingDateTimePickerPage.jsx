@@ -121,11 +121,18 @@ export default function BookingDateTimePickerPage() {
           const dateFromUrl = parseDateFromUrl(urlDate)
           console.log('Date from URL:', dateFromUrl, 'Available dates:', dates.map(d => d.num))
 
+          let finalInitialDateObj = dates[0] || { day: '', num: '', month: '', year: '' };
           if (dateFromUrl && dates.some(d => d.num === dateFromUrl)) {
             setSelectedDateNum(dateFromUrl)
+            const matchedDate = dates.find(d => d.num === dateFromUrl)
+            if (matchedDate) finalInitialDateObj = matchedDate
           } else {
             setSelectedDateNum(dates[0]?.num || '')
           }
+
+          // Automatically dispatch default / initial date settings to Redux store
+          dispatch(setSelectedDate(finalInitialDateObj.num));
+          dispatch(setSelectedDateObj(finalInitialDateObj));
 
           // Generate available times
           const times = generateTimes()
@@ -135,11 +142,16 @@ export default function BookingDateTimePickerPage() {
           const timeFromUrl = parseTimeFromUrl(urlTime)
           console.log('Time from URL:', timeFromUrl, 'Available times:', times)
 
+          let finalInitialTime = times[0] || '';
           if (timeFromUrl && times.includes(timeFromUrl)) {
             setSelectedTimeSlot(timeFromUrl)
+            finalInitialTime = timeFromUrl
           } else {
             setSelectedTimeSlot(times[0] || '')
           }
+
+          // Automatically dispatch default / initial time settings to Redux store
+          dispatch(setSelectedTime(finalInitialTime));
         }
       } catch (error) {
         console.error("Error fetching professional:", error)
@@ -388,7 +400,6 @@ export default function BookingDateTimePickerPage() {
                     className="date-strip-card"
                     onClick={() => {
                       setSelectedDateNum(date.num);
-
                       dispatch(setSelectedDate(date.num));
                       dispatch(setSelectedDateObj(date));
                     }}
@@ -420,7 +431,6 @@ export default function BookingDateTimePickerPage() {
                     key={time}
                     onClick={() => {
                       if (isDisabled) return;
-
                       setSelectedTimeSlot(time);
                       dispatch(setSelectedTime(time));
                     }}
