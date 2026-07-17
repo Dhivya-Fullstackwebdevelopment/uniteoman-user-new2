@@ -120,7 +120,7 @@ export default function BookingPaymentPage() {
   const handleProcessCheckoutPayment = async () => {
     setError('')
 
-    const apiBookingDate = toApiDate()
+    const apiBookingDate = toApiDate(selectedDate)
     const apiBookingTime = toApiTime(selectedTime)
 
     console.log("Processed Payload date & time:", apiBookingDate, apiBookingTime)
