@@ -20,16 +20,16 @@ export default function BookingAddressPage() {
   // Passed through from previous steps
   const professionalId = searchParams.get('professional_id') || ''
   const serviceTypeId = searchParams.get('service_type_id') || ''
-  const date = searchParams.get('date') || '' // "Wed,9 Jul 2026"
-  const time = searchParams.get('time') || '' // "10:00 AM"
+  const date = searchParams.get('date') || '' 
+  const time = searchParams.get('time') || '' 
   const urlServiceName = searchParams.get('service_name') || ''
   const urlServicePrice = searchParams.get('service_price') || ''
   const urlProName = searchParams.get('pro_name') || ''
   const urlLocationId = searchParams.get('location_id') || ''
 
-  const [userName, setUserName] = useState('Mohammed Al-Balushi')
-  const [userEmail, setUserEmail] = useState('mohammed@gmail.com')
-  const [userMobile, setUserMobile] = useState('92345678')
+  // Securely fetch user credentials from localStorage instead of input forms
+  const [userData, setUserData] = useState({ name: '', email: '', mobile: '' })
+  
   const [selectedArea, setSelectedArea] = useState('Qurum')
   const [villaApartment, setVillaApartment] = useState('Villa 12')
   const [streetName, setStreetName] = useState('Al Noor Street')
@@ -44,35 +44,40 @@ export default function BookingAddressPage() {
   const selectedDate = useSelector(selectSelectedDate);
   const selectedTime = useSelector(selectSelectedTime);
 
-  // Prefer Redux location id, fall back to URL param, then to "1" as a last resort
   const effectiveLocationId = selectedLocation?.id || urlLocationId || '1'
-
-  // Fallbacks: prefer Redux, fall back to URL params so the summary panel
-  // isn't blank if this page was reached before Redux was populated.
   const displayServiceName = selectedServiceType?.name || urlServiceName || 'Service'
   const displayServicePrice = selectedServiceType?.price || urlServicePrice || '0'
   const displayProName = selectedProfessional?.name || urlProName || 'Professional'
   const displayDate = selectedDate || date
   const displayTime = selectedTime || time
 
+  // 1. Hook to automatically seed user details from local storage profiles on mount
+  useEffect(() => {
+    try {
+      const storedUser = localStorage.getItem('customerUser')
+      if (storedUser) {
+        const parsedUser = JSON.parse(storedUser)
+        setUserData({
+          name: parsedUser.name || '',
+          email: parsedUser.email || '',
+          mobile: parsedUser.mobile_number || ''
+        })
+      }
+    } catch (err) {
+      console.error("Error reading customer user profile from storage:", err)
+    }
+  }, [])
+
+  // 2. Fetch areas based on current location selection context
   useEffect(() => {
     const fetchAreas = async () => {
-      if (!effectiveLocationId) {
-        console.log("Location ID missing");
-        return;
-      }
-
+      if (!effectiveLocationId) return;
       try {
         const response = await axios.get(
           `${API_ENDPOINTS.AREAS}?location_id=${effectiveLocationId}`
         );
-
-        console.log(response.data);
-
         if (response.data.status === "success" && Array.isArray(response.data.data)) {
           setAreas(response.data.data);
-
-          // Select first area by default
           if (response.data.data.length > 0) {
             setSelectedArea(response.data.data[0]);
           }
@@ -81,7 +86,6 @@ export default function BookingAddressPage() {
         console.error("Area API Error:", error);
       }
     };
-
     fetchAreas();
   }, [effectiveLocationId]);
 
@@ -113,7 +117,8 @@ export default function BookingAddressPage() {
     }
   }
 
-  const isValid = userName && userEmail && userMobile && villaApartment && streetName
+  // Address entries validation check
+  const isValid = villaApartment && streetName && selectedArea
 
   const handleNextStepNavigation = () => {
     if (!isValid) return
@@ -122,9 +127,10 @@ export default function BookingAddressPage() {
       service_type_id: serviceTypeId,
       date: displayDate,
       time: displayTime,
-      user_name: userName,
-      user_email: userEmail,
-      user_mobile: userMobile,
+      // Pass the background user properties along to payment page
+      user_name: userData.name,
+      user_email: userData.email,
+      user_mobile: userData.mobile,
       area: selectedArea,
       villa_apartment_no: villaApartment,
       street_name: streetName,
@@ -138,8 +144,6 @@ export default function BookingAddressPage() {
 
   return (
     <div className="page-root-wrapper" style={{ background: '#F8F8FA', minHeight: '100vh', fontFamily: '"DM Sans", sans-serif', padding: '40px 0' }}>
-
-      {/* Structural layout rules handling breakpoints seamlessly */}
       <style>{`
         .outer-layout-box {
           max-width: 1240px;
@@ -163,18 +167,9 @@ export default function BookingAddressPage() {
           gap: 12px;
           margin-bottom: 16px;
         }
-        .contact-inputs-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr 1fr;
-          gap: 12px;
-          margin-bottom: 20px;
-        }
 
-        /* Tablet Breakpoint Adjustments */
         @media (max-width: 1024px) {
-          .outer-layout-box {
-            padding: 0 24px;
-          }
+          .outer-layout-box { padding: 0 24px; }
           .inner-content-card {
             padding: 24px;
             grid-template-columns: 1fr 300px;
@@ -182,38 +177,18 @@ export default function BookingAddressPage() {
           }
         }
 
-        /* Mobile Breakpoint Stack Overhaul */
         @media (max-width: 768px) {
-          .page-root-wrapper {
-            padding: 16px 0;
-          }
-          .outer-layout-box {
-            padding: 0 12px;
-          }
+          .page-root-wrapper { padding: 16px 0; }
+          .outer-layout-box { padding: 0 12px; }
           .inner-content-card {
             padding: 20px 14px;
             grid-template-columns: 1fr;
             gap: 24px;
           }
-          .stepper-label-text {
-            display: none;
-          }
-          .address-inputs-grid {
-            grid-template-columns: 1fr;
-            gap: 12px;
-          }
-          .contact-inputs-grid {
-            grid-template-columns: 1fr;
-            gap: 12px;
-          }
-          .saved-addresses-row {
-            flex-direction: column;
-            gap: 8px !important;
-          }
-          .summary-sticky-panel {
-            position: relative !important;
-            top: 0 !important;
-          }
+          .stepper-label-text { display: none; }
+          .address-inputs-grid { grid-template-columns: 1fr; gap: 12px; }
+          .saved-addresses-row { flex-direction: column; gap: 8px !important; }
+          .summary-sticky-panel { position: relative !important; top: 0 !important; }
         }
       `}</style>
 
@@ -223,7 +198,7 @@ export default function BookingAddressPage() {
           {/* LEFT CONTAINER VIEW PANEL: ADDRESS BUILDER FORMS */}
           <div style={{ minWidth: 0 }}>
 
-            {/* Horizontal Checkout Progress Tracker Timeline Indicators */}
+            {/* Checkout Progress Tracker */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '0', marginBottom: '28px' }}>
               <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
@@ -249,37 +224,7 @@ export default function BookingAddressPage() {
               </div>
             </div>
 
-            <div style={{ font: '700 14px/1 "DM Sans", sans-serif', color: '#0A0A0F', marginBottom: '12px' }}>Your Details</div>
-
-            {/* Contact info inputs */}
-            <div className="contact-inputs-grid">
-              <div>
-                <label style={{ font: '600 11px/1 "DM Sans", sans-serif', color: '#9090A0', display: 'block', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '.6px' }}>Full Name *</label>
-                <input
-                  value={userName}
-                  onChange={(e) => setUserName(e.target.value)}
-                  style={{ width: '100%', boxSizing: 'border-box', background: '#F4F5F8', border: '1.5px solid #EBEBEF', borderRadius: '11px', padding: '11px 14px', font: '400 13px/1 "DM Sans", sans-serif', color: '#0A0A0F', outline: 'none' }}
-                />
-              </div>
-              <div>
-                <label style={{ font: '600 11px/1 "DM Sans", sans-serif', color: '#9090A0', display: 'block', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '.6px' }}>Email *</label>
-                <input
-                  value={userEmail}
-                  onChange={(e) => setUserEmail(e.target.value)}
-                  style={{ width: '100%', boxSizing: 'border-box', background: '#F4F5F8', border: '1.5px solid #EBEBEF', borderRadius: '11px', padding: '11px 14px', font: '400 13px/1 "DM Sans", sans-serif', color: '#0A0A0F', outline: 'none' }}
-                />
-              </div>
-              <div>
-                <label style={{ font: '600 11px/1 "DM Sans", sans-serif', color: '#9090A0', display: 'block', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '.6px' }}>Mobile *</label>
-                <input
-                  value={userMobile}
-                  onChange={(e) => setUserMobile(e.target.value)}
-                  style={{ width: '100%', boxSizing: 'border-box', background: '#F4F5F8', border: '1.5px solid #EBEBEF', borderRadius: '11px', padding: '11px 14px', font: '400 13px/1 "DM Sans", sans-serif', color: '#0A0A0F', outline: 'none' }}
-                />
-              </div>
-            </div>
-
-            {/* Simulated Interactive Map Display Sandbox Wrapper Block */}
+            {/* Map Box Section */}
             <div style={{ height: '160px', background: '#E8EDF2', borderRadius: '14px', marginBottom: '20px', position: 'relative', overflow: 'hidden' }}>
               <div style={{ position: 'absolute', left: 0, right: 0, top: '80px', height: '14px', background: '#F0F2F4' }}></div>
               <div style={{ position: 'absolute', top: 0, bottom: 0, left: '140px', width: '14px', background: '#F0F2F4' }}></div>
@@ -297,14 +242,13 @@ export default function BookingAddressPage() {
 
             <div style={{ font: '700 14px/1 "DM Sans", sans-serif', color: '#0A0A0F', marginBottom: '12px' }}>Select Area</div>
 
-            {/* Interactive Chip Grid Array iteration */}
+            {/* Interactive Chip Grid Array */}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '7px', marginBottom: '20px' }}>
               {areas.length === 0 && (
                 <div style={{ font: '400 12px/1 "DM Sans", sans-serif', color: '#9090A0' }}>Loading areas...</div>
               )}
               {areas.map((area) => {
                 const isSelected = selectedArea === area;
-
                 return (
                   <div
                     key={area}
@@ -313,12 +257,8 @@ export default function BookingAddressPage() {
                       padding: '8px 14px',
                       borderRadius: '20px',
                       cursor: 'pointer',
-                      background: isSelected
-                        ? BRAND_GRADIENT
-                        : '#F4F5F8',
-                      border: isSelected
-                        ? '1.5px solid transparent'
-                        : '1.5px solid #EBEBEF',
+                      background: isSelected ? BRAND_GRADIENT : '#F4F5F8',
+                      border: isSelected ? '1.5px solid transparent' : '1.5px solid #EBEBEF',
                       color: isSelected ? '#fff' : '#9090A0',
                       font: '600 12px/1 "DM Sans", sans-serif'
                     }}
@@ -331,7 +271,7 @@ export default function BookingAddressPage() {
 
             <div style={{ font: '700 14px/1 "DM Sans", sans-serif', color: '#0A0A0F', marginBottom: '12px' }}>Address Details</div>
 
-            {/* Input fields explicit double split grid panel schema */}
+            {/* Input fields panel */}
             <div className="address-inputs-grid">
               <div>
                 <label style={{ font: '600 11px/1 "DM Sans", sans-serif', color: '#9090A0', display: 'block', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '.6px' }}>Villa / Apartment No. *</label>
@@ -367,7 +307,7 @@ export default function BookingAddressPage() {
               </div>
             </div>
 
-            {/* Quick Access Address Selector Profiles */}
+            {/* Saved Address Profiles */}
             <div style={{ font: '700 13px/1 "DM Sans", sans-serif', color: '#0A0A0F', marginBottom: '10px' }}>Or Use Saved Address</div>
             <div className="saved-addresses-row" style={{ display: 'flex', gap: '10px' }}>
               <div
