@@ -17,10 +17,10 @@ export default function CustomerLoginPage() {
     const [otp, setOtp] = useState('')
     const navigate = useNavigate()
     const [searchParams] = useSearchParams()
-    
+
     // Get redirect URL from query params
     const redirectTo = searchParams.get('redirect') || '/'
-    
+
     const [otpTimer, setOtpTimer] = useState(600)
     const [canResendOtp, setCanResendOtp] = useState(false)
 
@@ -105,14 +105,14 @@ export default function CustomerLoginPage() {
             },
             body: JSON.stringify(data),
         })
-        
+
         const result = await response.json()
-        
+
         if (!response.ok) {
             const errorMessage = result.detail || result.message || result.error || 'Something went wrong'
             throw new Error(errorMessage)
         }
-        
+
         return result
     }
 
@@ -120,7 +120,7 @@ export default function CustomerLoginPage() {
     const handleSendOtp = async () => {
         try {
             setLoading(true)
-            
+
             const result = registerSchema.safeParse(formData)
             if (!result.success) {
                 const fieldErrors = {}
@@ -130,21 +130,21 @@ export default function CustomerLoginPage() {
                 setErrors(fieldErrors)
                 return
             }
-            
+
             const otpResponse = await apiCall('/auth/otp/send/', {
                 mobile_number: formData.mobile_number
             })
-            
+
             toast.success(otpResponse.message || 'OTP sent to your mobile number')
-            
+
             if (otpResponse.debug_otp) {
                 console.log('Debug OTP:', otpResponse.debug_otp)
             }
-            
+
             setOtpTimer(600)
             setCanResendOtp(false)
             setShowOtpScreen(true)
-            
+
         } catch (err) {
             toast.error(err.message || 'Failed to send OTP')
         } finally {
@@ -156,7 +156,7 @@ export default function CustomerLoginPage() {
     const handleLogin = async () => {
         try {
             setLoading(true)
-            
+
             const response = await apiCall('/auth/login/', {
                 mobile_number: formData.mobile_number,
                 password: formData.password,
@@ -166,17 +166,18 @@ export default function CustomerLoginPage() {
             localStorage.setItem('customer_token', response.access)
             localStorage.setItem('refresh_token', response.refresh)
             localStorage.setItem('customerUser', JSON.stringify(response.user))
-            
+            localStorage.setItem('UserID', JSON.stringify(response.user_id))
+
             // Trigger storage event for other tabs/components
             window.dispatchEvent(new Event('storage'))
-            
+
             toast.success(response.message || 'Login successful')
-            
+
             // Navigate after a small delay to ensure storage is updated
             setTimeout(() => {
                 navigate(redirectTo, { replace: true })
             }, 100)
-            
+
         } catch (err) {
             toast.error(err.message || 'Invalid mobile number or password')
         } finally {
@@ -194,27 +195,27 @@ export default function CustomerLoginPage() {
 
         try {
             setLoading(true)
-            
+
             // Step 1: Verify OTP
             const verifyResponse = await apiCall('/auth/otp/verify/', {
                 mobile_number: formData.mobile_number,
                 otp_code: otp,
             })
-            
+
             toast.success(verifyResponse.message || 'OTP verified successfully!')
-            
+
             // Step 2: Register the user
             const registerData = {
                 mobile_number: formData.mobile_number,
                 password: formData.password,
             }
-            
+
             if (formData.name) registerData.name = formData.name
             if (formData.email) registerData.email = formData.email
-            
+
             const registerResponse = await apiCall('/auth/register/', registerData)
             toast.success(registerResponse.message || 'Account created successfully!')
-            
+
             // Step 3: Auto login after registration
             const loginResponse = await apiCall('/auth/login/', {
                 mobile_number: formData.mobile_number,
@@ -225,17 +226,17 @@ export default function CustomerLoginPage() {
             localStorage.setItem('customer_token', loginResponse.access)
             localStorage.setItem('refresh_token', loginResponse.refresh)
             localStorage.setItem('customerUser', JSON.stringify(loginResponse.user))
-            
+
             // Trigger storage event for other tabs/components
             window.dispatchEvent(new Event('storage'))
-            
+
             toast.success('Account created and verified successfully!')
-            
+
             // Navigate after a small delay to ensure storage is updated
             setTimeout(() => {
                 navigate(redirectTo, { replace: true })
             }, 100)
-            
+
         } catch (err) {
             toast.error(err.message || 'Invalid OTP or registration failed')
         } finally {
@@ -250,13 +251,13 @@ export default function CustomerLoginPage() {
             const response = await apiCall('/auth/otp/send/', {
                 mobile_number: formData.mobile_number
             })
-            
+
             toast.success(response.message || 'OTP resent successfully')
-            
+
             if (response.debug_otp) {
                 console.log('New Debug OTP:', response.debug_otp)
             }
-            
+
             setOtp('')
             setOtpTimer(600)
             setCanResendOtp(false)
@@ -271,7 +272,7 @@ export default function CustomerLoginPage() {
     const handleSubmit = async (e) => {
         e.preventDefault()
         setErrors({})
-        
+
         let result
 
         if (isLogin) {
@@ -311,7 +312,7 @@ export default function CustomerLoginPage() {
     // ================= CHECK AUTH STATUS =================
     useEffect(() => {
         const token = localStorage.getItem('customer_token')
-        
+
         if (token) {
             // Already authenticated, redirect
             navigate(redirectTo, { replace: true })
