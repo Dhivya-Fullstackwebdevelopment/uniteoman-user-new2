@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Mail, Lock, User, AlertCircle, Sparkles } from 'lucide-react'
+import { Mail, Lock, User, AlertCircle, Sparkles, Phone } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { z } from 'zod'
-import { customerAuthApi } from '@/lib/api'
+import API_BASE_URL from '@/config/api'
 
 // ── Theme Design Tokens (Matching Admin Page) ────────────────
 const BRAND_FROM = '#D61CA8'
@@ -18,15 +18,16 @@ export default function CustomerLoginPage() {
     const navigate = useNavigate()
     const [searchParams] = useSearchParams()
     
-    // Get redirect URL from query params, default to a specific page if not provided
-    const redirectTo = searchParams.get('redirect')
+    // Get redirect URL from query params
+    const redirectTo = searchParams.get('redirect') || '/'
     
     const [otpTimer, setOtpTimer] = useState(600)
     const [canResendOtp, setCanResendOtp] = useState(false)
 
     // ================= FORM STATE =================
     const [formData, setFormData] = useState({
-        full_name: '',
+        name: '',
+        mobile_number: '',
         email: '',
         password: '',
     })
@@ -34,29 +35,38 @@ export default function CustomerLoginPage() {
 
     // ================= SCHEMAS =================
     const loginSchema = z.object({
-        email: z
+        mobile_number: z
             .string()
             .trim()
-            .min(1, 'Email is required')
-            .email('Enter a valid email address'),
+            .min(10, 'Mobile number must be 10 digits')
+            .max(10, 'Mobile number must be 10 digits')
+            .regex(/^[0-9]+$/, 'Enter a valid mobile number'),
         password: z
             .string()
             .min(1, 'Password is required'),
     })
 
     const registerSchema = z.object({
-        full_name: z
+        name: z
             .string()
             .trim()
             .min(1, 'Full name is required'),
+        mobile_number: z
+            .string()
+            .trim()
+            .min(10, 'Mobile number must be 10 digits')
+            .max(10, 'Mobile number must be 10 digits')
+            .regex(/^[0-9]+$/, 'Enter a valid mobile number'),
         email: z
             .string()
             .trim()
-            .min(1, 'Email is required')
-            .email('Enter a valid email address'),
+            .email('Enter a valid email address')
+            .optional()
+            .or(z.literal('')),
         password: z
             .string()
-            .min(6, 'Password must be at least 6 characters'),
+            .min(6, 'Password must be at least 6 characters')
+            .regex(/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])/, 'Password must contain uppercase, lowercase, number and special character'),
     })
 
     // ================= INPUT UTILS =================
@@ -74,7 +84,6 @@ export default function CustomerLoginPage() {
         }
     }
 
-    // Interactive focus utilities mimicking admin fields
     const handleFocus = (e) => {
         if (!errors[e.target.name]) {
             e.target.style.borderColor = BRAND_FROM
@@ -87,15 +96,170 @@ export default function CustomerLoginPage() {
         e.target.style.boxShadow = 'none'
     }
 
-    // ================= ACTIONS =================
+    // ================= API CALLS =================
+    const apiCall = async (endpoint, data) => {
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+        })
+        
+        const result = await response.json()
+        
+        if (!response.ok) {
+            // Extract error message from different possible formats
+            const errorMessage = result.detail || result.message || result.error || 'Something went wrong'
+            throw new Error(errorMessage)
+        }
+        
+        return result
+    }
+
+    // ================= REGISTER FLOW =================
+    const handleRegister = async () => {
+        try {
+            setLoading(true)
+            
+            // Step 1: Register user
+            const registerData = {
+                mobile_number: formData.mobile_number,
+                password: formData.password,
+            }
+            
+            // Add optional fields if they exist
+            if (formData.name) registerData.name = formData.name
+            if (formData.email) registerData.email = formData.email
+            
+            const registerResponse = await apiCall('/auth/register/', registerData)
+            toast.success(registerResponse.message || 'Registration successful!')
+            
+            // Step 2: Send OTP
+            const otpResponse = await apiCall('/auth/otp/send/', {
+                mobile_number: formData.mobile_number
+            })
+            
+            toast.success(otpResponse.message || 'OTP sent to your mobile number')
+            
+            // Store debug OTP if available (for testing)
+            if (otpResponse.debug_otp) {
+                console.log('Debug OTP:', otpResponse.debug_otp)
+                // Optionally auto-fill OTP for development
+                // setOtp(otpResponse.debug_otp)
+            }
+            
+            setOtpTimer(600)
+            setCanResendOtp(false)
+            setShowOtpScreen(true)
+            
+        } catch (err) {
+            toast.error(err.message || 'Failed to register')
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    // ================= LOGIN =================
+    const handleLogin = async () => {
+        try {
+            setLoading(true)
+            
+            const response = await apiCall('/auth/login/', {
+                mobile_number: formData.mobile_number,
+                password: formData.password,
+            })
+
+            // Store auth data
+            localStorage.setItem('customer_token', response.access)
+            localStorage.setItem('refresh_token', response.refresh)
+            localStorage.setItem('customerUser', JSON.stringify(response.user))
+            
+            toast.success(response.message || 'Login successful')
+            navigate(redirectTo, { replace: true })
+            
+        } catch (err) {
+            toast.error(err.message || 'Invalid mobile number or password')
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    // ================= VERIFY OTP =================
+    const handleVerifyOtp = async (e) => {
+        e.preventDefault()
+        if (!otp || otp.length !== 6) {
+            toast.error('Please enter a valid 6-digit OTP')
+            return
+        }
+
+        try {
+            setLoading(true)
+            
+            // Step 1: Verify OTP
+            const verifyResponse = await apiCall('/auth/otp/verify/', {
+                mobile_number: formData.mobile_number,
+                otp_code: otp,
+            })
+            
+            toast.success(verifyResponse.message || 'OTP verified successfully!')
+            
+            // Step 2: After OTP verification, login the user
+            const loginResponse = await apiCall('/auth/login/', {
+                mobile_number: formData.mobile_number,
+                password: formData.password,
+            })
+
+            // Store auth data
+            localStorage.setItem('customer_token', loginResponse.access)
+            localStorage.setItem('refresh_token', loginResponse.refresh)
+            localStorage.setItem('customerUser', JSON.stringify(loginResponse.user))
+            
+            toast.success('Account created and verified successfully!')
+            navigate(redirectTo, { replace: true })
+            
+        } catch (err) {
+            toast.error(err.message || 'Invalid OTP')
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    // ================= RESEND OTP =================
+    const handleResendOtp = async () => {
+        try {
+            setLoading(true)
+            const response = await apiCall('/auth/otp/send/', {
+                mobile_number: formData.mobile_number
+            })
+            
+            toast.success(response.message || 'OTP resent successfully')
+            
+            // Store debug OTP if available
+            if (response.debug_otp) {
+                console.log('New Debug OTP:', response.debug_otp)
+            }
+            
+            setOtp('')
+            setOtpTimer(600)
+            setCanResendOtp(false)
+        } catch (err) {
+            toast.error(err.message || 'Failed to resend OTP')
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    // ================= MAIN SUBMIT =================
     const handleSubmit = async (e) => {
         e.preventDefault()
         setErrors({})
+        
         let result
 
         if (isLogin) {
             result = loginSchema.safeParse({
-                email: formData.email,
+                mobile_number: formData.mobile_number,
                 password: formData.password,
             })
 
@@ -108,28 +272,7 @@ export default function CustomerLoginPage() {
                 return
             }
 
-            try {
-                setLoading(true)
-                const response = await customerAuthApi.login({
-                    email: formData.email,
-                    password: formData.password,
-                })
-
-                // Store auth data
-                localStorage.setItem('customer_token', response.access_token)
-                localStorage.setItem('customerUser', JSON.stringify(response.customer))
-                
-                toast.success('Login successful')
-                
-                // Use navigate with replace to prevent going back to login page
-                // This will redirect to the specified page
-                navigate(redirectTo, { replace: true })
-                
-            } catch (err) {
-                toast.error(err.response?.data?.detail || 'Invalid email or password')
-            } finally {
-                setLoading(false)
-            }
+            await handleLogin()
         } else {
             result = registerSchema.safeParse(formData)
 
@@ -142,62 +285,11 @@ export default function CustomerLoginPage() {
                 return
             }
 
-            try {
-                setLoading(true)
-                await customerAuthApi.sendOtp({
-                    full_name: formData.full_name,
-                    email: formData.email,
-                    password: formData.password,
-                })
-
-                toast.success('OTP sent to your email')
-                setOtpTimer(600)
-                setCanResendOtp(false)
-                setShowOtpScreen(true)
-            } catch (err) {
-                toast.error(err.response?.data?.detail || 'Failed to send OTP')
-            } finally {
-                setLoading(false)
-            }
+            await handleRegister()
         }
     }
 
-    const handleVerifyOtp = async (e) => {
-        e.preventDefault()
-        if (!otp) {
-            toast.error('Enter OTP')
-            return
-        }
-
-        try {
-            setLoading(true)
-            const response = await customerAuthApi.verifyOtp({
-                email: formData.email,
-                otp,
-            })
-
-            localStorage.setItem('customer_token', response.access_token)
-            localStorage.setItem('customerUser', JSON.stringify(response.customer))
-            toast.success('Account created successfully')
-            
-            // Use navigate with replace to prevent going back to login page
-            // This will redirect to the specified page
-            navigate(redirectTo, { replace: true })
-            
-        } catch (err) {
-            toast.error(err.response?.data?.detail || 'Invalid OTP')
-        } finally {
-            setLoading(false)
-        }
-    }
-
-    const resetForm = () => {
-        setFormData({ full_name: '', email: '', password: '' })
-        setErrors({})
-        setOtp('')
-        setShowOtpScreen(false)
-    }
-
+    // ================= TIMER EFFECT =================
     useEffect(() => {
         let interval
         if (showOtpScreen && otpTimer > 0) {
@@ -210,34 +302,22 @@ export default function CustomerLoginPage() {
         return () => clearInterval(interval)
     }, [showOtpScreen, otpTimer])
 
-    const handleResendOtp = async () => {
-        try {
-            setLoading(true)
-            await customerAuthApi.sendOtp({
-                full_name: formData.full_name,
-                email: formData.email,
-                password: formData.password,
-            })
-            toast.success('OTP resent successfully')
-            setOtp('')
-            setOtpTimer(600)
-            setCanResendOtp(false)
-        } catch (err) {
-            toast.error(err.response?.data?.detail || 'Failed to resend OTP')
-        } finally {
-            setLoading(false)
-        }
-    }
-
     // ================= CHECK AUTH STATUS =================
-    // Check if user is already authenticated and redirect them
     useEffect(() => {
         const token = localStorage.getItem('customer_token')
         if (token) {
-            // If already logged in, redirect to the intended page
+            // Verify token validity or just redirect
             navigate(redirectTo, { replace: true })
         }
     }, [navigate, redirectTo])
+
+    // ================= RESET FORM =================
+    const resetForm = () => {
+        setFormData({ name: '', mobile_number: '', email: '', password: '' })
+        setErrors({})
+        setOtp('')
+        setShowOtpScreen(false)
+    }
 
     // ── Render View ───────────────────────────────────────────
     return (
@@ -261,15 +341,20 @@ export default function CustomerLoginPage() {
                                     className="w-16 h-16 rounded-full flex items-center justify-center text-white"
                                     style={{ background: BRAND_GRADIENT }}
                                 >
-                                    <Mail size={24} />
+                                    <Phone size={24} />
                                 </div>
                             </div>
                             <h1 className="text-2xl font-black text-[#0A0A0F] tracking-tight">
                                 Verify OTP
                             </h1>
                             <p className="text-sm text-[#9090A0] font-medium mt-1">
-                                OTP sent to <span className="text-gray-700 font-semibold">{formData.email}</span>
+                                OTP sent to <span className="text-gray-700 font-semibold">{formData.mobile_number}</span>
                             </p>
+                            {process.env.NODE_ENV === 'development' && (
+                                <p className="text-xs text-[#9090A0] mt-2">
+                                    💡 Check console for debug OTP
+                                </p>
+                            )}
                         </div>
 
                         <form onSubmit={handleVerifyOtp} className="space-y-6">
@@ -336,10 +421,11 @@ export default function CustomerLoginPage() {
                                     <button
                                         type="button"
                                         onClick={handleResendOtp}
-                                        className="text-xs font-bold hover:underline"
+                                        disabled={loading}
+                                        className="text-xs font-bold hover:underline transition-all disabled:opacity-50"
                                         style={{ color: BRAND_FROM }}
                                     >
-                                        Resend OTP Code
+                                        {loading ? 'Sending...' : 'Resend OTP Code'}
                                     </button>
                                 )}
                             </div>
@@ -353,7 +439,17 @@ export default function CustomerLoginPage() {
                                     boxShadow: '0 6px 20px rgba(214,28,168,.35)'
                                 }}
                             >
-                                {loading ? 'Verifying...' : 'Verify OTP →'}
+                                {loading ? (
+                                    <>
+                                        <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        Verifying...
+                                    </>
+                                ) : (
+                                    'Verify & Create Account →'
+                                )}
                             </button>
                         </form>
                     </>
@@ -366,7 +462,7 @@ export default function CustomerLoginPage() {
                                     className="w-16 h-16 rounded-full flex items-center justify-center text-white"
                                     style={{ background: BRAND_GRADIENT }}
                                 >
-                                    <span className="text-2xl">{isLogin ?   <User size={30} /> : <User size={30} />}</span>
+                                    <User size={30} />
                                 </div>
                             </div>
                             <h1 className="text-2xl font-semibold text-[#0A0A0F] tracking-tight">
@@ -378,7 +474,7 @@ export default function CustomerLoginPage() {
                         </div>
 
                         <form onSubmit={handleSubmit} className="space-y-5">
-                            {/* Full Name */}
+                            {/* Name - Only for Registration */}
                             {!isLogin && (
                                 <div>
                                     <label className="text-[10px] font-black uppercase tracking-widest text-[#C4CBD6] ml-0.5 block mb-1.5">
@@ -387,53 +483,85 @@ export default function CustomerLoginPage() {
                                     <div className="relative">
                                         <input
                                             type="text"
-                                            name="full_name"
-                                            value={formData.full_name}
+                                            name="name"
+                                            value={formData.name}
                                             placeholder="Enter your full name"
                                             onChange={handleChange}
                                             onFocus={handleFocus}
                                             onBlur={handleBlur}
                                             style={{
-                                                border: errors.full_name ? '1px solid #ef4444' : '1px solid #dfdee5',
+                                                border: errors.name ? '1px solid #ef4444' : '1px solid #dfdee5',
                                                 background: '#F8F8FA'
                                             }}
                                             className="w-full rounded-xl py-3 px-3.5 text-sm font-bold text-[#0A0A0F] placeholder-[#C4CBD6] focus:outline-none transition-all"
                                         />
                                     </div>
-                                    {errors.full_name && (
+                                    {errors.name && (
                                         <p className="text-xs mt-1.5 flex items-center gap-1 font-medium text-red-500">
                                             <AlertCircle size={12} strokeWidth={2.5} />
-                                            {errors.full_name}
+                                            {errors.name}
                                         </p>
                                     )}
                                 </div>
                             )}
 
-                            {/* Email Address */}
+                            {/* Email - Only for Registration */}
+                            {!isLogin && (
+                                <div>
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-[#C4CBD6] ml-0.5 block mb-1.5">
+                                        Email Address <span className="text-gray-400 text-[8px]">(optional)</span>
+                                    </label>
+                                    <div className="relative">
+                                        <input
+                                            type="email"
+                                            name="email"
+                                            value={formData.email}
+                                            placeholder="example@gmail.com"
+                                            onChange={handleChange}
+                                            onFocus={handleFocus}
+                                            onBlur={handleBlur}
+                                            style={{
+                                                border: errors.email ? '1px solid #ef4444' : '1px solid #dfdee5',
+                                                background: '#F8F8FA'
+                                            }}
+                                            className="w-full rounded-xl py-3 px-3.5 text-sm font-bold text-[#0A0A0F] placeholder-[#C4CBD6] focus:outline-none transition-all"
+                                        />
+                                    </div>
+                                    {errors.email && (
+                                        <p className="text-xs mt-1.5 flex items-center gap-1 font-medium text-red-500">
+                                            <AlertCircle size={12} strokeWidth={2.5} />
+                                            {errors.email}
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Mobile Number */}
                             <div>
                                 <label className="text-[10px] font-black uppercase tracking-widest text-[#C4CBD6] ml-0.5 block mb-1.5">
-                                    Email Address <span className="text-red-500">*</span>
+                                    Mobile Number <span className="text-red-500">*</span>
                                 </label>
                                 <div className="relative">
                                     <input
-                                        type="text"
-                                        name="email"
-                                        value={formData.email}
-                                        placeholder="example@gmail.com"
+                                        type="tel"
+                                        name="mobile_number"
+                                        value={formData.mobile_number}
+                                        placeholder="9994078964"
                                         onChange={handleChange}
                                         onFocus={handleFocus}
                                         onBlur={handleBlur}
+                                        maxLength={10}
                                         style={{
-                                            border: errors.email ? '1px solid #ef4444' : '1px solid #dfdee5',
+                                            border: errors.mobile_number ? '1px solid #ef4444' : '1px solid #dfdee5',
                                             background: '#F8F8FA'
                                         }}
                                         className="w-full rounded-xl py-3 px-3.5 text-sm font-bold text-[#0A0A0F] placeholder-[#C4CBD6] focus:outline-none transition-all"
                                     />
                                 </div>
-                                {errors.email && (
+                                {errors.mobile_number && (
                                     <p className="text-xs mt-1.5 flex items-center gap-1 font-medium text-red-500">
                                         <AlertCircle size={12} strokeWidth={2.5} />
-                                        {errors.email}
+                                        {errors.mobile_number}
                                     </p>
                                 )}
                             </div>
@@ -463,6 +591,16 @@ export default function CustomerLoginPage() {
                                     <p className="text-xs mt-1.5 flex items-center gap-1 font-medium text-red-500">
                                         <AlertCircle size={12} strokeWidth={2.5} />
                                         {errors.password}
+                                    </p>
+                                )}
+                                {!isLogin && !errors.password && formData.password && (
+                                    <p className="text-[10px] text-green-600 mt-1">
+                                        ✓ Strong password
+                                    </p>
+                                )}
+                                {!isLogin && !errors.password && !formData.password && (
+                                    <p className="text-[10px] text-[#9090A0] mt-1">
+                                        Must contain uppercase, lowercase, number & special character
                                     </p>
                                 )}
                             </div>
