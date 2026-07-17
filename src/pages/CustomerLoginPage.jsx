@@ -15,6 +15,8 @@ export default function CustomerLoginPage() {
     const [loading, setLoading] = useState(false)
     const [showOtpScreen, setShowOtpScreen] = useState(false)
     const [otp, setOtp] = useState('')
+    const [isAuthenticated, setIsAuthenticated] = useState(false)
+    const [checkingAuth, setCheckingAuth] = useState(true)
     const navigate = useNavigate()
     const [searchParams] = useSearchParams()
     
@@ -117,25 +119,23 @@ export default function CustomerLoginPage() {
         return result
     }
 
-    // ================= REGISTER FLOW =================
-    const handleRegister = async () => {
+    // ================= SEND OTP FOR REGISTRATION =================
+    const handleSendOtp = async () => {
         try {
             setLoading(true)
             
-            // Step 1: Register user
-            const registerData = {
-                mobile_number: formData.mobile_number,
-                password: formData.password,
+            // First, validate the form data
+            const result = registerSchema.safeParse(formData)
+            if (!result.success) {
+                const fieldErrors = {}
+                result.error.issues.forEach(err => {
+                    fieldErrors[err.path[0]] = err.message
+                })
+                setErrors(fieldErrors)
+                return
             }
             
-            // Add optional fields if they exist
-            if (formData.name) registerData.name = formData.name
-            if (formData.email) registerData.email = formData.email
-            
-            const registerResponse = await apiCall('/auth/register/', registerData)
-            toast.success(registerResponse.message || 'Registration successful!')
-            
-            // Step 2: Send OTP
+            // Send OTP first
             const otpResponse = await apiCall('/auth/otp/send/', {
                 mobile_number: formData.mobile_number
             })
@@ -145,7 +145,7 @@ export default function CustomerLoginPage() {
             // Store debug OTP if available (for testing)
             if (otpResponse.debug_otp) {
                 console.log('Debug OTP:', otpResponse.debug_otp)
-                // Optionally auto-fill OTP for development
+                // Auto-fill OTP for development
                 // setOtp(otpResponse.debug_otp)
             }
             
@@ -154,7 +154,7 @@ export default function CustomerLoginPage() {
             setShowOtpScreen(true)
             
         } catch (err) {
-            toast.error(err.message || 'Failed to register')
+            toast.error(err.message || 'Failed to send OTP')
         } finally {
             setLoading(false)
         }
@@ -176,6 +176,7 @@ export default function CustomerLoginPage() {
             localStorage.setItem('customerUser', JSON.stringify(response.user))
             
             toast.success(response.message || 'Login successful')
+            setIsAuthenticated(true)
             navigate(redirectTo, { replace: true })
             
         } catch (err) {
@@ -185,8 +186,8 @@ export default function CustomerLoginPage() {
         }
     }
 
-    // ================= VERIFY OTP =================
-    const handleVerifyOtp = async (e) => {
+    // ================= VERIFY OTP & REGISTER =================
+    const handleVerifyOtpAndRegister = async (e) => {
         e.preventDefault()
         if (!otp || otp.length !== 6) {
             toast.error('Please enter a valid 6-digit OTP')
@@ -204,7 +205,20 @@ export default function CustomerLoginPage() {
             
             toast.success(verifyResponse.message || 'OTP verified successfully!')
             
-            // Step 2: After OTP verification, login the user
+            // Step 2: After OTP verification, register the user
+            const registerData = {
+                mobile_number: formData.mobile_number,
+                password: formData.password,
+            }
+            
+            // Add optional fields if they exist
+            if (formData.name) registerData.name = formData.name
+            if (formData.email) registerData.email = formData.email
+            
+            const registerResponse = await apiCall('/auth/register/', registerData)
+            toast.success(registerResponse.message || 'Account created successfully!')
+            
+            // Step 3: Auto login after registration
             const loginResponse = await apiCall('/auth/login/', {
                 mobile_number: formData.mobile_number,
                 password: formData.password,
@@ -216,10 +230,11 @@ export default function CustomerLoginPage() {
             localStorage.setItem('customerUser', JSON.stringify(loginResponse.user))
             
             toast.success('Account created and verified successfully!')
+            setIsAuthenticated(true)
             navigate(redirectTo, { replace: true })
             
         } catch (err) {
-            toast.error(err.message || 'Invalid OTP')
+            toast.error(err.message || 'Invalid OTP or registration failed')
         } finally {
             setLoading(false)
         }
@@ -274,18 +289,8 @@ export default function CustomerLoginPage() {
 
             await handleLogin()
         } else {
-            result = registerSchema.safeParse(formData)
-
-            if (!result.success) {
-                const fieldErrors = {}
-                result.error.issues.forEach(err => {
-                    fieldErrors[err.path[0]] = err.message
-                })
-                setErrors(fieldErrors)
-                return
-            }
-
-            await handleRegister()
+            // For registration, send OTP first
+            await handleSendOtp()
         }
     }
 
@@ -305,10 +310,23 @@ export default function CustomerLoginPage() {
     // ================= CHECK AUTH STATUS =================
     useEffect(() => {
         const token = localStorage.getItem('customer_token')
+        
         if (token) {
-            // Verify token validity or just redirect
-            navigate(redirectTo, { replace: true })
+            try {
+                setIsAuthenticated(true)
+                // Add small delay to prevent blink
+                setTimeout(() => {
+                    navigate(redirectTo, { replace: true })
+                }, 100)
+            } catch (error) {
+                localStorage.removeItem('customer_token')
+                localStorage.removeItem('refresh_token')
+                localStorage.removeItem('customerUser')
+                setIsAuthenticated(false)
+            }
         }
+        
+        setCheckingAuth(false)
     }, [navigate, redirectTo])
 
     // ================= RESET FORM =================
@@ -317,6 +335,24 @@ export default function CustomerLoginPage() {
         setErrors({})
         setOtp('')
         setShowOtpScreen(false)
+    }
+
+    // Show loading while checking authentication
+    if (checkingAuth) {
+        return (
+            <div className="min-h-screen flex items-center justify-center" style={{ background: '#F8F8FA' }}>
+                <div className="text-center">
+                    <div className="w-12 h-12 rounded-full border-4 border-t-transparent animate-spin mx-auto" 
+                         style={{ borderColor: BRAND_FROM, borderTopColor: 'transparent' }} />
+                    <p className="mt-4 text-sm text-[#9090A0]">Loading...</p>
+                </div>
+            </div>
+        )
+    }
+
+    // If authenticated, don't render the login page
+    if (isAuthenticated) {
+        return null
     }
 
     // ── Render View ───────────────────────────────────────────
@@ -357,7 +393,7 @@ export default function CustomerLoginPage() {
                             )}
                         </div>
 
-                        <form onSubmit={handleVerifyOtp} className="space-y-6">
+                        <form onSubmit={handleVerifyOtpAndRegister} className="space-y-6">
                             <div>
                                 <label className="text-[10px] font-black uppercase tracking-widest text-[#C4CBD6] ml-0.5 block mb-2 text-center">
                                     Enter 6-Digit OTP <span className="text-red-500">*</span>
@@ -445,7 +481,7 @@ export default function CustomerLoginPage() {
                                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                         </svg>
-                                        Verifying...
+                                        Creating Account...
                                     </>
                                 ) : (
                                     'Verify & Create Account →'
@@ -632,12 +668,12 @@ export default function CustomerLoginPage() {
                                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                         </svg>
-                                        Please wait...
+                                        Sending OTP...
                                     </>
                                 ) : isLogin ? (
                                     'Log In →'
                                 ) : (
-                                    'Create Account →'
+                                    'Send OTP →'
                                 )}
                             </button>
 
