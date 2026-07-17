@@ -152,7 +152,15 @@ export default function BookingPaymentPage() {
         save_card: paymentMethod === 'bank_of_muscat_card' ? saveCard : undefined
       }
 
-      const response = await axios.post(API_ENDPOINTS.CREATE_BOOKING, payload)
+      const response = await axios.post(
+        API_ENDPOINTS.CREATE_BOOKING,
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('customer_token')}`
+          }
+        }
+      )
 
       if (response.data && response.data.status === 'success') {
         navigate('/BookingConfirmationPage', { state: { booking: response.data.data } })
