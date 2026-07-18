@@ -1,3 +1,5 @@
+import { useState, useEffect } from 'react'
+import axios from 'axios'
 import {
   ShieldCheck,
   Zap,
@@ -36,64 +38,87 @@ import {
   Hammer
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import API_BASE_URL from '@/config/api'
 
-const CATEGORY_ICONS = {
-  'ac-service': Zap,
-  'home-cleaning': Brush,
-  'plumbing': Wrench,
-  'electrical': Zap,
-  'beauty-at-home': Sparkles,
-  'carpentry': Ruler,
-  'pest-control': ShieldCheck,
-  'painting': PaintBucket,
-  'car-detailing': Car,
-  'pool-service': Waves,
-  'appliance-repair': Wrench,
-  'landscaping': Scissors,
-  'moving-packing': Truck,
-  'water-tank-clean': Droplet,
-  'cctv-smart-home': Video,
-  'glazing-windows': GlassWater,
-  'fitness-wellness': Dumbbell,
-  'babysitting': Baby,
-  'pet-care': PawPrint,
-  'laundry-ironing': Shirt,
-  'home-renovation': Hammer
+// Map category names to Lucide icons (fallback if API icon fails)
+const CATEGORY_ICON_MAP = {
+  'AC Service': Zap,
+  'Home Cleaning': Brush,
+  'Plumbing': Wrench,
+  'Electrical': Zap,
+  'Beauty at Home': Sparkles,
+  'Carpentry': Ruler,
+  'Pest Control': ShieldCheck,
+  'Painting': PaintBucket,
+  'Car Detailing': Car,
+  'Pool Service': Waves,
+  'Appliance Repair': Wrench,
+  'Landscaping': Scissors,
+  'Moving & Packing': Truck,
+  'Water Tank Clean': Droplet,
+  'CCTV & Smart Home': Video,
+  'Glazing & Windows': GlassWater,
+  'Fitness & Wellness': Dumbbell,
+  'Babysitting': Baby,
+  'Pet Care': PawPrint,
+  'Laundry & Ironing': Shirt,
+  'Home Renovation': Hammer
 }
 
-const SERVICES = [
-  { id: 1, name_en: 'AC Service', slug: 'ac-service', price: '15', icon: Zap },
-  { id: 2, name_en: 'Home Cleaning', slug: 'home-cleaning', price: '25', icon: Brush },
-  { id: 3, name_en: 'Plumbing', slug: 'plumbing', price: '12', icon: Wrench },
-  { id: 4, name_en: 'Electrical', slug: 'electrical', price: '8', icon: Zap },
-  { id: 5, name_en: 'Beauty at Home', slug: 'beauty-at-home', price: '12', icon: Sparkles },
-  { id: 6, name_en: 'Carpentry', slug: 'carpentry', price: '15', icon: Ruler },
-  { id: 7, name_en: 'Pest Control', slug: 'pest-control', price: '18', icon: ShieldCheck },
-  { id: 8, name_en: 'Painting', slug: 'painting', price: '25', icon: PaintBucket },
-  { id: 9, name_en: 'Car Detailing', slug: 'car-detailing', price: '5', icon: Car },
-  { id: 10, name_en: 'Pool Service', slug: 'pool-service', price: '25', icon: Waves },
-  { id: 11, name_en: 'Appliance Repair', slug: 'appliance-repair', price: '12', icon: Wrench },
-  { id: 12, name_en: 'Landscaping', slug: 'landscaping', price: '15', icon: Scissors },
-  { id: 13, name_en: 'Moving & Packing', slug: 'moving-packing', price: '25', icon: Truck },
-  { id: 14, name_en: 'Water Tank Clean', slug: 'water-tank-clean', price: '35', icon: Droplet },
-  { id: 15, name_en: 'CCTV & Smart Home', slug: 'cctv-smart-home', price: '30', icon: Video },
-  { id: 16, name_en: 'Glazing & Windows', slug: 'glazing-windows', price: '18', icon: GlassWater },
-  { id: 17, name_en: 'Fitness & Wellness', slug: 'fitness-wellness', price: '20', icon: Dumbbell },
-  { id: 18, name_en: 'Babysitting', slug: 'babysitting', price: '5/hr', icon: Baby },
-  { id: 19, name_en: 'Pet Care', slug: 'pet-care', price: '8', icon: PawPrint },
-  { id: 20, name_en: 'Laundry & Ironing', slug: 'laundry-ironing', price: '5', icon: Shirt },
-  { id: 21, name_en: 'Home Renovation', slug: 'home-renovation', price: '40', icon: Hammer }
-]
+// Fallback icon for categories not in the map
+const FallbackIcon = Sparkles
 
 export function CategoryGrid() {
   const navigate = useNavigate()
+  const [services, setServices] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  // Fetch categories from API
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setLoading(true)
+        const response = await axios.get(`${API_BASE_URL}/services/`)
+
+        if (response.data.status === 'success' && response.data.data) {
+          setServices(response.data.data)
+        } else {
+          throw new Error('Invalid response format')
+        }
+      } catch (err) {
+        console.error('Error fetching categories:', err)
+        setError(err.response?.data?.message || err.message || 'Failed to fetch categories')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchCategories()
+  }, [])
 
   // Show only first 7 categories
-  const visibleCategories = SERVICES.slice(0, 7)
+  const visibleCategories = services.slice(0, 7)
 
   // Remaining categories count
-  const remainingCount = Math.max(SERVICES.length - 7, 0)
-  const remainingCategories = SERVICES.slice(7)
+  const remainingCount = Math.max(services.length - 7, 0)
+  const remainingCategories = services.slice(7)
+
+  // Get icon component for a category (fallback if API icon not available)
+  const getIconComponent = (categoryName) => {
+    const Icon = CATEGORY_ICON_MAP[categoryName] || FallbackIcon
+    return Icon
+  }
+
+  // Check if icon URL is valid and from API
+  const getIconUrl = (iconUrl) => {
+    if (!iconUrl) return null
+    // If it's a relative path, prepend API_BASE_URL
+    if (iconUrl.startsWith('/media/')) {
+      return `${API_BASE_URL}${iconUrl}`
+    }
+    return iconUrl
+  }
 
   const CARD_GRADIENTS = [
     {
@@ -133,6 +158,62 @@ export function CategoryGrid() {
     },
   ]
 
+  // Loading state
+  if (loading) {
+    return (
+      <section className="pt-10 pb-10 bg-[#F7F7FA]">
+        <div className="max-w-[1300px] mx-auto px-5 lg:px-14">
+          {/* Heading Skeleton */}
+          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8 mb-14">
+            <div>
+              <div className="w-32 h-6 bg-gray-200 rounded-md mb-4 animate-pulse" />
+              <div className="w-64 h-14 bg-gray-200 rounded-lg animate-pulse" />
+            </div>
+            <div className="w-40 h-12 bg-gray-200 rounded-xl animate-pulse" />
+          </div>
+
+          {/* Cards Skeleton */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {[...Array(7)].map((_, index) => (
+              <div
+                key={index}
+                className="h-[240px] rounded-[22px] bg-white p-6 shadow-[0_2px_16px_rgba(0,0,0,.05)] animate-pulse"
+              >
+                <div className="w-14 h-14 rounded-2xl bg-gray-200 mb-4" />
+                <div className="h-6 bg-gray-200 rounded w-3/4 mb-2" />
+                <div className="h-4 bg-gray-200 rounded w-full mb-2" />
+                <div className="h-4 bg-gray-200 rounded w-2/3" />
+                <div className="flex items-center justify-between mt-4">
+                  <div className="h-5 bg-gray-200 rounded w-24" />
+                  <div className="w-10 h-10 bg-gray-200 rounded-xl" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <style>{`
+          @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+          }
+          .animate-pulse {
+            animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+          }
+        `}</style>
+      </section>
+    )
+  }
+
+  // Error state
+  if (error) {
+    console.error('CategoryGrid error:', error)
+  }
+
+  // If no services, don't render
+  if (services.length === 0) {
+    return null
+  }
+
   return (
     <section className="pt-10 pb-10 bg-[#F7F7FA]">
       <style>{`
@@ -144,6 +225,13 @@ export function CategoryGrid() {
           opacity: 0;
           animation: cardIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
         }
+        .cat-icon-image {
+          transition: transform 0.3s ease, filter 0.3s ease;
+        }
+        .cat-card:hover .cat-icon-image {
+          transform: scale(1.15) rotate(-3deg);
+          filter: brightness(1.1);
+        }
       `}</style>
       <div className="max-w-[1300px] mx-auto px-5 lg:px-14">
 
@@ -153,7 +241,7 @@ export function CategoryGrid() {
           <div>
             <div className="inline-flex items-center bg-gradient-to-r from-[#D61CA8] to-[#8B2EF5] rounded-md px-3 py-1 mb-4">
               <span className="text-[10px] font-bold tracking-[2px] uppercase text-white">
-                {SERVICES.length}+ Categories
+                {services.length}+ Categories
               </span>
             </div>
 
@@ -191,10 +279,15 @@ export function CategoryGrid() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
 
           {visibleCategories.map((service, index) => {
-            const Icon = service.icon
             const style = CARD_GRADIENTS[index % CARD_GRADIENTS.length]
+            // const linkTo = `/categories/${service.name.toLowerCase().replace(/ & /g, '-').replace(/ /g, '-')}`
+            const linkTo = `/categories`
 
-            const linkTo = `/services/${service.slug}`
+
+            // Get icon URL from API
+            const iconUrl = getIconUrl(service.icon)
+            // Get fallback Lucide icon
+            const IconComponent = getIconComponent(service.name)
 
             return (
               <div
@@ -208,25 +301,38 @@ export function CategoryGrid() {
                   className={`absolute left-0 top-0 w-full h-[3px] bg-gradient-to-r ${style.top}`}
                 />
 
-                {/* Icon */}
-                <div className={`w-14 h-14 rounded-2xl ${style.iconBg} flex items-center justify-center mb-4 text-[#D61CA8] transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3`}>
-                  <Icon size={24} strokeWidth={2.2} />
+                {/* Icon - Use API icon if available, otherwise fallback to Lucide */}
+                <div className={`w-14 h-14 rounded-2xl ${style.iconBg} flex items-center justify-center text-[#D61CA8] transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3 overflow-hidden`}>
+                  {iconUrl ? (
+                    <img
+                      src={iconUrl}
+                      alt={service.name}
+                      className="cat-icon-image w-10 h-10 object-contain"
+                      onError={(e) => {
+                        // If image fails to load, show fallback icon
+                        e.target.style.display = 'none'
+                        e.target.parentElement.innerHTML = `<svg class="w-6 h-6" stroke-width="2.2" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>`
+                      }}
+                    />
+                  ) : (
+                    <IconComponent size={24} strokeWidth={2.2} />
+                  )}
                 </div>
 
                 {/* Name */}
                 <h3 className="text-[18px] font-bold text-[#0A0A0F] h-[56px] overflow-hidden mb-2">
-                  {service.name_en}
+                  {service.name}
                 </h3>
 
                 {/* Description */}
                 <p className="text-[12px] leading-5 text-[#9090A0] h-[40px] overflow-hidden">
-                  Professional {service.name_en.toLowerCase()} services available.
+                  {service.description || `Professional ${service.name.toLowerCase()} services available.`}
                 </p>
 
                 {/* Footer */}
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between mt-auto pt-2">
                   <span className="text-[#D61CA8] font-bold text-[15px]">
-                    From OMR {service.price}
+                    From OMR {service.starting_price}
                   </span>
 
                   <div
@@ -257,7 +363,7 @@ export function CategoryGrid() {
               <p className="text-[12px] leading-5 text-white/60 flex-1">
                 {remainingCategories
                   .slice(0, 4)
-                  .map((service) => service.name_en)
+                  .map((service) => service.name)
                   .join(" • ")}
                 {remainingCount > 4 && " • and more"}
               </p>
@@ -276,6 +382,7 @@ export function CategoryGrid() {
   )
 }
 
+// WhySection remains the same
 export function WhySection() {
   const items = [
     { ico: ShieldCheck, t: 'Verified Pros', d: 'Every business is manually checked for quality and reliability.' },
@@ -315,11 +422,27 @@ export function WhySection() {
   )
 }
 
+// Testimonials with API integration
 export function Testimonials() {
-  const { data: latestReviews = [] } = useQuery({
-    queryKey: ['homepage-latest-reviews'],
-    queryFn: () => reviewApi.homepageLatest()
-  })
+  const [latestReviews, setLatestReviews] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/reviews/homepage-latest/`)
+        if (response.data && response.data.data) {
+          setLatestReviews(response.data.data)
+        }
+      } catch (err) {
+        console.error('Error fetching reviews:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchReviews()
+  }, [])
 
   const row1 = latestReviews.slice(0, 5)
   const row2 = latestReviews.slice(5, 10)
@@ -327,9 +450,9 @@ export function Testimonials() {
   const renderCard = (t, idx) => (
     <div key={idx} className="w-[320px] md:w-[400px] shrink-0 p-[28px] border border-[var(--line)] rounded-[var(--r)] bg-white text-left shadow-sm hover:border-[var(--brand)] transition-colors duration-300 mx-[10px]">
       <div className="text-[#F59E0B] text-[14px] tracking-[2px] mb-[12px]">
-        {'★'.repeat(t.rating)}
+        {'★'.repeat(t.rating || 5)}
         <span className="text-gray-300">
-          {'★'.repeat(5 - t.rating)}
+          {'★'.repeat(5 - (t.rating || 5))}
         </span>
       </div>
       <p className="text-[14px] text-[var(--mid)] font-medium leading-[1.7] italic mb-[20px]">
@@ -345,6 +468,22 @@ export function Testimonials() {
       </div>
     </div>
   )
+
+  if (loading) {
+    return (
+      <section className="testi py-[48px] bg-[#FDFDFD] overflow-hidden">
+        <div className="text-center mb-[64px] px-4">
+          <div className="w-32 h-8 bg-gray-200 rounded-full mx-auto mb-4 animate-pulse" />
+          <div className="w-64 h-16 bg-gray-200 rounded-lg mx-auto animate-pulse" />
+        </div>
+        <div className="flex gap-4 justify-center">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="w-[320px] h-[200px] bg-gray-200 rounded-2xl animate-pulse" />
+          ))}
+        </div>
+      </section>
+    )
+  }
 
   return (
     <section className="testi py-[48px] bg-[#FDFDFD] overflow-hidden">
@@ -382,18 +521,23 @@ export function Testimonials() {
         <div className="absolute inset-y-0 left-0 w-[100px] lg:w-[200px] bg-gradient-to-r from-[#FDFDFD] to-transparent z-10 pointer-events-none"></div>
         <div className="absolute inset-y-0 right-0 w-[100px] lg:w-[200px] bg-gradient-to-l from-[#FDFDFD] to-transparent z-10 pointer-events-none"></div>
 
-        <div className="flex w-max animate-scroll-left">
-          {[...row1, ...row1].map((t, i) => renderCard(t, `r1-${i}`))}
-        </div>
+        {row1.length > 0 && (
+          <div className="flex w-max animate-scroll-left">
+            {[...row1, ...row1].map((t, i) => renderCard(t, `r1-${i}`))}
+          </div>
+        )}
 
-        <div className="flex w-max animate-scroll-right">
-          {[...row2, ...row2].map((t, i) => renderCard(t, `r2-${i}`))}
-        </div>
+        {row2.length > 0 && (
+          <div className="flex w-max animate-scroll-right">
+            {[...row2, ...row2].map((t, i) => renderCard(t, `r2-${i}`))}
+          </div>
+        )}
       </div>
     </section>
   )
 }
 
+// CTABand remains the same
 export function CTABand() {
   const navigate = useNavigate()
   return (

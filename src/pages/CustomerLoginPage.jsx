@@ -97,25 +97,52 @@ export default function CustomerLoginPage() {
     }
 
     // ================= API CALLS =================
+    // ================= API CALLS =================
     const apiCall = async (endpoint, data) => {
         const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-            method: 'POST',
+            method: "POST",
             headers: {
-                'Content-Type': 'application/json',
+                "Content-Type": "application/json",
             },
             body: JSON.stringify(data),
-        })
+        });
 
-        const result = await response.json()
+        const result = await response.json();
 
         if (!response.ok) {
-            const errorMessage = result.detail || result.message || result.error || 'Something went wrong'
-            throw new Error(errorMessage)
+            let errorMessage = "Something went wrong";
+
+            // Handle nested error structure: { error: { non_field_errors: ["message"] } }
+            if (result.error) {
+                // Check for non_field_errors inside error object
+                if (result.error.non_field_errors && result.error.non_field_errors.length > 0) {
+                    errorMessage = result.error.non_field_errors[0];
+                }
+                // Check for other field-specific errors inside error object
+                else {
+                    // Get all error messages from the error object
+                    const errorMessages = Object.values(result.error).flat();
+                    if (errorMessages.length > 0) {
+                        errorMessage = errorMessages[0];
+                    }
+                }
+            }
+            // Fallback to other common error formats
+            else if (result.non_field_errors && result.non_field_errors.length) {
+                errorMessage = result.non_field_errors[0];
+            } else if (result.detail) {
+                errorMessage = result.detail;
+            } else if (result.message) {
+                errorMessage = result.message;
+            } else if (result.error && typeof result.error === 'string') {
+                errorMessage = result.error;
+            }
+
+            throw new Error(errorMessage);
         }
 
-        return result
-    }
-
+        return result;
+    };
     // ================= SEND OTP FOR REGISTRATION =================
     const handleSendOtp = async () => {
         try {
@@ -179,7 +206,7 @@ export default function CustomerLoginPage() {
             }, 100)
 
         } catch (err) {
-            toast.error(err.message || 'Invalid mobile number or password')
+            toast.error(err.message);
         } finally {
             setLoading(false)
         }
@@ -636,16 +663,35 @@ export default function CustomerLoginPage() {
                             >
                                 {loading ? (
                                     <>
-                                        <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        <svg
+                                            className="animate-spin h-4 w-4 text-white"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <circle
+                                                className="opacity-25"
+                                                cx="12"
+                                                cy="12"
+                                                r="10"
+                                                stroke="currentColor"
+                                                strokeWidth="4"
+                                            />
+                                            <path
+                                                className="opacity-75"
+                                                fill="currentColor"
+                                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2
+                   5.291A7.962 7.962 0 014 12H0c0
+                   3.042 1.135 5.824 3 7.938l3-2.647z"
+                                            />
                                         </svg>
-                                        Sending OTP...
+
+                                        {isLogin ? "Logging in..." : "Sending OTP..."}
                                     </>
                                 ) : isLogin ? (
-                                    'Log In →'
+                                    "Log In →"
                                 ) : (
-                                    'Send OTP →'
+                                    "Send OTP →"
                                 )}
                             </button>
 

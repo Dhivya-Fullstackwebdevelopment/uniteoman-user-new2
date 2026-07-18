@@ -4,6 +4,7 @@ import toast from 'react-hot-toast'
 import API_BASE_URL from '@/config/api'
 import CancelBookingModal from '../components/Popups/CancelBookingModal'
 import RescheduleBookingModal from '../components/Popups/RescheduleBookingModal'
+import BookAgainModal from '../components/Popups/BookingAgainModal'
 
 
 const BRAND_GRADIENT = 'linear-gradient(135deg, #D61CA8, #8B2EF5)'
@@ -24,6 +25,10 @@ export default function MyBookingsPage() {
     const [selectedBookingForCancel, setSelectedBookingForCancel] = useState(null)
     const [isRescheduleModalOpen, setIsRescheduleModalOpen] = useState(false)
     const [selectedBookingForReschedule, setSelectedBookingForReschedule] = useState(null)
+    const [isBookAgainModalOpen, setIsBookAgainModalOpen] = useState(false)
+    const [selectedBookingForRebook, setSelectedBookingForRebook] = useState(null)
+    const [bookAgainResult, setBookAgainResult] = useState(null)
+    const [isBookAgainLoading, setIsBookAgainLoading] = useState(false)
 
     // Get token from localStorage
     const getAuthToken = () => {
@@ -134,6 +139,51 @@ export default function MyBookingsPage() {
         } catch (err) {
             toast.error(err.message || 'Failed to cancel booking')
         }
+    }
+
+    const openBookAgainModal = (booking) => {
+        setSelectedBookingForRebook(booking)
+        setBookAgainResult(null)
+        setIsBookAgainModalOpen(true)
+    }
+
+    const handleConfirmBookAgain = async () => {
+        if (!selectedBookingForRebook) return
+
+        try {
+            setIsBookAgainLoading(true)
+            const token = getAuthToken()
+            const response = await fetch(
+                `${API_BASE_URL}/professionals/bookings/${selectedBookingForRebook.id}/book-again/`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                }
+            )
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}))
+                throw new Error(errorData.message || 'Failed to rebook')
+            }
+
+            const data = await response.json()
+            setBookAgainResult(data)
+            toast.success(data.message || 'Booking reactivated successfully')
+            fetchBookings(activeTab)
+        } catch (err) {
+            toast.error(err.message || 'Failed to rebook')
+        } finally {
+            setIsBookAgainLoading(false)
+        }
+    }
+
+    const closeBookAgainModal = () => {
+        setIsBookAgainModalOpen(false)
+        setSelectedBookingForRebook(null)
+        setBookAgainResult(null)
     }
 
     // Handle tab change
@@ -537,7 +587,7 @@ export default function MyBookingsPage() {
                                                 )}
                                                 {isCancelled && (
                                                     <div
-                                                        onClick={() => navigate('/categories')}
+                                                        onClick={() => openBookAgainModal(booking)}rof
                                                         style={{ padding: '6px 13px', background: BRAND_GRADIENT, borderRadius: '8px', font: '700 11px/1 "DM Sans", sans-serif', color: 'white', cursor: 'pointer' }}
                                                     >
                                                         Book Again
@@ -563,6 +613,14 @@ export default function MyBookingsPage() {
                 onClose={() => setIsRescheduleModalOpen(false)}
                 onConfirm={handleConfirmReschedule}
                 booking={selectedBookingForReschedule}
+            />
+            <BookAgainModal
+                isOpen={isBookAgainModalOpen}
+                onClose={closeBookAgainModal}
+                onConfirm={handleConfirmBookAgain}
+                booking={selectedBookingForRebook}
+                result={bookAgainResult}
+                isLoading={isBookAgainLoading}
             />
         </div>
     )

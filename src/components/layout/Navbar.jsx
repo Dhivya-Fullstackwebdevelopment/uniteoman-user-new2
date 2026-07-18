@@ -292,7 +292,7 @@ export default function Navbar() {
                     <div
                       onClick={() => {
                         setShowDropdown(false);
-                        navigate('/profile');
+                        navigate('/customer/profile');
                       }}
                       style={{
                         display: 'flex',
@@ -483,7 +483,7 @@ export default function Navbar() {
 
                 <div
                   onClick={() => {
-                    go('/profile');
+                    go('/customer/profile');
                   }}
                   style={{
                     textAlign: 'center',
