@@ -19,7 +19,7 @@ export default function BookingDateTimePickerPage() {
   const navigate = useNavigate()
 
   // Get URL parameters from BookingPage
-  const professionalId = searchParams.get('professional_id') || ''
+  const professionalId = searchParams.get('professional_id') || 0
   const serviceId = searchParams.get('service_id') || '1'
   const locationId = searchParams.get('location_id') || '1'
   const serviceTypeId = searchParams.get('service_type_id') || ''
@@ -39,6 +39,7 @@ export default function BookingDateTimePickerPage() {
   const [availableTimes, setAvailableTimes] = useState([])
   const [serviceName, setServiceName] = useState(urlServiceName || '')
   const [servicePrice, setServicePrice] = useState(urlServicePrice || '0')
+  const [availableProfessionals, setAvailableProfessionals] = useState([])
   const dispatch = useDispatch();
 
   const selectedDate = useSelector(selectSelectedDate);
@@ -66,102 +67,6 @@ export default function BookingDateTimePickerPage() {
     // Time format: "11:00 AM" or "11:00%20AM"
     return decodeURIComponent(timeStr)
   }
-
-  // Fetch professional data
-  useEffect(() => {
-    const fetchProfessional = async () => {
-      if (!professionalId) {
-        setLoading(false)
-        return
-      }
-
-      setLoading(true)
-      try {
-        const params = new URLSearchParams()
-        params.append('location_id', locationId)
-        params.append('service_id', serviceId)
-        if (serviceTypeId) {
-          params.append('service_type_id', serviceTypeId)
-        }
-
-        const response = await axios.get(
-          `${API_ENDPOINTS.PROFESSIONAL_DETAIL(professionalId)}?${params.toString()}`
-        )
-
-        if (response.data && response.data.status === 'success') {
-          const data = response.data.data
-          setProfessional(data)
-
-          // If service name/price not from URL, use from API
-          if (!urlServiceName && data.services_offered && data.services_offered.length > 0) {
-            const service = data.services_offered[0]
-            setSelectedService(service)
-            setServiceName(service.type_name || 'Service')
-            setServicePrice(service.price || '0')
-          } else if (urlServiceName) {
-            // Find the service from API that matches the URL service name
-            if (data.services_offered) {
-              const matchedService = data.services_offered.find(
-                s => s.type_name === urlServiceName
-              )
-              if (matchedService) {
-                setSelectedService(matchedService)
-              } else {
-                // If no match, use the first service
-                setSelectedService(data.services_offered[0])
-              }
-            }
-          }
-
-          // Generate available dates (next 7 days)
-          const dates = generateDates()
-          setAvailableDates(dates)
-
-          // Set selected date from URL or default to first
-          const dateFromUrl = parseDateFromUrl(urlDate)
-          console.log('Date from URL:', dateFromUrl, 'Available dates:', dates.map(d => d.num))
-
-          let finalInitialDateObj = dates[0] || { day: '', num: '', month: '', year: '' };
-          if (dateFromUrl && dates.some(d => d.num === dateFromUrl)) {
-            setSelectedDateNum(dateFromUrl)
-            const matchedDate = dates.find(d => d.num === dateFromUrl)
-            if (matchedDate) finalInitialDateObj = matchedDate
-          } else {
-            setSelectedDateNum(dates[0]?.num || '')
-          }
-
-          // Automatically dispatch default / initial date settings to Redux store
-          dispatch(setSelectedDate(finalInitialDateObj.num));
-          dispatch(setSelectedDateObj(finalInitialDateObj));
-
-          // Generate available times
-          const times = generateTimes()
-          setAvailableTimes(times)
-
-          // Set selected time from URL or default to first
-          const timeFromUrl = parseTimeFromUrl(urlTime)
-          console.log('Time from URL:', timeFromUrl, 'Available times:', times)
-
-          let finalInitialTime = times[0] || '';
-          if (timeFromUrl && times.includes(timeFromUrl)) {
-            setSelectedTimeSlot(timeFromUrl)
-            finalInitialTime = timeFromUrl
-          } else {
-            setSelectedTimeSlot(times[0] || '')
-          }
-
-          // Automatically dispatch default / initial time settings to Redux store
-          dispatch(setSelectedTime(finalInitialTime));
-        }
-      } catch (error) {
-        console.error("Error fetching professional:", error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchProfessional()
-  }, [professionalId, locationId, serviceId, serviceTypeId, urlDate, urlTime, urlServiceName])
 
   // Generate next 7 days
   const generateDates = () => {
@@ -199,10 +104,126 @@ export default function BookingDateTimePickerPage() {
     return times
   }
 
+  // Fetch professional data
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true)
+      try {
+        // If professional_id is provided, fetch that specific professional
+        if (professionalId) {
+          const params = new URLSearchParams()
+          params.append('location_id', locationId)
+          params.append('service_id', serviceId)
+          if (serviceTypeId) {
+            params.append('service_type_id', serviceTypeId)
+          }
+
+          const response = await axios.get(
+            `${API_ENDPOINTS.PROFESSIONAL_DETAIL(professionalId)}?${params.toString()}`
+          )
+
+          if (response.data && response.data.status === 'success') {
+            const data = response.data.data
+            setProfessional(data)
+
+            // If service name/price not from URL, use from API
+            if (!urlServiceName && data.services_offered && data.services_offered.length > 0) {
+              const service = data.services_offered[0]
+              setSelectedService(service)
+              setServiceName(service.type_name || 'Service')
+              setServicePrice(service.price || '0')
+            } else if (urlServiceName) {
+              // Find the service from API that matches the URL service name
+              if (data.services_offered) {
+                const matchedService = data.services_offered.find(
+                  s => s.type_name === urlServiceName
+                )
+                if (matchedService) {
+                  setSelectedService(matchedService)
+                } else {
+                  // If no match, use the first service
+                  setSelectedService(data.services_offered[0])
+                }
+              }
+            }
+          }
+        } else {
+          // No professional_id - fetch available professionals for this service
+          try {
+            const proResponse = await axios.get(
+              API_ENDPOINTS.PROFESSIONALS_BY_LOCATION_AND_SERVICE(locationId, serviceId)
+            )
+            if (proResponse.data && proResponse.data.status === 'success') {
+              setAvailableProfessionals(proResponse.data.data || [])
+              // Set service name from URL or first professional's service
+              if (!urlServiceName && proResponse.data.data?.[0]?.services_offered?.[0]) {
+                setServiceName(proResponse.data.data[0].services_offered[0].type_name || 'Service')
+                setServicePrice(proResponse.data.data[0].services_offered[0].price || '0')
+              }
+            }
+          } catch (error) {
+            console.error("Error fetching professionals:", error)
+          }
+        }
+
+        // Generate available dates (next 7 days)
+        const dates = generateDates()
+        setAvailableDates(dates)
+
+        // Set selected date from URL or default to first
+        const dateFromUrl = parseDateFromUrl(urlDate)
+        console.log('Date from URL:', dateFromUrl, 'Available dates:', dates.map(d => d.num))
+
+        let finalInitialDateObj = dates[0] || { day: '', num: '', month: '', year: '' };
+        if (dateFromUrl && dates.some(d => d.num === dateFromUrl)) {
+          setSelectedDateNum(dateFromUrl)
+          const matchedDate = dates.find(d => d.num === dateFromUrl)
+          if (matchedDate) finalInitialDateObj = matchedDate
+        } else {
+          setSelectedDateNum(dates[0]?.num || '')
+        }
+
+        // Automatically dispatch default / initial date settings to Redux store
+        dispatch(setSelectedDate(finalInitialDateObj.num));
+        dispatch(setSelectedDateObj(finalInitialDateObj));
+
+        // Generate available times
+        const times = generateTimes()
+        setAvailableTimes(times)
+
+        // Set selected time from URL or default to first
+        const timeFromUrl = parseTimeFromUrl(urlTime)
+        console.log('Time from URL:', timeFromUrl, 'Available times:', times)
+
+        let finalInitialTime = times[0] || '';
+        if (timeFromUrl && times.includes(timeFromUrl)) {
+          setSelectedTimeSlot(timeFromUrl)
+          finalInitialTime = timeFromUrl
+        } else {
+          setSelectedTimeSlot(times[0] || '')
+        }
+
+        // Automatically dispatch default / initial time settings to Redux store
+        dispatch(setSelectedTime(finalInitialTime));
+      } catch (error) {
+        console.error("Error fetching data:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [professionalId, locationId, serviceId, serviceTypeId, urlDate, urlTime, urlServiceName])
+
   const activeDateObj = availableDates.find(d => d.num === selectedDateNum) || availableDates[0] || { day: '', num: '', month: '', year: '' }
 
   const handleNextStepNavigation = () => {
-    navigate(`/BookingAddressPage?professional_id=${professionalId}&service_id=${serviceId}&location_id=${locationId}&service_type_id=${serviceTypeId}&date=${encodeURIComponent(activeDateObj.day)}, ${activeDateObj.num} ${activeDateObj.month} ${activeDateObj.year}&time=${encodeURIComponent(selectedTimeSlot)}&service_name=${encodeURIComponent(serviceName)}&service_price=${encodeURIComponent(servicePrice)}&pro_name=${encodeURIComponent(professional?.name || urlProName)}`)
+    let finalProName = professional?.name || urlProName || 
+      (availableProfessionals.length > 0 ? availableProfessionals[0]?.name : 'Professional');
+    
+    let finalProfessionalId = professionalId || '';
+    
+    navigate(`/BookingAddressPage?professional_id=${finalProfessionalId}&service_id=${serviceId}&location_id=${locationId}&service_type_id=${serviceTypeId}&date=${encodeURIComponent(activeDateObj.day)}, ${activeDateObj.num} ${activeDateObj.month} ${activeDateObj.year}&time=${encodeURIComponent(selectedTimeSlot)}&service_name=${encodeURIComponent(serviceName)}&service_price=${encodeURIComponent(servicePrice)}&pro_name=${encodeURIComponent(finalProName)}`)
   }
 
   // Loading shimmer
@@ -233,18 +254,6 @@ export default function BookingDateTimePickerPage() {
     )
   }
 
-  if (!professional) {
-    return (
-      <div style={{ textAlign: 'center', padding: '60px 20px', color: '#9090A0' }}>
-        <div style={{ fontSize: '48px', marginBottom: '12px' }}>🔍</div>
-        <div style={{ font: '400 16px/1.5 "DM Sans", sans-serif' }}>Professional not found</div>
-        <Link to="/business-list" style={{ color: '#D61CA8', textDecoration: 'none', marginTop: '12px', display: 'inline-block' }}>
-          ← Back to services
-        </Link>
-      </div>
-    )
-  }
-
   // Get disabled times (e.g., past times)
   const getSlotStatus = (time) => {
     const now = new Date()
@@ -269,6 +278,19 @@ export default function BookingDateTimePickerPage() {
     }
 
     return 'available'
+  }
+
+  // If no professional and no available professionals
+  if (!professional && availableProfessionals.length === 0 && !loading) {
+    return (
+      <div style={{ textAlign: 'center', padding: '60px 20px', color: '#9090A0' }}>
+        <div style={{ fontSize: '48px', marginBottom: '12px' }}>🔍</div>
+        <div style={{ font: '400 16px/1.5 "DM Sans", sans-serif' }}>No professionals available for this service</div>
+        <Link to="/business-list" style={{ color: '#D61CA8', textDecoration: 'none', marginTop: '12px', display: 'inline-block' }}>
+          ← Back to services
+        </Link>
+      </div>
+    )
   }
 
   return (
@@ -453,7 +475,7 @@ export default function BookingDateTimePickerPage() {
             <div style={{ background: 'rgba(75,110,245,.05)', border: '1px solid rgba(75,110,245,.2)', borderRadius: '11px', padding: '11px 14px', display: 'flex', gap: '8px', marginBottom: '16px' }}>
               <span style={{ fontSize: '14px', lineHeight: 1 }}>ℹ️</span>
               <div style={{ font: '400 12px/1.5 "DM Sans", sans-serif', color: '#4B6EF5' }}>
-                {serviceName || 'Service'} takes ~45 mins. {professional?.name?.split(' ')[0] || urlProName || 'Pro'} will arrive at <strong style={{ color: '#D61CA8' }}>{selectedTimeSlot}</strong> on <strong style={{ color: '#D61CA8' }}>{activeDateObj.day} {activeDateObj.num} {activeDateObj.month}</strong>.
+                {serviceName || 'Service'} takes ~45 mins. {professional?.name?.split(' ')[0] || urlProName || (availableProfessionals.length > 0 ? availableProfessionals[0]?.name?.split(' ')[0] : 'Pro')} will arrive at <strong style={{ color: '#D61CA8' }}>{selectedTimeSlot}</strong> on <strong style={{ color: '#D61CA8' }}>{activeDateObj.day} {activeDateObj.num} {activeDateObj.month}</strong>.
               </div>
             </div>
           </div>
@@ -463,7 +485,8 @@ export default function BookingDateTimePickerPage() {
             <div className="summary-sticky-panel" style={{ background: '#0A0A0F', borderRadius: '18px', padding: '20px', position: 'sticky', top: '20px' }}>
               <div style={{ font: '700 13px/1 "DM Sans", sans-serif', color: 'white', marginBottom: '3px' }}>Booking Summary</div>
               <div style={{ font: '400 11px/1 "DM Sans", sans-serif', color: 'rgba(255,255,255,.4)', marginBottom: '16px' }}>
-                {professional?.name || urlProName || 'Professional'}
+                {professional ? (professional?.name || urlProName || 'Professional') : 
+                 (availableProfessionals.length > 0 ? `${availableProfessionals.filter(p => p.is_available_today).length || availableProfessionals.length} pros available` : 'Professional')}
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', gap: '8px' }}>
@@ -472,12 +495,27 @@ export default function BookingDateTimePickerPage() {
                   {serviceName || 'Service'}
                 </span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', gap: '8px' }}>
-                <span style={{ font: '400 11px/1 "DM Sans", sans-serif', color: 'rgba(255,255,255,.45)', whiteSpace: 'nowrap' }}>Pro</span>
-                <span style={{ font: '600 11px/1 "DM Sans", sans-serif', color: 'white', textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {professional?.name || urlProName || 'Professional'} ★{professional?.rating || '4.9'}
-                </span>
-              </div>
+
+              {/* Show professional info only if specific pro is selected */}
+              {professional && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', gap: '8px' }}>
+                  <span style={{ font: '400 11px/1 "DM Sans", sans-serif', color: 'rgba(255,255,255,.45)', whiteSpace: 'nowrap' }}>Pro</span>
+                  <span style={{ font: '600 11px/1 "DM Sans", sans-serif', color: 'white', textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {professional?.name || urlProName || 'Professional'} ★{professional?.rating || '4.9'}
+                  </span>
+                </div>
+              )}
+
+              {/* Show availability count if no specific pro selected */}
+              {!professional && availableProfessionals.length > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', gap: '8px' }}>
+                  <span style={{ font: '400 11px/1 "DM Sans", sans-serif', color: 'rgba(255,255,255,.45)', whiteSpace: 'nowrap' }}>Available Pros</span>
+                  <span style={{ font: '600 11px/1 "DM Sans", sans-serif', color: '#10B981', textAlign: 'right' }}>
+                    {availableProfessionals.filter(p => p.is_available_today).length || availableProfessionals.length} available
+                  </span>
+                </div>
+              )}
+
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', gap: '8px' }}>
                 <span style={{ font: '400 11px/1 "DM Sans", sans-serif', color: 'rgba(255,255,255,.45)', whiteSpace: 'nowrap' }}>Date</span>
                 <span style={{ font: '600 11px/1 "DM Sans", sans-serif', color: 'white', textAlign: 'right' }}>

@@ -20,8 +20,8 @@ export default function BookingAddressPage() {
   // Passed through from previous steps
   const professionalId = searchParams.get('professional_id') || ''
   const serviceTypeId = searchParams.get('service_type_id') || ''
-  const date = searchParams.get('date') || '' 
-  const time = searchParams.get('time') || '' 
+  const date = searchParams.get('date') || ''
+  const time = searchParams.get('time') || ''
   const urlServiceName = searchParams.get('service_name') || ''
   const urlServicePrice = searchParams.get('service_price') || ''
   const urlProName = searchParams.get('pro_name') || ''
@@ -29,7 +29,7 @@ export default function BookingAddressPage() {
 
   // Securely fetch user credentials from localStorage instead of input forms
   const [userData, setUserData] = useState({ name: '', email: '', mobile: '' })
-  
+
   const [selectedArea, setSelectedArea] = useState('Qurum')
   const [villaApartment, setVillaApartment] = useState('Villa 12')
   const [streetName, setStreetName] = useState('Al Noor Street')
@@ -122,8 +122,12 @@ export default function BookingAddressPage() {
 
   const handleNextStepNavigation = () => {
     if (!isValid) return
+
+    // Get professional_id from URL params - pass it through as is (could be null/empty)
+    // const professionalIdParam = searchParams.get('professional_id') || ''
+
     const params = new URLSearchParams({
-      professional_id: professionalId,
+      // professional_id: professionalIdParam, // Pass through whatever value (could be empty)
       service_type_id: serviceTypeId,
       date: displayDate,
       time: displayTime,

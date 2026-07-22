@@ -25,8 +25,10 @@ const BRAND_GRADIENT = 'linear-gradient(135deg, #D61CA8, #8B2EF5)'
 
 export default function BookingPaymentPage() {
   const [searchParams] = useSearchParams()
-
   const navigate = useNavigate()
+
+  // Get professional_id from URL params - it could be empty string
+  const professionalIdFromUrl = searchParams.get('professional_id') || 0
 
   // Get data strictly from Redux Selectors
   const serviceType = useSelector(selectSelectedServiceType)
@@ -55,7 +57,6 @@ export default function BookingPaymentPage() {
 
   // Safely extract YYYY-MM-DD from the state values
   const toApiDate = () => {
-    // Strategy 1: Read directly from the serialized date timestamp object property if available
     if (selectedDateObj?.full) {
       try {
         const d = new Date(selectedDateObj.full)
@@ -70,7 +71,6 @@ export default function BookingPaymentPage() {
       }
     }
 
-    // Strategy 2: Reconstruct it if fields are passed separately inside the object mapping
     if (selectedDateObj?.year && selectedDateObj?.month && selectedDateObj?.num) {
       try {
         const monthMap = { Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11 }
@@ -124,19 +124,24 @@ export default function BookingPaymentPage() {
     const apiBookingTime = toApiTime(selectedTime)
 
     console.log("Processed Payload date & time:", apiBookingDate, apiBookingTime)
-
-    // if (!apiBookingDate || !apiBookingTime) {
-    //   setError('Invalid date or time structure selected. Please try reselecting.')
-    //   return
-    // }
+    console.log("professionalIdFromUrl:", professionalIdFromUrl)
 
     setSubmitting(true)
     try {
+      // Determine the professional_id to send - null if not provided
+      let finalProfessionalId = 0;
+      
+      // If professionalIdFromUrl has a value, use it, otherwise keep as null
+      if (professionalIdFromUrl && professionalIdFromUrl !== 0 && professionalIdFromUrl !== '') {
+        finalProfessionalId = Number(professionalIdFromUrl);
+      }
+      // else: keep as null (will be sent as null to database)
+
       const payload = {
-        professional_id: Number(professional?.id || 0),
+       // professional_id: finalProfessionalId, // This will be null when not provided
         service_type_id: Number(serviceTypeId || 0),
-        booking_date: apiBookingDate,   // Outputs correctly: "2026-07-21"
-        booking_time: apiBookingTime,   // Outputs correctly: "10:00"
+        booking_date: apiBookingDate,
+        booking_time: apiBookingTime,
         user_name: searchParams.get('user_name') || '',
         user_email: searchParams.get('user_email') || '',
         user_mobile: searchParams.get('user_mobile') || '',
@@ -151,6 +156,8 @@ export default function BookingPaymentPage() {
         card_last4: paymentMethod === 'bank_of_muscat_card' ? cardNumber.slice(-4) : undefined,
         save_card: paymentMethod === 'bank_of_muscat_card' ? saveCard : undefined
       }
+
+      console.log("Final payload:", payload)
 
       const response = await axios.post(
         API_ENDPOINTS.CREATE_BOOKING,

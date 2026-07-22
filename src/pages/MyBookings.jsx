@@ -92,18 +92,27 @@ export default function MyBookingsPage() {
             upcoming: 0,
             ongoing: 0,
             completed: 0,
-            cancelled: 0
+            cancelled: 0,
         }
 
-        bookingsData.forEach(booking => {
-            const status = booking.status_code || booking.status
-            if (status === 'SCHEDULED' || status === 'PENDING' || status === 'CONFIRMED') {
+        bookingsData.forEach((booking) => {
+            const status = (booking.status_code || booking.status || "").toUpperCase()
+
+            if (
+                status === "SCHEDULED" ||
+                status === "PENDING" ||
+                status === "CONFIRMED"
+            ) {
                 counts.upcoming++
-            } else if (status === 'EN_ROUTE' || status === 'ARRIVED' || status === 'IN_PROGRESS') {
+            } else if (
+                status === "EN_ROUTE" ||
+                status === "ARRIVED" ||
+                status === "IN_PROGRESS"
+            ) {
                 counts.ongoing++
-            } else if (status === 'COMPLETED') {
+            } else if (status === "COMPLETED") {
                 counts.completed++
-            } else if (status === 'CANCELLED') {
+            } else if (status === "CANCELLED") {
                 counts.cancelled++
             }
         })
@@ -501,13 +510,30 @@ export default function MyBookingsPage() {
                             </div>
                         ) : (
                             bookings.map((booking) => {
-                                const statusInfo = getStatusBadgeStyle(booking.status_code || booking.status)
+                                const bookingStatus = (
+                                    booking.status_code ||
+                                    booking.status ||
+                                    ''
+                                ).toUpperCase()
+
+                                const statusInfo = getStatusBadgeStyle(bookingStatus)
+
                                 const icon = getServiceIcon(booking.service_name)
                                 const iconBg = getIconBg(booking.service_name)
-                                const isUpcoming = statusInfo.label === 'Scheduled' || statusInfo.label === 'Pending' || statusInfo.label === 'Confirmed'
-                                const isOngoing = statusInfo.label === 'En Route' || statusInfo.label === 'Arrived' || statusInfo.label === 'In Progress'
-                                const isCompleted = statusInfo.label === 'Completed'
-                                const isCancelled = statusInfo.label === 'Cancelled'
+
+                                const isUpcoming =
+                                    bookingStatus === 'SCHEDULED' ||
+                                    bookingStatus === 'PENDING' ||
+                                    bookingStatus === 'CONFIRMED'
+
+                                const isOngoing =
+                                    bookingStatus === 'EN_ROUTE' ||
+                                    bookingStatus === 'ARRIVED' ||
+                                    bookingStatus === 'IN_PROGRESS'
+
+                                const isCompleted = bookingStatus === 'COMPLETED'
+
+                                const isCancelled = bookingStatus === 'CANCELLED'
 
                                 return (
                                     <div key={booking.id} className="mb-booking-row">
@@ -550,7 +576,7 @@ export default function MyBookingsPage() {
                                                         Track Live
                                                     </button>
                                                 )}
-                                                {(isUpcoming || isOngoing) && (
+                                                {isUpcoming && (
                                                     <>
                                                         <div
                                                             onClick={() => openRescheduleModal(booking)}
@@ -587,7 +613,7 @@ export default function MyBookingsPage() {
                                                 )}
                                                 {isCancelled && (
                                                     <div
-                                                        onClick={() => openBookAgainModal(booking)}rof
+                                                        onClick={() => openBookAgainModal(booking)} rof
                                                         style={{ padding: '6px 13px', background: BRAND_GRADIENT, borderRadius: '8px', font: '700 11px/1 "DM Sans", sans-serif', color: 'white', cursor: 'pointer' }}
                                                     >
                                                         Book Again

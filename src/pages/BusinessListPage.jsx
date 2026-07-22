@@ -137,17 +137,46 @@ export default function BusinessListPage() {
     setDisplayCount(10) // Changed to 10
   }, [serviceTypes])
 
-  const handleBookProfessional = (professionalId) => {
-    const finalServiceTypeId = selectedServiceTypeId || serviceTypes[0]?.id
-    const targetUrl = `/BusinessSelection?professional_id=${professionalId}&service_type_id=${finalServiceTypeId}&service_id=${urlServiceId}&location_id=${urlLocation}`
+  const getCurrentDate = () => {
+    const today = new Date();
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return `${dayNames[today.getDay()]}, ${today.getDate()} ${monthNames[today.getMonth()]} ${today.getFullYear()}`;
+  };
 
-    const token = localStorage.getItem('customer_token')
-    if (!token) {
-      navigate(`/customer/login?redirect=${encodeURIComponent(targetUrl)}`)
-      return
+  const getCurrentTime = () => {
+    const now = new Date();
+    let hours = now.getHours();
+    const minutes = now.getMinutes();
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12 || 12;
+    return `${hours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+  };
+
+  const handleBookProfessional = (professionalId = null, proName = '') => {
+    // Get the selected service type or fallback to first
+    const serviceTypeId = selectedServiceTypeId || serviceTypes[0]?.id;
+    const serviceType = serviceTypes.find(s => s.id === serviceTypeId) || serviceTypes[0];
+
+    // Get current date and time as defaults
+    const defaultDate = getCurrentDate();
+    const defaultTime = getCurrentTime();
+
+    // Build URL with professional_id only if provided (not null)
+    let targetUrl = `/BookingDateTimePickerPage?service_id=${urlServiceId}&location_id=${urlLocation}&service_type_id=${serviceTypeId}&date=${encodeURIComponent(defaultDate)}&time=${encodeURIComponent(defaultTime)}&service_name=${encodeURIComponent(serviceName)}&service_price=${encodeURIComponent(serviceType?.price || serviceData?.starting_price || '0')}`;
+    
+    // Add professional_id and pro_name only if professionalId is provided
+    if (professionalId) {
+      targetUrl += `&professional_id=${professionalId}&pro_name=${encodeURIComponent(proName)}`;
     }
-    navigate(targetUrl)
-  }
+
+    const token = localStorage.getItem('customer_token');
+    if (!token) {
+      navigate(`/customer/login?redirect=${encodeURIComponent(targetUrl)}`);
+      return;
+    }
+    navigate(targetUrl);
+  };
 
   const handleServiceTypeSelect = (service) => {
     dispatch(setSelectedServiceType({
@@ -419,14 +448,9 @@ export default function BusinessListPage() {
                           </div>
                           <button
                             onClick={(e) => {
-                              e.stopPropagation()
-                              const targetUrl = `/BusinessSelection?service_type_id=${service.id}&service_id=${urlServiceId}&location_id=${urlLocation}`
-                              const token = localStorage.getItem('customer_token')
-                              if (!token) {
-                                navigate(`/customer/login?redirect=${encodeURIComponent(targetUrl)}`)
-                                return
-                              }
-                              navigate(targetUrl)
+                              e.stopPropagation();
+                              // User-side booking - pass null for professional_id
+                              handleBookProfessional(null, '');
                             }}
                             style={{ padding: '6px 13px', background: BRAND_GRADIENT, borderRadius: '8px', font: '700 11px/1 "DM Sans", sans-serif', color: 'white', cursor: 'pointer', border: 'none', outline: 'none' }}
                           >
@@ -534,20 +558,9 @@ export default function BusinessListPage() {
                   </div>
                   <button
                     onClick={(e) => {
-                      e.stopPropagation()
-                      const targetUrl = `/BusinessSelection?professional_id=${pro.id}&service_type_id=${pro.service_type_id || selectedServiceTypeId}&service_id=${urlServiceId}&location_id=${urlLocation}`
-                      const token = localStorage.getItem('customer_token')
-                      if (!token) {
-                        navigate(`/customer/login?redirect=${encodeURIComponent(targetUrl)}`)
-                        return
-                      }
-                      dispatch(setSelectedServiceType({
-                        id: pro.service_type_id,
-                        name: pro.type_name || '',
-                        price: pro.price,
-                        duration: pro.duration
-                      }))
-                      navigate(targetUrl)
+                      e.stopPropagation();
+                      // AI Top Picks - pass the professional ID
+                      handleBookProfessional(pro.id, pro.name);
                     }}
                     style={{ width: '100%', padding: '7px', background: BRAND_GRADIENT, borderRadius: '8px', textAlign: 'center', font: '700 11px/1 "DM Sans", sans-serif', color: 'white', cursor: 'pointer', border: 'none', outline: 'none' }}
                   >
