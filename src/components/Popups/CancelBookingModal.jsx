@@ -8,11 +8,17 @@ export default function CancelBookingModal({ isOpen, onClose, onConfirm, booking
   if (!isOpen) return null
 
   const handleConfirmAction = async () => {
-    setIsProcessing(true)
-    await onConfirm()
-    setIsProcessing(false)
-    onClose()
-  }
+    setIsProcessing(true);
+
+    try {
+      await onConfirm();
+      onClose(); 
+    } catch (err) {
+      onClose();
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   return (
     <div style={{
@@ -33,11 +39,11 @@ export default function CancelBookingModal({ isOpen, onClose, onConfirm, booking
         fontFamily: '"DM Sans", sans-serif'
       }}>
         <div style={{ fontSize: '48px', marginBottom: '16px' }}>⚠️</div>
-        
+
         <h3 style={{ font: '700 20px/1.3 "DM Sans", sans-serif', color: '#0A0A0F', margin: '0 0 10px 0' }}>
           Cancel Booking?
         </h3>
-        
+
         <p style={{ font: '400 14px/1.5 "DM Sans", sans-serif', color: '#9090A0', margin: '0 0 24px 0', padding: '0 10px' }}>
           Are you sure you want to cancel booking <strong style={{ color: '#0A0A0F' }}>{bookingNumber || 'this order'}</strong>? This action cannot be undone.
         </p>

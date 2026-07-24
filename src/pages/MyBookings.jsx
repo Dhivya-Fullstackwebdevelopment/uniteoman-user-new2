@@ -127,28 +127,35 @@ export default function MyBookingsPage() {
 
     // Triggered directly when confirm action completes within the pop-up modal sandbox
     const handleConfirmCancelAPI = async () => {
-        if (!selectedBookingForCancel) return
+        if (!selectedBookingForCancel) return;
 
         try {
-            const token = getAuthToken()
-            const response = await fetch(`${API_BASE_URL}/professionals/bookings/${selectedBookingForCancel.id}/cancel/`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
-            })
+            const token = getAuthToken();
+
+            const response = await fetch(
+                `${API_BASE_URL}/professionals/bookings/${selectedBookingForCancel.id}/cancel/`,
+                {
+                    method: 'POST',
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                }
+            );
+
+            const data = await response.json();
 
             if (!response.ok) {
-                throw new Error('Failed to cancel booking')
+                throw new Error(data.message || 'Failed to cancel booking');
             }
 
-            toast.success('Booking cancelled successfully')
-            fetchBookings(activeTab)
+            toast.success(data.message || 'Booking cancelled successfully');
+            fetchBookings(activeTab);
         } catch (err) {
-            toast.error(err.message || 'Failed to cancel booking')
+            toast.error(err.message);
+            throw err; // Important
         }
-    }
+    };
 
     const openBookAgainModal = (booking) => {
         setSelectedBookingForRebook(booking)
