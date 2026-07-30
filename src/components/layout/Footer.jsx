@@ -79,7 +79,7 @@ export default function Footer() {
           {/* Logo */}
           <div>
             <img
-              src="/image 672.png"
+              src="/image672.png"
               alt="UniteOman"
               className="h-[38px] w-auto mb-5"
             />

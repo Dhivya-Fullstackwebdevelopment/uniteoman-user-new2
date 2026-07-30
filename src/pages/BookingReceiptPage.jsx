@@ -157,7 +157,7 @@ export default function BookingReceiptPage() {
 
                         {/* Brand Logo and Title Context Subheader */}
                         <div style={{ textAlign: 'center', paddingBottom: '24px', borderBottom: '1px solid #EBEBEF', marginBottom: '24px' }}>
-                            <img src="../../public/image 672.png" style={{ height: '24px', marginBottom: '12px' }} alt="UniteOman Logo" />
+                            <img src="../../public/image672.png" style={{ height: '24px', marginBottom: '12px' }} alt="UniteOman Logo" />
                             <div style={{ font: '600 22px/1 "DM Sans", sans-serif', color: '#0A0A0F', marginBottom: '4px' }}>Service Receipt</div>
                             <div style={{ font: '400 13px/1 "DM Sans", sans-serif', color: '#9090A0' }}>
                                 Booking #{receipt?.booking_number} · {receipt?.booking_date}

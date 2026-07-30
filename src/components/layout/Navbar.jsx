@@ -173,7 +173,7 @@ export default function Navbar() {
         {/* Logo */}
         <div style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }} onClick={() => navigate('/')}>
           <img
-            src="../../../public/image 672.png"
+            src="../../../public/image672.png"
             style={{ height: '26px', flexShrink: 0 }}
             alt="UniteOman Logo"
           />
@@ -402,7 +402,7 @@ export default function Navbar() {
           {/* Top bar: logo + close */}
           <div style={{ height: '54px', minHeight: '54px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px', borderBottom: '1px solid #EBEBEF' }}>
             <img
-              src="../../../public/image 672.png"
+              src="../../../public/image672.png"
               style={{ height: '22px', flexShrink: 0 }}
               alt="UniteOman Logo"
             />

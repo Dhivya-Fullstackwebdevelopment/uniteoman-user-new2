@@ -100,7 +100,7 @@ export default function StatsSection() {
         {/* Heading */}
         <div className={`stats-header text-center mb-12 sm:mb-16 ${inView ? "stats-visible" : ""}`}>
           <img
-            src="/image 672.png"
+            src="/image672.png"
             alt="UniteOman"
             className="h-8 sm:h-11 w-auto mx-auto mb-4 sm:mb-5 opacity-95"
           />

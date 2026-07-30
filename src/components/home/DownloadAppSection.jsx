@@ -151,7 +151,7 @@ export default function DownloadAppSection() {
               <div className="w-16 h-[5px] rounded-full bg-white/30" />
               <div className="flex-1 w-full rounded-2xl bg-white/10 flex items-center justify-center">
                 <img
-                  src="/image 672.png"
+                  src="/image672.png"
                   alt="UniteOman"
                   className="w-[100px] opacity-70"
                 />
