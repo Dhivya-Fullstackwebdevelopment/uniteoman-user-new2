@@ -60,9 +60,32 @@ export default function CustomerLoginPage() {
         email: z
             .string()
             .trim()
-            .email('Enter a valid email address')
-            .optional()
-            .or(z.literal('')),
+            .superRefine((value, ctx) => {
+                if (!value) {
+                    ctx.addIssue({
+                        code: z.ZodIssueCode.custom,
+                        message: "Email is required",
+                    });
+                    return;
+                }
+
+                if (!value.includes("@")) {
+                    ctx.addIssue({
+                        code: z.ZodIssueCode.custom,
+                        message: "Email must contain @",
+                    });
+                    return;
+                }
+
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+                if (!emailRegex.test(value)) {
+                    ctx.addIssue({
+                        code: z.ZodIssueCode.custom,
+                        message: "Enter a valid email address",
+                    });
+                }
+            }),
         password: z
             .string()
             .min(6, 'Password must be at least 6 characters')
@@ -544,11 +567,11 @@ export default function CustomerLoginPage() {
                             {!isLogin && (
                                 <div>
                                     <label className="text-[10px] font-black uppercase tracking-widest text-[#C4CBD6] ml-0.5 block mb-1.5">
-                                        Email Address <span className="text-gray-400 text-[8px]">(optional)</span>
+                                        Email Address <span className="text-red-500">*</span>
                                     </label>
                                     <div className="relative">
                                         <input
-                                            type="email"
+                                            type="text"
                                             name="email"
                                             value={formData.email}
                                             placeholder="example@gmail.com"
