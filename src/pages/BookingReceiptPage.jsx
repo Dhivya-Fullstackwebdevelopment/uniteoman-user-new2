@@ -3,7 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom'
 import axios from 'axios'
 
 const BRAND_GRADIENT = 'linear-gradient(135deg, #D61CA8, #8B2EF5)'
-const API_BASE_URL = 'http://127.0.0.1:8000/api'
+// const API_BASE_URL = 'http://127.0.0.1:8000/api'
+const API_BASE_URL = 'http://72.61.229.172:8090/api'
 
 export default function BookingReceiptPage() {
     const navigate = useNavigate()
